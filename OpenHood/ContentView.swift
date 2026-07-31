@@ -1565,6 +1565,7 @@ struct VehicleHomeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
     }
+}
     // MARK: - Vehicle Planning
 
     enum VehiclePlanGoal: String, CaseIterable, Identifiable {
@@ -2601,7 +2602,7 @@ struct VehicleHomeView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
-}// MARK: - Vehicle Dashboard
+// MARK: - Vehicle Dashboard
 
 struct VehicleDashboardView: View {
     @EnvironmentObject private var vehicle: VehicleOnboardingData
