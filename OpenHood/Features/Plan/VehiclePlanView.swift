@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Vehicle Planning
 
 enum VehiclePlanGoal: String, CaseIterable, Identifiable {
-    case reliable = "Reliable"
+    case reliable = "Reliability"
     case performance = "Performance"
     case style = "Style"
     case custom = "Custom Plan"
@@ -47,7 +47,7 @@ enum VehiclePlanGoal: String, CaseIterable, Identifiable {
     var focusPrompt: String {
         switch self {
         case .reliable:
-            return "What should your reliable plan focus on?"
+            return "What should your reliability plan focus on?"
 
         case .performance:
             return "What matters most?"
@@ -147,6 +147,97 @@ struct PlanQuestionOption: Identifiable {
     ) {
         self.title = title
         self.subtitle = subtitle
+    }
+}
+
+enum PlanRecommendationVerificationStatus: String {
+    case prototype = "Prototype — verification required"
+    case verified = "Verified"
+}
+
+struct PlanRecommendationRecord: Identifiable {
+    let id: String
+    let vehicleApplicability: String
+    let goal: VehiclePlanGoal
+    let focus: String
+    let triggeringAnswers: [String]
+    let recommendedInspection: String
+    let conditionalNextStep: String
+    let reason: String
+    let partsEstimateStatus: String
+    let laborEstimateStatus: String
+    let benefits: String
+    let tradeoffs: String
+    let supportingWork: String
+    let verificationStatus: PlanRecommendationVerificationStatus
+    let sourceReferences: [String]
+}
+
+enum PlanRecommendationLibrary {
+    static let reliabilityPrototype: [PlanRecommendationRecord] = [
+        PlanRecommendationRecord(
+            id: "reliability-preventive-prototype",
+            vehicleApplicability: "Saved vehicle profile; vehicle-specific applicability not yet verified",
+            goal: .reliable,
+            focus: "Stay ahead of problems",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming the saved service history, current concerns, and the vehicle's present condition.",
+            conditionalNextStep: "If inspection verifies overdue or condition-based needs, organize confirmed work before optional improvements.",
+            reason: "A verified baseline helps avoid recommending work the vehicle may not need.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Potential benefits depend on what inspection and service records confirm.",
+            tradeoffs: "Inspection may show that no immediate replacement work is needed.",
+            supportingWork: "Supporting work remains conditional until vehicle-specific records and inspection results are available.",
+            verificationStatus: .prototype,
+            sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-prototype",
+            vehicleApplicability: "Saved vehicle profile; symptom-specific applicability not yet verified",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming the reported concern with an appropriate inspection. Do not treat the selected symptom as a diagnosis.",
+            conditionalNextStep: "If inspection verifies a specific fault, use that finding to define the confirmed repair and any supporting work.",
+            reason: "Similar symptoms can have different causes, so OpenHood needs more information before recommending replacement.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Benefits can be described after the cause and required work are confirmed.",
+            tradeoffs: "Additional inspection may be required before parts or labor can be estimated.",
+            supportingWork: "Supporting work depends on the verified cause and vehicle-specific repair information.",
+            verificationStatus: .prototype,
+            sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-return-stock-prototype",
+            vehicleApplicability: "Saved vehicle profile; original configuration not yet verified",
+            goal: .reliable,
+            focus: "Return to stock",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming the current configuration and the correct original equipment for the saved vehicle.",
+            conditionalNextStep: "If inspection verifies non-stock components, compare them with verified factory configuration before planning changes.",
+            reason: "OpenHood needs verified current and factory configuration details before recommending replacement.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Potential benefits depend on the current modifications and the verified factory configuration.",
+            tradeoffs: "Returning one area to stock may affect connected modifications or require additional compatible components.",
+            supportingWork: "Compatibility and supporting work remain conditional until the installed parts are identified.",
+            verificationStatus: .prototype,
+            sourceReferences: []
+        )
+    ]
+
+    static func recommendation(
+        for goal: VehiclePlanGoal,
+        focus: String,
+        answers: [String: String]
+    ) -> PlanRecommendationRecord? {
+        reliabilityPrototype.first { record in
+            record.goal == goal
+                && record.focus == focus
+                && record.triggeringAnswers.allSatisfy { answers.values.contains($0) }
+        }
     }
 }
 
@@ -405,6 +496,14 @@ struct PlanBuilderPlaceholderView: View {
     @State private var budget: PlanBudget?
     @State private var timeline: PlanTimeline?
     @State private var customGoal = ""
+    @State private var mileage = ""
+    @State private var reliabilityDetail = ""
+
+    private let mileageKey = "What is the current mileage?"
+    private let serviceHistoryKey = "How much service history is known?"
+    private let concernsKey = "Are there any current concerns?"
+    private let currentIssueKey = "What is happening?"
+    private let returnToStockKey = "What needs to return to stock?"
 
     private var followUpQuestions: [PlanFollowUpQuestion] {
         switch goal {
@@ -457,9 +556,78 @@ struct PlanBuilderPlaceholderView: View {
                 )
             ]
 
-        case .reliable, .custom:
+        case .reliable:
+            return reliabilityFollowUpQuestions
+
+        case .custom:
             return []
         }
+    }
+
+    private var reliabilityFollowUpQuestions: [PlanFollowUpQuestion] {
+        switch focus {
+        case "Stay ahead of problems":
+            return [
+                PlanFollowUpQuestion(
+                    title: serviceHistoryKey,
+                    options: [
+                        PlanQuestionOption("Complete"),
+                        PlanQuestionOption("Some"),
+                        PlanQuestionOption("Very little"),
+                        PlanQuestionOption("I’m not sure")
+                    ]
+                ),
+                PlanFollowUpQuestion(
+                    title: concernsKey,
+                    options: reliabilityConcernOptions(includeNoKnownConcerns: true)
+                )
+            ]
+
+        case "Fix something now":
+            return [
+                PlanFollowUpQuestion(
+                    title: currentIssueKey,
+                    options: reliabilityConcernOptions(includeNoKnownConcerns: false)
+                )
+            ]
+
+        default:
+            return [
+                PlanFollowUpQuestion(
+                    title: returnToStockKey,
+                    options: [
+                        PlanQuestionOption("Engine or exhaust"),
+                        PlanQuestionOption("Suspension or ride height"),
+                        PlanQuestionOption("Wheels or tires"),
+                        PlanQuestionOption("Exterior"),
+                        PlanQuestionOption("Interior"),
+                        PlanQuestionOption("Lighting or electrical"),
+                        PlanQuestionOption("Multiple areas"),
+                        PlanQuestionOption("I’m not sure")
+                    ]
+                )
+            ]
+        }
+    }
+
+    private func reliabilityConcernOptions(
+        includeNoKnownConcerns: Bool
+    ) -> [PlanQuestionOption] {
+        let concerns = [
+            "Warning light",
+            "Leak",
+            "Unusual sound or vibration",
+            "Starting or running issue",
+            "Overheating",
+            "Braking or steering concern",
+            "Something else"
+        ].map { PlanQuestionOption($0) }
+
+        if includeNoKnownConcerns {
+            return [PlanQuestionOption("No known concerns")] + concerns
+        }
+
+        return concerns
     }
 
     private var styleDetailQuestion: PlanFollowUpQuestion {
@@ -507,8 +675,28 @@ struct PlanBuilderPlaceholderView: View {
         needsCustomDescription ? 1 : 0
     }
 
+    private var mileageStepCount: Int {
+        goal == .reliable && focus == "Stay ahead of problems" ? 1 : 0
+    }
+
+    private var needsReliabilityDetail: Bool {
+        guard goal == .reliable else {
+            return false
+        }
+
+        return answers.values.contains("Something else")
+            || answers.values.contains("Multiple areas")
+    }
+
+    private var reliabilityDetailStepCount: Int {
+        needsReliabilityDetail ? 1 : 0
+    }
+
     private var budgetStep: Int {
-        customDescriptionStepCount + followUpQuestions.count
+        customDescriptionStepCount
+            + mileageStepCount
+            + followUpQuestions.count
+            + reliabilityDetailStepCount
     }
 
     private var timelineStep: Int {
@@ -524,6 +712,10 @@ struct PlanBuilderPlaceholderView: View {
             VStack(alignment: .leading, spacing: 24) {
                 if needsCustomDescription && step == 0 {
                     customDescriptionQuestion
+                } else if goal == .reliable,
+                          focus == "Stay ahead of problems",
+                          step == customDescriptionStepCount {
+                    mileageQuestion
                 } else if let question = currentFollowUpQuestion {
                     choiceQuestion(
                         title: question.title,
@@ -532,6 +724,9 @@ struct PlanBuilderPlaceholderView: View {
                         answers[question.title] = answer
                         step += 1
                     }
+                } else if needsReliabilityDetail,
+                          step == budgetStep - 1 {
+                    reliabilityDetailQuestion
                 } else if step == budgetStep {
                     choiceQuestion(
                         title: "What is your budget?",
@@ -564,7 +759,9 @@ struct PlanBuilderPlaceholderView: View {
     }
 
     private var currentFollowUpQuestion: PlanFollowUpQuestion? {
-        let questionIndex = step - customDescriptionStepCount
+        let questionIndex = step
+            - customDescriptionStepCount
+            - mileageStepCount
 
         guard questionIndex >= 0,
               questionIndex < followUpQuestions.count else {
@@ -572,6 +769,72 @@ struct PlanBuilderPlaceholderView: View {
         }
 
         return followUpQuestions[questionIndex]
+    }
+
+    private var mileageQuestion: some View {
+        shortTextQuestion(
+            title: mileageKey,
+            subtitle: "Reliability · \(focus)",
+            text: $mileage,
+            prompt: "Enter mileage",
+            keyboardType: .numberPad
+        ) {
+            answers[mileageKey] = mileage.trimmingCharacters(in: .whitespacesAndNewlines)
+            step += 1
+        }
+    }
+
+    private var reliabilityDetailQuestion: some View {
+        shortTextQuestion(
+            title: "Tell us a little more",
+            subtitle: "A short description is enough.",
+            text: $reliabilityDetail,
+            prompt: "Add a short description",
+            keyboardType: .default
+        ) {
+            answers["Details"] = reliabilityDetail.trimmingCharacters(in: .whitespacesAndNewlines)
+            step += 1
+        }
+    }
+
+    private func shortTextQuestion(
+        title: String,
+        subtitle: String,
+        text: Binding<String>,
+        prompt: String,
+        keyboardType: UIKeyboardType,
+        continueAction: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            questionHeader(title: title, subtitle: subtitle)
+
+            TextField(prompt, text: text)
+                .font(.body)
+                .keyboardType(keyboardType)
+                .padding(18)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                }
+
+            Button(action: continueAction) {
+                Text("Continue")
+                    .font(.headline)
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(
+                        text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            ? Color.secondary.opacity(0.35)
+                            : Color.primary
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+            }
+            .buttonStyle(.plain)
+            .disabled(text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
     }
 
     private var customDescriptionQuestion: some View {
@@ -681,6 +944,7 @@ struct PlanBuilderPlaceholderView: View {
             }
 
             PlanSelectionSummaryCard(
+                vehicle: vehicle.vehicleName,
                 goal: goal.rawValue,
                 focus: focus,
                 budget: budget?.rawValue ?? "",
@@ -689,7 +953,16 @@ struct PlanBuilderPlaceholderView: View {
                 customGoal: needsCustomDescription ? customGoal : nil
             )
 
-            PlanCostImpactCard()
+            if let recommendation = PlanRecommendationLibrary.recommendation(
+                for: goal,
+                focus: focus,
+                answers: answers
+            ) {
+                PlanRecommendedStartingPointCard(recommendation: recommendation)
+                PlanCostImpactCard(recommendation: recommendation)
+            } else {
+                PlanCostImpactCard(recommendation: nil)
+            }
 
             Spacer(minLength: 24)
         }
@@ -697,6 +970,7 @@ struct PlanBuilderPlaceholderView: View {
 }
 
 struct PlanSelectionSummaryCard: View {
+    let vehicle: String
     let goal: String
     let focus: String
     let budget: String
@@ -710,6 +984,7 @@ struct PlanSelectionSummaryCard: View {
                 .font(.title3)
                 .fontWeight(.bold)
 
+            summaryRow(label: "Vehicle", value: vehicle)
             summaryRow(label: "Goal", value: goal)
             summaryRow(label: "Focus", value: focus)
 
@@ -718,9 +993,13 @@ struct PlanSelectionSummaryCard: View {
                 summaryRow(label: "Description", value: customGoal)
             }
 
-            ForEach(answers.keys.sorted(), id: \.self) { question in
-                if let answer = answers[question] {
-                    summaryRow(label: question, value: answer)
+            if goal == VehiclePlanGoal.reliable.rawValue {
+                reliabilitySummaryRows
+            } else {
+                ForEach(answers.keys.sorted(), id: \.self) { question in
+                    if let answer = answers[question] {
+                        summaryRow(label: question, value: answer)
+                    }
                 }
             }
 
@@ -741,6 +1020,34 @@ struct PlanSelectionSummaryCard: View {
         }
     }
 
+    @ViewBuilder
+    private var reliabilitySummaryRows: some View {
+        let concernKeys = [
+            "Are there any current concerns?",
+            "What is happening?",
+            "What needs to return to stock?"
+        ]
+
+        if let concern = concernKeys.compactMap({ answers[$0] }).first {
+            summaryRow(
+                label: focus == "Return to stock" ? "Area" : "Concern",
+                value: concern
+            )
+        }
+
+        if let details = answers["Details"] {
+            summaryRow(label: "Details", value: details)
+        }
+
+        if let mileage = answers["What is the current mileage?"] {
+            summaryRow(label: "Mileage", value: mileage)
+        }
+
+        if let history = answers["How much service history is known?"] {
+            summaryRow(label: "Service history", value: history)
+        }
+    }
+
     private func summaryRow(
         label: String,
         value: String
@@ -758,6 +1065,56 @@ struct PlanSelectionSummaryCard: View {
     }
 }
 
+struct PlanRecommendedStartingPointCard: View {
+    let recommendation: PlanRecommendationRecord
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Recommended starting point")
+                .font(.title3)
+                .fontWeight(.bold)
+
+            recommendationRow(
+                title: "Check first",
+                value: recommendation.recommendedInspection
+            )
+            recommendationRow(
+                title: "Likely next step",
+                value: recommendation.conditionalNextStep
+            )
+            recommendationRow(
+                title: "Why it matters",
+                value: recommendation.reason
+            )
+
+            Text(recommendation.verificationStatus.rawValue)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+        }
+    }
+
+    private func recommendationRow(
+        title: String,
+        value: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.headline)
+
+            Text(value)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 enum PlanImpactSection: String, CaseIterable, Identifiable {
     case benefits = "Benefits"
     case tradeoffs = "Tradeoffs"
@@ -769,6 +1126,8 @@ enum PlanImpactSection: String, CaseIterable, Identifiable {
 }
 
 struct PlanCostImpactCard: View {
+    let recommendation: PlanRecommendationRecord?
+
     @State private var expandedSection: PlanImpactSection?
 
     var body: some View {
@@ -785,13 +1144,22 @@ struct PlanCostImpactCard: View {
             HStack(spacing: 12) {
                 estimateStatus(
                     title: "Parts",
-                    value: "Pending verified data"
+                    value: recommendation?.partsEstimateStatus
+                        ?? "Pending verified data"
                 )
 
                 estimateStatus(
                     title: "Labor",
-                    value: "Pending verified data"
+                    value: recommendation?.laborEstimateStatus
+                        ?? "Pending verified data"
                 )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                workStatus(label: "Inspection", value: "Recommended first")
+                workStatus(label: "Confirmed work", value: "None yet")
+                workStatus(label: "Conditional work", value: "Pending inspection")
+                workStatus(label: "Optional work", value: "Not recommended yet")
             }
 
             VStack(spacing: 0) {
@@ -824,7 +1192,7 @@ struct PlanCostImpactCard: View {
                             }
 
                             if expandedSection == section {
-                                Text("Pending verified vehicle-specific data.")
+                                Text(impactText(for: section))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.leading)
@@ -848,6 +1216,38 @@ struct PlanCostImpactCard: View {
                     Color.secondary.opacity(0.12),
                     lineWidth: 1
                 )
+        }
+    }
+
+    private func impactText(for section: PlanImpactSection) -> String {
+        guard let recommendation else {
+            return "Pending verified vehicle-specific data."
+        }
+
+        switch section {
+        case .benefits:
+            return recommendation.benefits
+        case .tradeoffs:
+            return recommendation.tradeoffs
+        case .supportingWork:
+            return recommendation.supportingWork
+        }
+    }
+
+    private func workStatus(
+        label: String,
+        value: String
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(.subheadline)
+
+            Spacer()
+
+            Text(value)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.trailing)
         }
     }
 
