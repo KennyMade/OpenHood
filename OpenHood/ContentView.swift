@@ -1781,6 +1781,10 @@ struct MaintenanceKnowledgeView: View {
 // MARK: - I Know Most
 
 struct MaintenanceMemoryView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @EnvironmentObject private var garageStore: GarageStore
+    @EnvironmentObject private var onboardingSession: OnboardingSession
+
     @State private var maintenanceNotes = ""
 
     var body: some View {
@@ -1843,8 +1847,11 @@ struct MaintenanceMemoryView: View {
                         )
                 }
 
-                NavigationLink {
-                    VehicleHomeView()
+                Button {
+                    onboardingSession.complete(
+                        vehicle: vehicle,
+                        garageStore: garageStore
+                    )
                 } label: {
                     Text("Continue")
                         .font(.headline)
@@ -1858,8 +1865,11 @@ struct MaintenanceMemoryView: View {
                         .isEmpty
                 )
 
-                NavigationLink {
-                    VehicleHomeView()
+                Button {
+                    onboardingSession.complete(
+                        vehicle: vehicle,
+                        garageStore: garageStore
+                    )
                 } label: {
                     Text("Skip for now")
                         .font(.headline)
@@ -1956,6 +1966,10 @@ enum MaintenanceService: String, CaseIterable, Identifiable {
 }
 
 struct MaintenanceServicesView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @EnvironmentObject private var garageStore: GarageStore
+    @EnvironmentObject private var onboardingSession: OnboardingSession
+
     @State private var selectedServices: Set<MaintenanceService> = []
 
     var body: some View {
@@ -1988,8 +2002,11 @@ struct MaintenanceServicesView: View {
                     .buttonStyle(.plain)
                 }
 
-                NavigationLink {
-                    VehicleHomeView()
+                Button {
+                    onboardingSession.complete(
+                        vehicle: vehicle,
+                        garageStore: garageStore
+                    )
                 } label: {
                     Text("Continue")
                         .font(.headline)
@@ -2008,8 +2025,11 @@ struct MaintenanceServicesView: View {
                 .buttonStyle(.plain)
                 .disabled(selectedServices.isEmpty)
 
-                NavigationLink {
-                    VehicleHomeView()
+                Button {
+                    onboardingSession.complete(
+                        vehicle: vehicle,
+                        garageStore: garageStore
+                    )
                 } label: {
                     Text("I don’t remember any specific services")
                         .font(.subheadline)
@@ -2112,6 +2132,10 @@ struct MaintenanceServiceCard: View {
 // MARK: - I Do Not Know
 
 struct MaintenanceBaselineView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @EnvironmentObject private var garageStore: GarageStore
+    @EnvironmentObject private var onboardingSession: OnboardingSession
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -2140,8 +2164,11 @@ struct MaintenanceBaselineView: View {
 
             Spacer()
 
-            NavigationLink {
-                VehicleHomeView()
+            Button {
+                onboardingSession.complete(
+                    vehicle: vehicle,
+                    garageStore: garageStore
+                )
             } label: {
                 Text("Enter OpenHood")
                     .font(.headline)
@@ -2197,30 +2224,6 @@ struct VehicleHomeView: View {
                     SomethingHappenedCard()
                 }
                 .buttonStyle(.plain)
-
-                HStack(spacing: 14) {
-                    NavigationLink {
-                      LearnMyCarView()
-                    } label: {
-                        CompactHomeCard(
-                            icon: "book.closed.fill",
-                            title: "Learn",
-                            subtitle: "Understand your car"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                    VehiclePlanView()
-                    } label: {
-                        CompactHomeCard(
-                            icon: "wrench.and.screwdriver.fill",
-                            title: "Plan",
-                            subtitle: "Build what comes next"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
 
                 Spacer(minLength: 20)
             }

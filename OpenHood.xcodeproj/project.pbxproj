@@ -17,6 +17,9 @@
 		B10000013030000000000001 /* SavedVehicle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000023030000000000001 /* SavedVehicle.swift */; };
 		B10000033030000000000001 /* GarageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000043030000000000001 /* GarageStore.swift */; };
 		B10000053030000000000001 /* GaragePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000063030000000000001 /* GaragePersistence.swift */; };
+		C10000013040000000000001 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000023040000000000001 /* AppRootView.swift */; };
+		C10000033040000000000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000043040000000000001 /* MainTabView.swift */; };
+		C10000053040000000000001 /* GarageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000063040000000000001 /* GarageView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +34,9 @@
 		B10000023030000000000001 /* SavedVehicle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedVehicle.swift; sourceTree = "<group>"; };
 		B10000043030000000000001 /* GarageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageStore.swift; sourceTree = "<group>"; };
 		B10000063030000000000001 /* GaragePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaragePersistence.swift; sourceTree = "<group>"; };
+		C10000023040000000000001 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		C10000043040000000000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		C10000063040000000000001 /* GarageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +71,7 @@
 			children = (
 				A10000033020000000000001 /* Features */,
 				B10000073030000000000001 /* Models */,
+				C10000073040000000000001 /* Navigation */,
 				B10000083030000000000001 /* Persistence */,
 				97D1CAEC30195D810059BAC9 /* Assets.xcassets */,
 				97D1CAED30195D810059BAC9 /* ContentView.swift */,
@@ -78,6 +85,7 @@
 		A10000033020000000000001 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				C10000083040000000000001 /* Garage */,
 				A20000033020000000000001 /* Incidents */,
 				A10000043020000000000001 /* Plan */,
 			);
@@ -115,6 +123,23 @@
 				B10000063030000000000001 /* GaragePersistence.swift */,
 			);
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		C10000073040000000000001 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				C10000023040000000000001 /* AppRootView.swift */,
+				C10000043040000000000001 /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		C10000083040000000000001 /* Garage */ = {
+			isa = PBXGroup;
+			children = (
+				C10000063040000000000001 /* GarageView.swift */,
+			);
+			path = Garage;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -189,6 +214,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000013040000000000001 /* AppRootView.swift in Sources */,
+				C10000033040000000000001 /* MainTabView.swift in Sources */,
+				C10000053040000000000001 /* GarageView.swift in Sources */,
 				B10000013030000000000001 /* SavedVehicle.swift in Sources */,
 				B10000033030000000000001 /* GarageStore.swift in Sources */,
 				B10000053030000000000001 /* GaragePersistence.swift in Sources */,

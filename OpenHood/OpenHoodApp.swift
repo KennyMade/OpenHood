@@ -11,7 +11,7 @@ import SwiftUI
 struct OpenHoodApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppRootView()
         }
     }
 }
