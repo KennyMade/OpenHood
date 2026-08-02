@@ -13,6 +13,7 @@
 		97FEA3F4301A8BC900C608B2 /* VehicleCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FEA3F3301A8BC900C608B2 /* VehicleCatalog.swift */; };
 		97FEA3F6301A94F200C608B2 /* VehicleKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FEA3F5301A94F200C608B2 /* VehicleKnowledge.swift */; };
 		A10000013020000000000001 /* VehiclePlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000023020000000000001 /* VehiclePlanView.swift */; };
+		A20000013020000000000001 /* SomethingHappenedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000023020000000000001 /* SomethingHappenedView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		97FEA3F3301A8BC900C608B2 /* VehicleCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleCatalog.swift; sourceTree = "<group>"; };
 		97FEA3F5301A94F200C608B2 /* VehicleKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleKnowledge.swift; sourceTree = "<group>"; };
 		A10000023020000000000001 /* VehiclePlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehiclePlanView.swift; sourceTree = "<group>"; };
+		A20000023020000000000001 /* SomethingHappenedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SomethingHappenedView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 		A10000033020000000000001 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				A20000033020000000000001 /* Incidents */,
 				A10000043020000000000001 /* Plan */,
 			);
 			path = Features;
@@ -79,6 +82,14 @@
 				A10000023020000000000001 /* VehiclePlanView.swift */,
 			);
 			path = Plan;
+			sourceTree = "<group>";
+		};
+		A20000033020000000000001 /* Incidents */ = {
+			isa = PBXGroup;
+			children = (
+				A20000023020000000000001 /* SomethingHappenedView.swift */,
+			);
+			path = Incidents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -154,6 +165,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
+				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,
 				A10000013020000000000001 /* VehiclePlanView.swift in Sources */,
 				97FEA3F6301A94F200C608B2 /* VehicleKnowledge.swift in Sources */,
 				97FEA3F4301A8BC900C608B2 /* VehicleCatalog.swift in Sources */,
