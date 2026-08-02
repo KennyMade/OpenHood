@@ -55,6 +55,7 @@ final class OnboardingSession: ObservableObject {
     let vehicleID = UUID()
 
     private(set) var hasCompleted = false
+    @Published private(set) var completedVehicleID: UUID?
 
     @discardableResult
     func complete(
@@ -65,9 +66,14 @@ final class OnboardingSession: ObservableObject {
             return false
         }
 
+        let savedVehicle = vehicle.savedVehicle(id: vehicleID)
+
+        guard garageStore.add(savedVehicle) else {
+            return false
+        }
+
         hasCompleted = true
-        return garageStore.add(
-            vehicle.savedVehicle(id: vehicleID)
-        )
+        completedVehicleID = savedVehicle.id
+        return true
     }
 }
