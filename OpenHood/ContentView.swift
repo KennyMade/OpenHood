@@ -3,7 +3,7 @@ import Combine
 
 // MARK: - Vehicle Onboarding Data
 
-enum VehicleProfileVerification {
+enum VehicleProfileVerification: String, Codable {
     case verified
     case basicUnverified
 }
