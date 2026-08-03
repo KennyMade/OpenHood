@@ -20,6 +20,9 @@
 		C10000013040000000000001 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000023040000000000001 /* AppRootView.swift */; };
 		C10000033040000000000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000043040000000000001 /* MainTabView.swift */; };
 		C10000053040000000000001 /* GarageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000063040000000000001 /* GarageView.swift */; };
+		D10000013050000000000001 /* VehicleIncident.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000023050000000000001 /* VehicleIncident.swift */; };
+		D10000033050000000000001 /* IncidentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000043050000000000001 /* IncidentStore.swift */; };
+		D10000053050000000000001 /* IncidentPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000063050000000000001 /* IncidentPersistence.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +40,9 @@
 		C10000023040000000000001 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		C10000043040000000000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		C10000063040000000000001 /* GarageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageView.swift; sourceTree = "<group>"; };
+		D10000023050000000000001 /* VehicleIncident.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleIncident.swift; sourceTree = "<group>"; };
+		D10000043050000000000001 /* IncidentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentStore.swift; sourceTree = "<group>"; };
+		D10000063050000000000001 /* IncidentPersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentPersistence.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,8 +117,10 @@
 		B10000073030000000000001 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				D10000043050000000000001 /* IncidentStore.swift */,
 				B10000023030000000000001 /* SavedVehicle.swift */,
 				B10000043030000000000001 /* GarageStore.swift */,
+				D10000023050000000000001 /* VehicleIncident.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -121,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				B10000063030000000000001 /* GaragePersistence.swift */,
+				D10000063050000000000001 /* IncidentPersistence.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -220,6 +229,9 @@
 				B10000013030000000000001 /* SavedVehicle.swift in Sources */,
 				B10000033030000000000001 /* GarageStore.swift in Sources */,
 				B10000053030000000000001 /* GaragePersistence.swift in Sources */,
+				D10000033050000000000001 /* IncidentStore.swift in Sources */,
+				D10000053050000000000001 /* IncidentPersistence.swift in Sources */,
+				D10000013050000000000001 /* VehicleIncident.swift in Sources */,
 				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
 				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,
 				A10000013020000000000001 /* VehiclePlanView.swift in Sources */,
