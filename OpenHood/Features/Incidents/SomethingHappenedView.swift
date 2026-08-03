@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Something Happened
 
@@ -74,6 +75,17 @@ struct SomethingHappenedPlaceholderView: View {
         return incidentStore.draft(for: vehicleID)
     }
 
+    private var savedIncidents: [VehicleIncident] {
+        guard let vehicleID = activeVehicle?.id else { return [] }
+        return incidentStore.incidents
+            .filter {
+                $0.vehicleID == vehicleID
+                    && $0.status == .submitted
+                    && $0.guidanceSnapshot != nil
+            }
+            .sorted { $0.updatedAt > $1.updatedAt }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -100,14 +112,14 @@ struct SomethingHappenedPlaceholderView: View {
                     Button {
                         incidentForIntake = activeDraft
                     } label: {
-                        Text("Continue draft")
+                        Text("Continue this issue")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
                     }
                     .buttonStyle(.borderedProminent)
 
-                    Button("Start over") {
+                    Button("Describe something new") {
                         startNewIncident()
                     }
                     .font(.headline)
@@ -125,6 +137,24 @@ struct SomethingHappenedPlaceholderView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+
+                if !savedIncidents.isEmpty {
+                    Text("Saved guidance")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    ForEach(savedIncidents) { savedIncident in
+                        Button {
+                            incidentForIntake = savedIncident
+                        } label: {
+                            IncidentChoiceCard(
+                                title: savedIncident.safetySelection?.title
+                                    ?? "Saved issue"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
             .padding(24)
         }
@@ -132,11 +162,13 @@ struct SomethingHappenedPlaceholderView: View {
         .navigationTitle("Something Happened")
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(item: $incidentForIntake) { incident in
-            IncidentIntakeView(
-                initialIncident: incident,
-                vehicleName: activeVehicle?.incidentDisplayName ?? "Vehicle",
-                incidentStore: incidentStore
-            )
+            if let activeVehicle {
+                IncidentIntakeView(
+                    initialIncident: incident,
+                    vehicle: activeVehicle,
+                    incidentStore: incidentStore
+                )
+            }
         }
     }
 
@@ -148,11 +180,13 @@ struct SomethingHappenedPlaceholderView: View {
 
 private enum IncidentStep: Hashable {
     case urgentSafety
+    case urgentQuestion(Int)
     case cautionSafety
     case observations
     case description
     case recentWork
     case review
+    case guidance
     case saved
 }
 
@@ -160,17 +194,17 @@ private struct IncidentIntakeView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var incidentStore: IncidentStore
 
-    let vehicleName: String
+    let vehicle: SavedVehicle
 
     @State private var incident: VehicleIncident
     @State private var path: [IncidentStep]
 
     init(
         initialIncident: VehicleIncident,
-        vehicleName: String,
+        vehicle: SavedVehicle,
         incidentStore: IncidentStore
     ) {
-        self.vehicleName = vehicleName
+        self.vehicle = vehicle
         self.incidentStore = incidentStore
         _incident = State(initialValue: initialIncident)
         _path = State(initialValue: Self.resumePath(for: initialIncident))
@@ -213,11 +247,19 @@ private struct IncidentIntakeView: View {
             IncidentSafetyGuidanceView(
                 selection: incident.safetySelection,
                 isUrgent: true,
-                primaryTitle: "Save incident"
+                primaryTitle: "I’m safe — continue",
+                secondaryTitle: "Save and exit",
+                confirmationMessage: "Continue only after the vehicle is stopped, the engine is off when appropriate, you are away from immediate danger, and you will not reproduce the symptom.",
+                onSecondary: {
+                    incidentStore.submit(incident)
+                    path.append(.saved)
+                }
             ) {
-                incidentStore.submit(incident)
-                path.append(.saved)
+                guard path.last == .urgentSafety else { return }
+                advanceUrgentIntake()
             }
+        case .urgentQuestion(let index):
+            urgentQuestionDestination(index: index)
         case .cautionSafety:
             IncidentSafetyGuidanceView(
                 selection: incident.safetySelection,
@@ -251,10 +293,9 @@ private struct IncidentIntakeView: View {
         case .review:
             IncidentReviewView(
                 incident: incident,
-                vehicleName: vehicleName,
-                onSave: {
-                    incidentStore.submit(incident)
-                    path.append(.saved)
+                vehicleName: vehicle.incidentDisplayName,
+                onContinue: {
+                    path.append(.guidance)
                 },
                 onStartOver: {
                     incident = incidentStore.startNewDraft(
@@ -263,11 +304,206 @@ private struct IncidentIntakeView: View {
                     path.removeAll()
                 }
             )
+        case .guidance:
+            if incident.guidanceSnapshot != nil
+                || !requiresUrgentQuestions
+                || isUrgentIntakeComplete {
+                let result = incident.guidanceSnapshot.map {
+                    IncidentGuidanceResult(snapshot: $0)
+                } ?? IncidentGuidanceEngine().evaluate(
+                    incident: incident,
+                    vehicle: vehicle
+                )
+                IncidentGuidanceView(
+                    result: result,
+                    onSave: {
+                        incident.guidanceSnapshot = result.snapshot
+                        incidentStore.submit(incident)
+                        appendIfNeeded(.saved)
+                    }
+                )
+            } else {
+                IncidentIncompleteIntakeRecoveryView {
+                    resumeIncompleteUrgentIntake()
+                }
+            }
         case .saved:
             IncidentSavedView {
                 dismiss()
             }
         }
+    }
+
+    @ViewBuilder
+    private func urgentQuestionDestination(index: Int) -> some View {
+        let questions = urgentQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .urgentQuestion(index) else { return }
+                setUrgentAnswer(answer, key: question.answerKey)
+                advanceUrgentIntake()
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                resumeIncompleteUrgentIntake()
+            }
+        }
+    }
+
+    private var urgentQuestions: [IncidentUrgentQuestion] {
+        switch incident.safetySelection {
+        case .smokeOrFire:
+            return [
+                IncidentUrgentQuestion(
+                    title: "Is there an active flame?",
+                    message: "Answer only from a safe distance.",
+                    answerKey: IncidentUrgentAnswerKey.activeFlame,
+                    options: [
+                        .init(id: "activeFire", title: "Yes"),
+                        .init(id: "No", title: "No"),
+                        .init(id: "I’m not sure", title: "I’m not sure")
+                    ]
+                ),
+                IncidentUrgentQuestion(
+                    title: "Is smoke still present after shutdown?",
+                    message: nil,
+                    answerKey: IncidentUrgentAnswerKey.smokePresent,
+                    options: [
+                        .init(id: "continuingSmoke", title: "Yes"),
+                        .init(id: "No", title: "No"),
+                        .init(id: "I’m not sure", title: "I’m not sure")
+                    ]
+                ),
+                question("Where did it appear to come from?", key: IncidentUrgentAnswerKey.smokeSource, choices: ["Under the hood", "Near a wheel", "Under the vehicle", "Inside the cabin", "Near the rear", "I’m not sure"]),
+                question("Which smell was closest?", key: IncidentUrgentAnswerKey.smokeOdor, choices: ["Electrical or plastic", "Gasoline", "Burning oil", "Sweet or coolant-like", "I didn’t notice a smell", "I’m not sure"])
+            ]
+        case .strongFuelSmell:
+            return [
+                question("Which description is closest?", key: IncidentUrgentAnswerKey.smellDescription, choices: ["Gasoline", "Burning oil", "Sweet or coolant-like", "Electrical or plastic", "Exhaust", "I’m not sure"]),
+                question("Where was the smell strongest?", key: IncidentUrgentAnswerKey.smellLocation, choices: ["Inside", "Outside", "Under the hood", "Near the rear", "I’m not sure"]),
+                question("Was anything visible?", key: IncidentUrgentAnswerKey.visibleEvidence, choices: ["Liquid", "Smoke", "Vapor", "Nothing visible", "I’m not sure"], message: "Observe only from a safe distance."),
+                question("Did it begin after a recent event?", key: IncidentUrgentAnswerKey.recentTrigger, choices: ["Refueling", "Service", "A recent repair", "No recent event", "I’m not sure"])
+            ]
+        case .overheatingOrSteam:
+            return [
+                question("Did the gauge or warning indicate overheating?", key: IncidentUrgentAnswerKey.temperatureIndication, choices: yesNoUnsure()),
+                question("What cooling-system sign did you observe?", key: IncidentUrgentAnswerKey.coolingEvidence, choices: ["Steam", "Bubbling", "Leaking fluid", "More than one", "None", "I’m not sure"], message: "Do not open a hot cooling system or touch hot components."),
+                question("What happened to the cabin heat?", key: IncidentUrgentAnswerKey.cabinHeat, choices: ["It became cold", "It was inconsistent", "It stayed normal", "I didn’t check", "I’m not sure"]),
+                question("When did it happen?", key: IncidentUrgentAnswerKey.drivingCondition, choices: ["While stopped", "While moving", "Both", "I’m not sure"]),
+                question("Was coolant added or cooling work performed recently?", key: IncidentUrgentAnswerKey.coolingRecentWork, choices: ["Coolant was added", "Cooling-system work was performed", "Both", "Neither", "I’m not sure"])
+            ]
+        case .flashingWarningLight:
+            return [
+                question("Which light flashed?", key: IncidentUrgentAnswerKey.warningSymbol, choices: ["Check engine", "Oil pressure", "Temperature", "Brake", "Charging or battery", "Tire pressure", "I’m not sure"], message: "Do not restart the vehicle to check again."),
+                question("What is the warning doing now?", key: IncidentUrgentAnswerKey.warningState, choices: ["Still flashing", "Now steady", "Gone", "I’m not sure"]),
+                question("How did the engine behave?", key: IncidentUrgentAnswerKey.engineBehavior, choices: ["Shaking", "Lost power", "Stalled", "Behaved normally", "I’m not sure"]),
+                question("Did another warning appear?", key: IncidentUrgentAnswerKey.additionalWarning, choices: yesNoUnsure())
+            ]
+        case .unsafeBrakesOrSteering:
+            return [
+                question("What is the main concern?", key: IncidentUrgentAnswerKey.concernType, choices: ["Braking", "Steering", "Both", "I’m not sure"]),
+                question("What did it feel or sound like?", key: IncidentUrgentAnswerKey.controlBehavior, choices: ["Pulling", "Shaking or wobbling", "Grinding", "Soft braking", "Unusually heavy steering", "Inconsistent response", "I’m not sure"]),
+                question("When did it happen?", key: IncidentUrgentAnswerKey.occurrenceContext, choices: ["Low speed", "Highway speed", "During braking", "During turning", "Continuously", "I’m not sure"]),
+                question("Did a warning light appear?", key: IncidentUrgentAnswerKey.controlWarning, choices: yesNoUnsure()),
+                question("Was related work performed recently?", key: IncidentUrgentAnswerKey.controlRecentWork, choices: ["Tire or wheel work", "Brake work", "Suspension or alignment work", "Steering work", "No recent work", "I’m not sure"])
+            ]
+        case .engineWillNotStayRunning:
+            return [
+                question("What happens when it runs?", key: IncidentUrgentAnswerKey.runningDetail, choices: ["Starts and immediately stops", "Idles roughly", "Shakes or misfires", "Stalls when placed in gear", "I’m not sure"]),
+                question("Did this begin after recent work?", key: IncidentUrgentAnswerKey.runningRecentWork, choices: ["Service", "Battery work", "Fueling", "A repair", "No recent work", "I’m not sure"]),
+                question("What are the warning lights doing?", key: IncidentUrgentAnswerKey.runningWarning, choices: ["Flashing", "Steady", "None", "I’m not sure"]),
+                question("What else did you notice?", key: IncidentUrgentAnswerKey.runningEvidence, choices: ["Fuel smell", "Smoke", "Unusual noise", "Visible disconnected component", "Nothing else", "I’m not sure"]),
+                question("Did restarting change anything?", key: IncidentUrgentAnswerKey.restartEffect, choices: ["Yes", "No", "I did not restart it", "I’m not sure"], message: "Do not restart it now to reproduce the concern.")
+            ]
+        case .noneOfThese, .unsure, nil:
+            return []
+        }
+    }
+
+    private func question(
+        _ title: String,
+        key: String,
+        choices: [String],
+        message: String? = nil
+    ) -> IncidentUrgentQuestion {
+        IncidentUrgentQuestion(
+            title: title,
+            message: message,
+            answerKey: key,
+            options: choices.map { .init(id: $0, title: $0) }
+        )
+    }
+
+    private func yesNoUnsure() -> [String] {
+        ["Yes", "No", "I’m not sure"]
+    }
+
+    private var requiresUrgentQuestions: Bool {
+        incident.safetySelection?.urgency == .urgent
+            && !urgentQuestions.isEmpty
+    }
+
+    private var hasImmediateDangerAnswer: Bool {
+        let answers = incident.urgentFollowUpAnswers ?? [:]
+        return answers[IncidentUrgentAnswerKey.activeFlame] == "activeFire"
+            || answers[IncidentUrgentAnswerKey.smokePresent] == "continuingSmoke"
+    }
+
+    private var nextUnansweredUrgentQuestionIndex: Int? {
+        urgentQuestions.firstIndex { question in
+            guard let answer = incident.urgentFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private var isUrgentIntakeComplete: Bool {
+        hasImmediateDangerAnswer
+            || (requiresUrgentQuestions
+                && nextUnansweredUrgentQuestionIndex == nil)
+    }
+
+    private func advanceUrgentIntake() {
+        if hasImmediateDangerAnswer {
+            appendIfNeeded(.guidance)
+        } else if let index = nextUnansweredUrgentQuestionIndex {
+            appendIfNeeded(.urgentQuestion(index))
+        } else if isUrgentIntakeComplete {
+            appendIfNeeded(.guidance)
+        }
+    }
+
+    private func resumeIncompleteUrgentIntake() {
+        if path.last == .guidance
+            || path.last.map({ step in
+                if case .urgentQuestion = step { return true }
+                return false
+            }) == true {
+            path.removeLast()
+        }
+        advanceUrgentIntake()
+    }
+
+    private func appendIfNeeded(_ step: IncidentStep) {
+        guard path.last != step else { return }
+        path.append(step)
+    }
+
+    private func setUrgentAnswer(_ answer: String, key: String) {
+        var answers = incident.urgentFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.urgentFollowUpAnswers = answers
+        saveDraft()
+    }
+
+    private func urgentAnswer(_ key: String) -> String? {
+        incident.urgentFollowUpAnswers?[key]
     }
 
     private func saveDraft() {
@@ -277,6 +513,11 @@ private struct IncidentIntakeView: View {
     private static func resumePath(
         for incident: VehicleIncident
     ) -> [IncidentStep] {
+        if incident.status == .submitted,
+           incident.guidanceSnapshot != nil {
+            return [.guidance]
+        }
+
         guard let safety = incident.safetySelection else {
             return []
         }
@@ -336,10 +577,66 @@ private struct IncidentSafetyQuestionView: View {
     }
 }
 
+private struct IncidentUrgentFollowUpOption: Identifiable {
+    let id: String
+    let title: String
+}
+
+private struct IncidentUrgentQuestion {
+    let title: String
+    let message: String?
+    let answerKey: String
+    let options: [IncidentUrgentFollowUpOption]
+}
+
+private struct IncidentIncompleteIntakeRecoveryView: View {
+    let onContinue: () -> Void
+
+    var body: some View {
+        IncidentQuestionLayout(
+            title: "Continue this issue",
+            message: "A required answer is still needed before OpenHood can show the result."
+        ) {
+            IncidentContinueButton(
+                title: "Continue questions",
+                isDisabled: false,
+                action: onContinue
+            )
+        }
+        .navigationTitle("Something Happened")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct IncidentUrgentFollowUpView: View {
+    let title: String
+    var message: String?
+    let options: [IncidentUrgentFollowUpOption]
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        IncidentQuestionLayout(title: title, message: message) {
+            ForEach(options) { option in
+                Button {
+                    onSelect(option.id)
+                } label: {
+                    IncidentChoiceCard(title: option.title)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .navigationTitle("Safety follow-up")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 private struct IncidentSafetyGuidanceView: View {
     let selection: IncidentSafetySelection?
     let isUrgent: Bool
     let primaryTitle: String
+    var secondaryTitle: String?
+    var confirmationMessage: String?
+    var onSecondary: (() -> Void)?
     let onContinue: () -> Void
 
     var body: some View {
@@ -356,9 +653,18 @@ private struct IncidentSafetyGuidanceView: View {
                 Text(selection?.safetyGuidance ?? IncidentSafetySelection.unsure.safetyGuidance)
                     .font(.title3)
 
-                Text("OpenHood has not diagnosed the vehicle.")
+                Text("OpenHood has not identified the cause.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+
+                if let confirmationMessage {
+                    Text(confirmationMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(16)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                }
 
                 Button(action: onContinue) {
                     Text(primaryTitle)
@@ -367,6 +673,14 @@ private struct IncidentSafetyGuidanceView: View {
                         .padding()
                 }
                 .buttonStyle(.borderedProminent)
+
+                if let secondaryTitle, let onSecondary {
+                    Button(secondaryTitle, action: onSecondary)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .buttonStyle(.bordered)
+                }
             }
             .padding(24)
         }
@@ -523,7 +837,7 @@ private struct IncidentRecentWorkView: View {
 private struct IncidentReviewView: View {
     let incident: VehicleIncident
     let vehicleName: String
-    let onSave: () -> Void
+    let onContinue: () -> Void
     let onStartOver: () -> Void
 
     var body: some View {
@@ -562,12 +876,12 @@ private struct IncidentReviewView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 22))
 
                 IncidentContinueButton(
-                    title: "Save incident",
+                    title: "Your next step",
                     isDisabled: false,
-                    action: onSave
+                    action: onContinue
                 )
 
-                Button("Start over", role: .destructive, action: onStartOver)
+                Button("Describe something new", role: .destructive, action: onStartOver)
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -596,6 +910,249 @@ private struct IncidentReviewView: View {
     }
 }
 
+private enum IncidentGuidanceDisclosure: Hashable {
+    case areas
+    case rationale
+    case uncertainty
+    case avoid
+    case mechanic
+    case sources
+    case answers
+}
+
+private struct IncidentGuidanceView: View {
+    let result: IncidentGuidanceResult
+    let onSave: () -> Void
+
+    @State private var expandedSection: IncidentGuidanceDisclosure?
+    @State private var didCopySummary = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Your answer")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                Text(result.driveRecommendation.rawValue)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .foregroundStyle(driveStatusColor)
+                    .background(driveStatusColor.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+
+                resultCard(title: "What this most strongly suggests") {
+                    Text(result.plainLanguageAssessment)
+                        .font(.headline)
+                    Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                resultCard(title: "Do this now") {
+                    Text(result.immediateAction)
+                        .font(.headline)
+                }
+
+                resultCard(title: "What would help confirm it") {
+                    Text(result.confirmationStep)
+                        .font(.headline)
+                }
+
+                Text("More details")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                if !result.possibleContributors.isEmpty {
+                    disclosureCard(
+                        title: "Possible system areas",
+                        section: .areas
+                    ) {
+                        ForEach(result.possibleContributors) { contributor in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(contributor.category.rawValue)
+                                    .font(.headline)
+                                Text(contributor.confidenceWording)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                if !result.possibleContributors.isEmpty {
+                    disclosureCard(
+                        title: "Why this fits",
+                        section: .rationale
+                    ) {
+                        ForEach(result.possibleContributors) { contributor in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(contributor.rationale.observedFact)
+                                    .font(.headline)
+                                Text(contributor.rationale.explanation)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                if !result.uncertaintyStatements.isEmpty {
+                    disclosureCard(
+                        title: "What remains uncertain",
+                        section: .uncertainty
+                    ) {
+                        guidanceList(result.uncertaintyStatements)
+                    }
+                }
+
+                if !result.actionsToAvoid.isEmpty {
+                    disclosureCard(
+                        title: "What to avoid",
+                        section: .avoid
+                    ) {
+                        guidanceList(result.actionsToAvoid)
+                    }
+                }
+
+                if !result.mechanicReadySummary.isEmpty {
+                    disclosureCard(
+                        title: "Information for a mechanic",
+                        section: .mechanic
+                    ) {
+                        Text(result.mechanicReadySummary)
+                            .textSelection(.enabled)
+
+                        Button {
+                            UIPasteboard.general.string = result.mechanicReadySummary
+                            didCopySummary = true
+                        } label: {
+                            Label(
+                                didCopySummary ? "Copied" : "Copy summary",
+                                systemImage: didCopySummary ? "checkmark" : "doc.on.doc"
+                            )
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+
+                disclosureCard(
+                    title: "Sources and confidence",
+                    section: .sources
+                ) {
+                    Text(result.confidenceLabel)
+                        .font(.headline)
+                    Text(result.knowledgeStatus)
+                        .foregroundStyle(.secondary)
+                    Text("Knowledge record IDs: \(result.matchedRecordIDs.joined(separator: ", "))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+
+                if !result.reportedSummary.isEmpty {
+                    disclosureCard(
+                        title: "Your answers",
+                        section: .answers
+                    ) {
+                        Text(result.reportedSummary)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                IncidentContinueButton(
+                    title: "Save this result",
+                    isDisabled: false,
+                    action: onSave
+                )
+            }
+            .padding(24)
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("Your next step")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var driveStatusColor: Color {
+        switch result.driveRecommendation {
+        case .stopDriving, .doNotRestart:
+            .red
+        case .serviceSoon, .checkBeforeDriving:
+            .orange
+        case .monitor:
+            .secondary
+        }
+    }
+
+    @ViewBuilder
+    private func resultCard<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.title2)
+                .fontWeight(.bold)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    @ViewBuilder
+    private func disclosureCard<Content: View>(
+        title: String,
+        section: IncidentGuidanceDisclosure,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                expandedSection = expandedSection == section ? nil : section
+            } label: {
+                HStack {
+                    Text(title)
+                        .font(.headline)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                    Image(
+                        systemName: expandedSection == section
+                            ? "chevron.up"
+                            : "chevron.down"
+                    )
+                }
+            }
+            .buttonStyle(.plain)
+
+            if expandedSection == section {
+                content()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func guidanceList(_ items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 6))
+                        .padding(.top, 7)
+                    Text(item)
+                }
+            }
+        }
+    }
+}
+
 private struct IncidentSavedView: View {
     let onReturn: () -> Void
 
@@ -612,7 +1169,7 @@ private struct IncidentSavedView: View {
                 .fontWeight(.bold)
 
             Text(
-                "OpenHood recorded your observations but has not diagnosed the vehicle."
+                "OpenHood recorded your observations without identifying a cause."
             )
             .font(.title3)
             .foregroundStyle(.secondary)

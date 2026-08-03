@@ -23,6 +23,9 @@
 		D10000013050000000000001 /* VehicleIncident.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000023050000000000001 /* VehicleIncident.swift */; };
 		D10000033050000000000001 /* IncidentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000043050000000000001 /* IncidentStore.swift */; };
 		D10000053050000000000001 /* IncidentPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000063050000000000001 /* IncidentPersistence.swift */; };
+		E10000013060000000000001 /* IncidentGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000023060000000000001 /* IncidentGuidance.swift */; };
+		E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000043060000000000001 /* IncidentGuidanceEngine.swift */; };
+		F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +46,9 @@
 		D10000023050000000000001 /* VehicleIncident.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleIncident.swift; sourceTree = "<group>"; };
 		D10000043050000000000001 /* IncidentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentStore.swift; sourceTree = "<group>"; };
 		D10000063050000000000001 /* IncidentPersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentPersistence.swift; sourceTree = "<group>"; };
+		E10000023060000000000001 /* IncidentGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidance.swift; sourceTree = "<group>"; };
+		E10000043060000000000001 /* IncidentGuidanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceEngine.swift; sourceTree = "<group>"; };
+		F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceKnowledge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +115,8 @@
 		A20000033020000000000001 /* Incidents */ = {
 			isa = PBXGroup;
 			children = (
+				E10000043060000000000001 /* IncidentGuidanceEngine.swift */,
+				F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */,
 				A20000023020000000000001 /* SomethingHappenedView.swift */,
 			);
 			path = Incidents;
@@ -117,6 +125,7 @@
 		B10000073030000000000001 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				E10000023060000000000001 /* IncidentGuidance.swift */,
 				D10000043050000000000001 /* IncidentStore.swift */,
 				B10000023030000000000001 /* SavedVehicle.swift */,
 				B10000043030000000000001 /* GarageStore.swift */,
@@ -232,6 +241,9 @@
 				D10000033050000000000001 /* IncidentStore.swift in Sources */,
 				D10000053050000000000001 /* IncidentPersistence.swift in Sources */,
 				D10000013050000000000001 /* VehicleIncident.swift in Sources */,
+				E10000013060000000000001 /* IncidentGuidance.swift in Sources */,
+				E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */,
+				F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */,
 				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
 				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,
 				A10000013020000000000001 /* VehiclePlanView.swift in Sources */,
