@@ -56,6 +56,11 @@ final class IncidentStore: ObservableObject {
         persist()
     }
 
+    func eraseAll() {
+        incidents = []
+        persist()
+    }
+
     private func upsert(_ incident: VehicleIncident) {
         if let index = incidents.firstIndex(where: { $0.id == incident.id }) {
             incidents[index] = incident

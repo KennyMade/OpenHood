@@ -26,6 +26,7 @@
 		E10000013060000000000001 /* IncidentGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000023060000000000001 /* IncidentGuidance.swift */; };
 		E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000043060000000000001 /* IncidentGuidanceEngine.swift */; };
 		F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */; };
+		G10000013080000000000001 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G10000023080000000000001 /* ProfileSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		E10000023060000000000001 /* IncidentGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidance.swift; sourceTree = "<group>"; };
 		E10000043060000000000001 /* IncidentGuidanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceEngine.swift; sourceTree = "<group>"; };
 		F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceKnowledge.swift; sourceTree = "<group>"; };
+		G10000023080000000000001 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 				C10000083040000000000001 /* Garage */,
 				A20000033020000000000001 /* Incidents */,
 				A10000043020000000000001 /* Plan */,
+				G10000033080000000000001 /* Settings */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -158,6 +161,14 @@
 				C10000063040000000000001 /* GarageView.swift */,
 			);
 			path = Garage;
+			sourceTree = "<group>";
+		};
+		G10000033080000000000001 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				G10000023080000000000001 /* ProfileSettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -244,6 +255,7 @@
 				E10000013060000000000001 /* IncidentGuidance.swift in Sources */,
 				E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */,
 				F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */,
+				G10000013080000000000001 /* ProfileSettingsView.swift in Sources */,
 				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
 				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,
 				A10000013020000000000001 /* VehiclePlanView.swift in Sources */,

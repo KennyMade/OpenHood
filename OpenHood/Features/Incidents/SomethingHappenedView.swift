@@ -63,7 +63,7 @@ struct SomethingHappenedCard: View {
 
 struct SomethingHappenedPlaceholderView: View {
     @EnvironmentObject private var garageStore: GarageStore
-    @StateObject private var incidentStore = IncidentStore()
+    @EnvironmentObject private var incidentStore: IncidentStore
     @State private var incidentForIntake: VehicleIncident?
 
     private var activeVehicle: SavedVehicle? {

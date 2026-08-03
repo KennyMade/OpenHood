@@ -100,6 +100,12 @@ final class GarageStore: ObservableObject {
         return removedVehicle
     }
 
+    func eraseAll() {
+        vehicles = []
+        activeVehicleID = nil
+        persist()
+    }
+
     private func persist() {
         persistence.save(
             GarageArchive(

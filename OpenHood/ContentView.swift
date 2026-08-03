@@ -2233,6 +2233,16 @@ struct VehicleHomeView: View {
         .navigationTitle("OpenHood")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ProfileSettingsView()
+                } label: {
+                    Image(systemName: "person.crop.circle")
+                }
+                .accessibilityLabel("Profile and settings")
+            }
+        }
     }
 }
     // MARK: - Learn My Car

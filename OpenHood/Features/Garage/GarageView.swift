@@ -198,6 +198,8 @@ struct GarageVehicleCard: View {
 
 struct GarageVehicleOverview: View {
     @EnvironmentObject private var garageStore: GarageStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var isConfirmingRemoval = false
 
     let vehicle: SavedVehicle
 
@@ -268,12 +270,35 @@ struct GarageVehicleOverview: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+
+                Button("Remove Vehicle", role: .destructive) {
+                    isConfirmingRemoval = true
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .buttonStyle(.bordered)
             }
             .padding(20)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Vehicle")
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "Remove \(vehicleName.isEmpty ? "this vehicle" : vehicleName)?",
+            isPresented: $isConfirmingRemoval,
+            titleVisibility: .visible
+        ) {
+            Button("Remove Vehicle", role: .destructive) {
+                if garageStore.removeVehicle(id: vehicle.id) != nil {
+                    dismiss()
+                }
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the vehicle from OpenHood on this device.")
+        }
     }
 }
 

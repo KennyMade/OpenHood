@@ -3,6 +3,7 @@ import Combine
 
 struct AppRootView: View {
     @StateObject private var garageStore = GarageStore()
+    @StateObject private var incidentStore = IncidentStore()
 
     var body: some View {
         Group {
@@ -13,6 +14,7 @@ struct AppRootView: View {
             }
         }
         .environmentObject(garageStore)
+        .environmentObject(incidentStore)
     }
 }
 
