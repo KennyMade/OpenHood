@@ -26,6 +26,7 @@
 		E10000013060000000000001 /* IncidentGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000023060000000000001 /* IncidentGuidance.swift */; };
 		E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000043060000000000001 /* IncidentGuidanceEngine.swift */; };
 		F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */; };
+		H10000013090000000000001 /* IncidentEvidenceGatedKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */; };
 		G10000013080000000000001 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G10000023080000000000001 /* ProfileSettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +51,7 @@
 		E10000023060000000000001 /* IncidentGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidance.swift; sourceTree = "<group>"; };
 		E10000043060000000000001 /* IncidentGuidanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceEngine.swift; sourceTree = "<group>"; };
 		F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceKnowledge.swift; sourceTree = "<group>"; };
+		H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentEvidenceGatedKnowledge.swift; sourceTree = "<group>"; };
 		G10000023080000000000001 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -120,6 +122,7 @@
 			children = (
 				E10000043060000000000001 /* IncidentGuidanceEngine.swift */,
 				F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */,
+				H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */,
 				A20000023020000000000001 /* SomethingHappenedView.swift */,
 			);
 			path = Incidents;
@@ -255,6 +258,7 @@
 				E10000013060000000000001 /* IncidentGuidance.swift in Sources */,
 				E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */,
 				F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */,
+				H10000013090000000000001 /* IncidentEvidenceGatedKnowledge.swift in Sources */,
 				G10000013080000000000001 /* ProfileSettingsView.swift in Sources */,
 				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
 				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,

@@ -183,6 +183,7 @@ private enum IncidentStep: Hashable {
     case urgentQuestion(Int)
     case cautionSafety
     case observations
+    case noiseQuestion(Int)
     case description
     case recentWork
     case review
@@ -273,8 +274,10 @@ private struct IncidentIntakeView: View {
                 selections: $incident.observationTypes,
                 onChange: saveDraft
             ) {
-                path.append(.description)
+                advanceNoiseIntake()
             }
+        case .noiseQuestion(let index):
+            noiseQuestionDestination(index: index)
         case .description:
             IncidentDescriptionView(
                 description: $incident.userDescription,
@@ -355,6 +358,69 @@ private struct IncidentIntakeView: View {
         }
     }
 
+    /// phase1.suspension.bump-noise: structured follow-up asked only
+    /// when the reported observation could be suspension noise (`.sound`
+    /// or `.vibrationOrMovement`) — see `noiseQuestions`. Mirrors the
+    /// urgent-question step pattern above, but for the routine intake
+    /// path, so IncidentGuidanceEngine can match against exact recorded
+    /// answers (IncidentNoiseAnswerKey) instead of free-text guessing.
+    @ViewBuilder
+    private func noiseQuestionDestination(index: Int) -> some View {
+        let questions = noiseQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .noiseQuestion(index) else { return }
+                setNoiseAnswer(answer, key: question.answerKey)
+                advanceNoiseIntake()
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                advanceNoiseIntake()
+            }
+        }
+    }
+
+    private var noiseQuestions: [IncidentUrgentQuestion] {
+        guard incident.observationTypes.contains(.sound)
+            || incident.observationTypes.contains(.vibrationOrMovement) else {
+            return []
+        }
+        return [
+            question("Where is the noise coming from?", key: IncidentNoiseAnswerKey.location, choices: ["Front", "Rear", "Left", "Right", "All over", "I’m not sure"]),
+            question("When does it happen?", key: IncidentNoiseAnswerKey.timing, choices: ["Over bumps", "While turning", "While braking", "Constant", "Only at speed", "I’m not sure"]),
+            question("What does it sound like?", key: IncidentNoiseAnswerKey.sound, choices: ["Rattle", "Clunk", "Grind", "Squeal", "I’m not sure"])
+        ]
+    }
+
+    private func advanceNoiseIntake() {
+        if let index = nextUnansweredNoiseQuestionIndex {
+            appendIfNeeded(.noiseQuestion(index))
+        } else {
+            appendIfNeeded(.description)
+        }
+    }
+
+    private var nextUnansweredNoiseQuestionIndex: Int? {
+        noiseQuestions.firstIndex { question in
+            guard let answer = incident.noiseFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private func setNoiseAnswer(_ answer: String, key: String) {
+        var answers = incident.noiseFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.noiseFollowUpAnswers = answers
+        saveDraft()
+    }
+
     private var urgentQuestions: [IncidentUrgentQuestion] {
         switch incident.safetySelection {
         case .smokeOrFire:
@@ -405,13 +471,26 @@ private struct IncidentIntakeView: View {
                 question("Did another warning appear?", key: IncidentUrgentAnswerKey.additionalWarning, choices: yesNoUnsure())
             ]
         case .unsafeBrakesOrSteering:
-            return [
+            var questions = [
                 question("What is the main concern?", key: IncidentUrgentAnswerKey.concernType, choices: ["Braking", "Steering", "Both", "I’m not sure"]),
+                question("Can you steer and control the vehicle’s direction normally?", key: IncidentUrgentAnswerKey.steeringControlLoss, choices: ["Yes", "No", "I’m not sure"], message: "Answer only from a safe, stopped position.")
+            ]
+            if vehicleIsHondaHRV2025 {
+                // CLM-STR-002: the HR-V's owner's manual treats a separate
+                // "Do not drive" message as more severe than the EPS
+                // indicator alone, so it needs its own question rather
+                // than being inferred from steeringControlLoss.
+                questions.append(
+                    question("Does the dashboard show a specific “Do not drive” message — not just the steering warning icon?", key: IncidentUrgentAnswerKey.hrvDoNotDriveMessage, choices: ["Yes", "No", "I’m not sure"])
+                )
+            }
+            questions += [
                 question("What did it feel or sound like?", key: IncidentUrgentAnswerKey.controlBehavior, choices: ["Pulling", "Shaking or wobbling", "Grinding", "Soft braking", "Unusually heavy steering", "Inconsistent response", "I’m not sure"]),
                 question("When did it happen?", key: IncidentUrgentAnswerKey.occurrenceContext, choices: ["Low speed", "Highway speed", "During braking", "During turning", "Continuously", "I’m not sure"]),
                 question("Did a warning light appear?", key: IncidentUrgentAnswerKey.controlWarning, choices: yesNoUnsure()),
                 question("Was related work performed recently?", key: IncidentUrgentAnswerKey.controlRecentWork, choices: ["Tire or wheel work", "Brake work", "Suspension or alignment work", "Steering work", "No recent work", "I’m not sure"])
             ]
+            return questions
         case .engineWillNotStayRunning:
             return [
                 question("What happens when it runs?", key: IncidentUrgentAnswerKey.runningDetail, choices: ["Starts and immediately stops", "Idles roughly", "Shakes or misfires", "Stalls when placed in gear", "I’m not sure"]),
@@ -441,6 +520,18 @@ private struct IncidentIntakeView: View {
 
     private func yesNoUnsure() -> [String] {
         ["Yes", "No", "I’m not sure"]
+    }
+
+    /// CLM-STR-002 is the only claim in the steering ledger with a real,
+    /// checkable vehicle scope (Honda HR-V, 2025) — see the doc comment on
+    /// IncidentEvidenceGatedKnowledge.claims. This gate only controls
+    /// whether the extra question is asked; IncidentGuidanceEngine still
+    /// re-checks the same scope via evidenceClaims before actually citing
+    /// CLM-STR-002 or escalating to STOP DRIVING.
+    private var vehicleIsHondaHRV2025: Bool {
+        vehicle.make.caseInsensitiveCompare("Honda") == .orderedSame
+            && vehicle.model.caseInsensitiveCompare("HR-V") == .orderedSame
+            && vehicle.year == 2025
     }
 
     private var requiresUrgentQuestions: Bool {
@@ -918,13 +1009,40 @@ private enum IncidentGuidanceDisclosure: Hashable {
     case mechanic
     case sources
     case answers
+    case moreDetails
+}
+
+/// The 4-point non-emergency severity scale shown by IncidentGuidanceView's
+/// severityLadder. .doNotRestart is deliberately not a 5th step here — see
+/// the doc comment on `severityLadderStep` for why.
+private enum IncidentSeverityLadderStep: CaseIterable {
+    case monitor, serviceSoon, checkBeforeDriving, stopDriving
+
+    var title: String {
+        switch self {
+        case .monitor: "Monitor"
+        case .serviceSoon: "Service soon"
+        case .checkBeforeDriving: "Check before driving"
+        case .stopDriving: "Stop driving"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .monitor: .secondary
+        case .serviceSoon, .checkBeforeDriving: .orange
+        case .stopDriving: .red
+        }
+    }
 }
 
 private struct IncidentGuidanceView: View {
     let result: IncidentGuidanceResult
     let onSave: () -> Void
 
+    @Environment(\.openURL) private var openURL
     @State private var expandedSection: IncidentGuidanceDisclosure?
+    @State private var expandedTermIDs: Set<String> = []
     @State private var didCopySummary = false
 
     var body: some View {
@@ -934,147 +1052,445 @@ private struct IncidentGuidanceView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text(result.driveRecommendation.rawValue)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
-                    .foregroundStyle(driveStatusColor)
-                    .background(driveStatusColor.opacity(0.10))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-
-                resultCard(title: "What this most strongly suggests") {
-                    Text(result.plainLanguageAssessment)
-                        .font(.headline)
-                    Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                if result.isUrgent {
+                    urgentContent
+                } else {
+                    phase1Content
                 }
-
-                resultCard(title: "Do this now") {
-                    Text(result.immediateAction)
-                        .font(.headline)
-                }
-
-                resultCard(title: "What would help confirm it") {
-                    Text(result.confirmationStep)
-                        .font(.headline)
-                }
-
-                Text("More details")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                if !result.possibleContributors.isEmpty {
-                    disclosureCard(
-                        title: "Possible system areas",
-                        section: .areas
-                    ) {
-                        ForEach(result.possibleContributors) { contributor in
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(contributor.category.rawValue)
-                                    .font(.headline)
-                                Text(contributor.confidenceWording)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-
-                if !result.possibleContributors.isEmpty {
-                    disclosureCard(
-                        title: "Why this fits",
-                        section: .rationale
-                    ) {
-                        ForEach(result.possibleContributors) { contributor in
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(contributor.rationale.observedFact)
-                                    .font(.headline)
-                                Text(contributor.rationale.explanation)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-
-                if !result.uncertaintyStatements.isEmpty {
-                    disclosureCard(
-                        title: "What remains uncertain",
-                        section: .uncertainty
-                    ) {
-                        guidanceList(result.uncertaintyStatements)
-                    }
-                }
-
-                if !result.actionsToAvoid.isEmpty {
-                    disclosureCard(
-                        title: "What to avoid",
-                        section: .avoid
-                    ) {
-                        guidanceList(result.actionsToAvoid)
-                    }
-                }
-
-                if !result.mechanicReadySummary.isEmpty {
-                    disclosureCard(
-                        title: "Information for a mechanic",
-                        section: .mechanic
-                    ) {
-                        Text(result.mechanicReadySummary)
-                            .textSelection(.enabled)
-
-                        Button {
-                            UIPasteboard.general.string = result.mechanicReadySummary
-                            didCopySummary = true
-                        } label: {
-                            Label(
-                                didCopySummary ? "Copied" : "Copy summary",
-                                systemImage: didCopySummary ? "checkmark" : "doc.on.doc"
-                            )
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-
-                disclosureCard(
-                    title: "Sources and confidence",
-                    section: .sources
-                ) {
-                    Text(result.confidenceLabel)
-                        .font(.headline)
-                    Text(result.knowledgeStatus)
-                        .foregroundStyle(.secondary)
-                    Text("Knowledge record IDs: \(result.matchedRecordIDs.joined(separator: ", "))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
-
-                if !result.reportedSummary.isEmpty {
-                    disclosureCard(
-                        title: "Your answers",
-                        section: .answers
-                    ) {
-                        Text(result.reportedSummary)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                IncidentContinueButton(
-                    title: "Save this result",
-                    isDisabled: false,
-                    action: onSave
-                )
             }
             .padding(24)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Your next step")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // MARK: - Urgent (emergency) layout — unchanged from before the Phase 1 redesign
+
+    @ViewBuilder
+    private var urgentContent: some View {
+        Text(result.driveRecommendation.rawValue)
+            .font(.title2)
+            .fontWeight(.bold)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .foregroundStyle(driveStatusColor)
+            .background(driveStatusColor.opacity(0.10))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+
+        resultCard(title: "What this most strongly suggests") {
+            Text(result.plainLanguageAssessment)
+                .font(.headline)
+            Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+
+        resultCard(title: "Do this now") {
+            Text(result.immediateAction)
+                .font(.headline)
+        }
+
+        resultCard(title: "What would help confirm it") {
+            Text(result.confirmationStep)
+                .font(.headline)
+        }
+
+        Text("More details")
+            .font(.title2)
+            .fontWeight(.bold)
+
+        if !result.possibleContributors.isEmpty {
+            disclosureCard(
+                title: "Possible system areas",
+                section: .areas
+            ) {
+                ForEach(result.possibleContributors) { contributor in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(contributor.category.rawValue)
+                            .font(.headline)
+                        Text(contributor.confidenceWording)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+
+        if !result.possibleContributors.isEmpty {
+            disclosureCard(
+                title: "Why this fits",
+                section: .rationale
+            ) {
+                ForEach(result.possibleContributors) { contributor in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(contributor.rationale.observedFact)
+                            .font(.headline)
+                        Text(contributor.rationale.explanation)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+
+        if !result.uncertaintyStatements.isEmpty {
+            disclosureCard(
+                title: "What remains uncertain",
+                section: .uncertainty
+            ) {
+                guidanceList(result.uncertaintyStatements)
+            }
+        }
+
+        if !result.actionsToAvoid.isEmpty {
+            disclosureCard(
+                title: "What to avoid",
+                section: .avoid
+            ) {
+                guidanceList(result.actionsToAvoid)
+            }
+        }
+
+        if !result.mechanicReadySummary.isEmpty {
+            disclosureCard(
+                title: "Information for a mechanic",
+                section: .mechanic
+            ) {
+                Text(result.mechanicReadySummary)
+                    .textSelection(.enabled)
+
+                copySummaryButton
+            }
+        }
+
+        sourcesDisclosure
+        answersDisclosure
+
+        IncidentContinueButton(
+            title: "Save this result",
+            isDisabled: false,
+            action: onSave
+        )
+    }
+
+    // MARK: - Phase 1 (non-emergency) redesigned layout
+
+    @ViewBuilder
+    private var phase1Content: some View {
+        severityLadder
+
+        if let context = result.reportedContext {
+            Label(context, systemImage: "mappin.and.ellipse")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+
+        if showsTrustIndicator {
+            Label("Reviewed automotive guidance, not a guess", systemImage: "checkmark.seal.fill")
+                .font(.subheadline)
+                .foregroundStyle(.green)
+        }
+
+        resultCard(title: "What this most strongly suggests") {
+            Text(result.plainLanguageAssessment)
+                .font(.headline)
+            Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+
+        resultCard(title: "Do this now") {
+            Text(result.immediateAction)
+                .font(.headline)
+        }
+
+        resultCard(title: "What would help confirm it") {
+            Text(result.confirmationStep)
+                .font(.headline)
+        }
+
+        possibleAreasSection
+        findShopButton
+        costRangeSection
+        moreDetailsSection
+        sourcesDisclosure
+        answersDisclosure
+
+        IncidentContinueButton(
+            title: "Save this result",
+            isDisabled: false,
+            action: onSave
+        )
+    }
+
+    /// Maps the result's single driveRecommendation onto the 4-point
+    /// ladder. .doNotRestart has no ladder position — it's about not
+    /// restarting after already stopping, not a point on a "how much
+    /// longer can I keep driving" scale, so it's surfaced as its own
+    /// badge (see `doNotRestartBadge`) instead of forcing it onto this
+    /// line. The ordinary (non-urgent) path never actually produces
+    /// .doNotRestart today, but this stays correct if that ever changes.
+    private var severityLadderStep: IncidentSeverityLadderStep? {
+        switch result.driveRecommendation {
+        case .monitor: .monitor
+        case .serviceSoon: .serviceSoon
+        case .checkBeforeDriving: .checkBeforeDriving
+        case .stopDriving: .stopDriving
+        case .doNotRestart: nil
+        }
+    }
+
+    @ViewBuilder
+    private var severityLadder: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 4) {
+                ForEach(IncidentSeverityLadderStep.allCases, id: \.self) { step in
+                    let isActive = step == severityLadderStep
+                    Text(step.title)
+                        .font(.caption)
+                        .fontWeight(isActive ? .bold : .regular)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(isActive ? .white : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(isActive ? step.color : Color.secondary.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+
+            if result.driveRecommendation == .doNotRestart {
+                doNotRestartBadge
+            }
+        }
+    }
+
+    private var doNotRestartBadge: some View {
+        Label("Do not restart", systemImage: "exclamationmark.octagon.fill")
+            .font(.caption)
+            .fontWeight(.bold)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.red)
+            .clipShape(Capsule())
+    }
+
+    /// Only claims "reviewed automotive guidance" when every shown
+    /// contributor is actually backed by reviewed content — never true
+    /// yet for the 8 still-placeholder Phase 1 records, so this line
+    /// simply doesn't appear for those instead of overclaiming.
+    private var showsTrustIndicator: Bool {
+        !result.possibleContributors.isEmpty
+            && result.possibleContributors.allSatisfy(\.isReviewedGuidance)
+    }
+
+    private var allTerms: [IncidentPossibleAreaTerm] {
+        result.possibleContributors.flatMap(\.terms)
+    }
+
+    /// Item 3: individual tappable rows (icon + term) instead of a
+    /// paragraph. Falls back to a plain category list for any Phase 1
+    /// record that hasn't been given structured possibleAreaTerms yet
+    /// (everything except phase1.suspension.bump-noise, for now).
+    @ViewBuilder
+    private var possibleAreasSection: some View {
+        if !result.possibleContributors.isEmpty {
+            resultCard(title: "Possible areas to inspect") {
+                if allTerms.isEmpty {
+                    ForEach(result.possibleContributors) { contributor in
+                        Text(contributor.category.rawValue)
+                            .font(.headline)
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 14) {
+                        ForEach(allTerms) { term in
+                            termRow(term)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func termRow(_ term: IncidentPossibleAreaTerm) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                toggleTerm(term.id)
+            } label: {
+                HStack {
+                    Image(systemName: "wrench.and.screwdriver")
+                        .foregroundStyle(.secondary)
+                    Text(term.name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(
+                        systemName: expandedTermIDs.contains(term.id)
+                            ? "chevron.up"
+                            : "chevron.down"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if expandedTermIDs.contains(term.id) {
+                Text(term.plainExplanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 26)
+            }
+        }
+    }
+
+    private func toggleTerm(_ id: String) {
+        if expandedTermIDs.contains(id) {
+            expandedTermIDs.remove(id)
+        } else {
+            expandedTermIDs.insert(id)
+        }
+    }
+
+    /// Item 4: zero-cost handoff to the user's own Maps app — no ratings
+    /// API, no network call this app makes, just a pre-filled search.
+    private var firstRepairSearchTerm: String? {
+        result.possibleContributors.compactMap(\.repairSearchTerm).first
+    }
+
+    @ViewBuilder
+    private var findShopButton: some View {
+        if let searchTerm = firstRepairSearchTerm {
+            Button {
+                openMaps(searchingFor: searchTerm)
+            } label: {
+                Label("Find a shop", systemImage: "map")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    private func openMaps(searchingFor searchTerm: String) {
+        var components = URLComponents(string: "http://maps.apple.com/")
+        components?.queryItems = [
+            URLQueryItem(name: "q", value: "\(searchTerm) near me")
+        ]
+        guard let url = components?.url else { return }
+        openURL(url)
+    }
+
+    /// Item 5: cost ranges are display strings, not necessarily numeric
+    /// (e.g. strut mounts), and are only shown when at least one term
+    /// actually has one.
+    @ViewBuilder
+    private var costRangeSection: some View {
+        let costedTerms = allTerms.filter { $0.typicalCostRange != nil }
+        if !costedTerms.isEmpty {
+            resultCard(title: "Typical cost range") {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(costedTerms) { term in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(term.name)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Text(term.typicalCostRange ?? "")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Text("General U.S. estimate, varies by location, vehicle, and labor rates — not a quote.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    /// Item 2's last bullet: the deeper stuff, collapsed by default
+    /// (expandedSection defaults to nil).
+    @ViewBuilder
+    private var moreDetailsSection: some View {
+        if !result.uncertaintyStatements.isEmpty
+            || !result.actionsToAvoid.isEmpty
+            || !result.mechanicReadySummary.isEmpty {
+            disclosureCard(title: "More details", section: .moreDetails) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !result.uncertaintyStatements.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("What remains uncertain")
+                                .font(.headline)
+                            guidanceList(result.uncertaintyStatements)
+                        }
+                    }
+                    if !result.actionsToAvoid.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("What to avoid")
+                                .font(.headline)
+                            guidanceList(result.actionsToAvoid)
+                        }
+                    }
+                    if !result.mechanicReadySummary.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Information for a mechanic")
+                                .font(.headline)
+                            Text(result.mechanicReadySummary)
+                                .textSelection(.enabled)
+                            copySummaryButton
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var copySummaryButton: some View {
+        Button {
+            UIPasteboard.general.string = result.mechanicReadySummary
+            didCopySummary = true
+        } label: {
+            Label(
+                didCopySummary ? "Copied" : "Copy summary",
+                systemImage: didCopySummary ? "checkmark" : "doc.on.doc"
+            )
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding()
+        }
+        .buttonStyle(.bordered)
+    }
+
+    @ViewBuilder
+    private var sourcesDisclosure: some View {
+        disclosureCard(
+            title: "Sources and confidence",
+            section: .sources
+        ) {
+            Text(result.confidenceLabel)
+                .font(.headline)
+            Text(result.knowledgeStatus)
+                .foregroundStyle(.secondary)
+            Text("Knowledge record IDs: \(result.matchedRecordIDs.joined(separator: ", "))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+        }
+    }
+
+    @ViewBuilder
+    private var answersDisclosure: some View {
+        if !result.reportedSummary.isEmpty {
+            disclosureCard(
+                title: "Your answers",
+                section: .answers
+            ) {
+                Text(result.reportedSummary)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     private var driveStatusColor: Color {

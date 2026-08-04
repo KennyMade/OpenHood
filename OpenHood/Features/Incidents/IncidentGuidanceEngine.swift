@@ -37,6 +37,8 @@ struct IncidentGuidanceEngine {
             ranked: ranked,
             hasMatches: hasMatches
         )
+        let matchedIDs = matchedRecords.map(\.id)
+        let claimBreakdown = claimIDBreakdown(matchedRecordIDs: matchedIDs)
 
         return IncidentGuidanceResult(
             safetyStatus: safetyStatus(for: incident.safetySelection),
@@ -55,7 +57,10 @@ struct IncidentGuidanceEngine {
                             incident: incident
                         ),
                         explanation: "This may fit because \(match.record.explanation) This does not confirm a cause."
-                    )
+                    ),
+                    terms: match.record.possibleAreaTerms,
+                    repairSearchTerm: match.record.repairSearchTerm,
+                    isReviewedGuidance: match.record.verificationState != .needsVerification
                 )
             },
             uncertaintyStatements: uncertainty,
@@ -78,7 +83,7 @@ struct IncidentGuidanceEngine {
                 uncertainty: uncertainty
             ),
             knowledgeVersion: knowledgeVersion,
-            matchedRecordIDs: matchedRecords.map(\.id),
+            matchedRecordIDs: matchedIDs,
             confidenceLabel: hasMatches
                 ? "Limited confidence — consistent with your observations"
                 : "Not enough information yet",
@@ -98,7 +103,11 @@ struct IncidentGuidanceEngine {
             confirmationStep: evidenceRequests(
                 records: matchedRecords,
                 incident: incident
-            ).first?.prompt ?? "A qualified inspection may be needed to collect direct evidence."
+            ).first?.prompt ?? "A qualified inspection may be needed to collect direct evidence.",
+            factClaimIDs: claimBreakdown.fact,
+            policyClaimIDs: claimBreakdown.policy,
+            uncertaintyClaimIDs: [],
+            reportedContext: reportedContext(for: incident)
         )
     }
 }
@@ -186,7 +195,27 @@ private extension IncidentGuidanceEngine {
             incident.userDescription.localizedCaseInsensitiveContains(text)
         case .recentWork(let response):
             incident.recentWorkResponse == response
+        case .noiseAnswer(let key, let value):
+            incident.noiseFollowUpAnswers?[key] == value
         }
+    }
+
+    /// The redesigned Phase 1 result screen's "Rear, over bumps"-style
+    /// line, shown near the top instead of a car diagram — the user
+    /// already picked these from a menu, this just plays them back.
+    /// Only populated when structured noise answers exist; nil for
+    /// every other Phase 1 record family today.
+    func reportedContext(for incident: VehicleIncident) -> String? {
+        guard let answers = incident.noiseFollowUpAnswers else { return nil }
+        let pieces = [
+            answers[IncidentNoiseAnswerKey.location],
+            answers[IncidentNoiseAnswerKey.timing]
+        ]
+        .compactMap { $0 }
+        .filter { $0 != "I’m not sure" }
+        guard !pieces.isEmpty else { return nil }
+        let joined = pieces.joined(separator: ", ").lowercased()
+        return joined.prefix(1).uppercased() + joined.dropFirst()
     }
 
     func matchedEvidenceSummary(
@@ -344,6 +373,7 @@ private extension IncidentGuidanceEngine {
 
     func urgentDriveRecommendation(
         incident: VehicleIncident,
+        vehicle: SavedVehicle,
         immediateDanger: Bool
     ) -> IncidentDriveRecommendation {
         if immediateDanger { return .doNotRestart }
@@ -353,13 +383,16 @@ private extension IncidentGuidanceEngine {
              .engineWillNotStayRunning:
             return .doNotRestart
         case .unsafeBrakesOrSteering:
-            return .stopDriving
+            return unsafeBrakesOrSteeringDriveRecommendation(answers: answers, vehicle: vehicle)
         case .flashingWarningLight:
-            if answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine",
-               answers[IncidentUrgentAnswerKey.warningState] == "Still flashing",
-               let behavior = answers[IncidentUrgentAnswerKey.engineBehavior],
-               ["Shaking", "Lost power", "Stalled"].contains(behavior) {
-                return .stopDriving
+            if answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+                // OH-UIK-001: default gate is CHECK BEFORE DRIVING
+                // (CLM-MIL-005), but the record's own smartest_next_step
+                // explicitly escalates "severe active shaking...or major
+                // power loss" to STOP DRIVING — see milHasSevereActiveSymptom.
+                return milHasSevereActiveSymptom(answers: answers)
+                    ? .stopDriving
+                    : .checkBeforeDriving
             }
             if answers[IncidentUrgentAnswerKey.warningSymbol] == "Tire pressure" {
                 return .checkBeforeDriving
@@ -373,8 +406,47 @@ private extension IncidentGuidanceEngine {
         }
     }
 
+    /// OH-UIK-011/OH-UIK-013: braking is an unconditional STOP DRIVING
+    /// (CLM-BRK-005). Steering defaults to CHECK BEFORE DRIVING
+    /// (CLM-STR-001/002/003) and escalates to STOP DRIVING on a reported
+    /// loss of directional control (CLM-STR-005P) or on the exact HR-V
+    /// "Do not drive" message (CLM-STR-002, acceptance test 10) — the
+    /// latter overrides the generic EPS-warning gate even when steering
+    /// still feels controllable, per the pack's own distinction between
+    /// the EPS indicator alone and the separate "Do not drive" message.
+    func unsafeBrakesOrSteeringDriveRecommendation(
+        answers: [String: String],
+        vehicle: SavedVehicle
+    ) -> IncidentDriveRecommendation {
+        guard answers[IncidentUrgentAnswerKey.concernType] == "Steering" else {
+            return .stopDriving
+        }
+        if hrvDoNotDriveMessageConfirmed(answers: answers, vehicle: vehicle) {
+            return .stopDriving
+        }
+        if answers[IncidentUrgentAnswerKey.steeringControlLoss] == "No" {
+            return .stopDriving
+        }
+        return .checkBeforeDriving
+    }
+
+    /// CLM-STR-002 acceptance-test-10 gate: true only when the user
+    /// confirmed the exact HR-V "Do not drive" message AND the vehicle
+    /// still scope-matches the claim (Honda HR-V 2025, verified profile)
+    /// through the same evidenceClaims chokepoint every other OEM claim
+    /// goes through — the view only gates *asking* the question on
+    /// make/model/year, so this is the actual enforcement point.
+    func hrvDoNotDriveMessageConfirmed(
+        answers: [String: String],
+        vehicle: SavedVehicle
+    ) -> Bool {
+        answers[IncidentUrgentAnswerKey.hrvDoNotDriveMessage] == "Yes"
+            && !evidenceClaims("CLM-STR-002", vehicle: vehicle).isEmpty
+    }
+
     func urgentAssessment(
         incident: VehicleIncident,
+        vehicle: SavedVehicle,
         immediateDanger: Bool
     ) -> String {
         let answers = incident.urgentFollowUpAnswers ?? [:]
@@ -384,16 +456,11 @@ private extension IncidentGuidanceEngine {
         switch incident.safetySelection {
         case .flashingWarningLight:
             let symbol = answers[IncidentUrgentAnswerKey.warningSymbol]
-            let state = answers[IncidentUrgentAnswerKey.warningState]
-            let behavior = answers[IncidentUrgentAnswerKey.engineBehavior]
-            if symbol == "Check engine",
-               state == "Still flashing",
-               behavior == "Shaking" {
-                return "This most strongly fits an active engine misfire."
-            }
-            if symbol == "Check engine", state == "Now steady",
-               behavior == "Behaved normally" {
-                return "This most strongly suggests a monitored engine or emissions-system concern that needs diagnostic information."
+            if symbol == "Check engine" {
+                return milAssessment(
+                    vehicle: vehicle,
+                    severeActiveSymptom: milHasSevereActiveSymptom(answers: answers)
+                )
             }
             if symbol == "Tire pressure" {
                 return "This most strongly suggests a tire-pressure or pressure-monitoring concern, not an engine fault."
@@ -403,7 +470,11 @@ private extension IncidentGuidanceEngine {
             }
             return "The warning points to the selected monitored system, but the symbol alone does not confirm a cause."
         case .overheatingOrSteam:
-            return "This most strongly suggests a cooling-system temperature, circulation, pressure, or fluid-containment concern."
+            // OH-UIK-006: CLM-OHT-005 (PRODUCT_POLICY) is the only claim
+            // eligible to back this sentence — OEM-specific claims
+            // (CLM-OHT-001..004) support immediate_action/actions_to_avoid
+            // instead, never the plain-language cause assessment.
+            return "This pattern is consistent with a possible high-temperature or pressurized cooling-system event. OpenHood has not independently confirmed the cause."
         case .strongFuelSmell:
             let description = answers[IncidentUrgentAnswerKey.smellDescription]
                 ?? "unidentified"
@@ -411,7 +482,7 @@ private extension IncidentGuidanceEngine {
         case .smokeOrFire:
             return "This most strongly suggests a heat, electrical, or fluid-related smoke source that requires inspection."
         case .unsafeBrakesOrSteering:
-            return "This most strongly suggests a braking, steering, tire, wheel, or related control concern."
+            return brakesOrSteeringAssessment(answers: answers, vehicle: vehicle)
         case .engineWillNotStayRunning:
             if let recent = answers[IncidentUrgentAnswerKey.runningRecentWork],
                ["Service", "Battery work", "A repair"].contains(recent) {
@@ -423,8 +494,131 @@ private extension IncidentGuidanceEngine {
         }
     }
 
+    /// Test 12: classifies a `matchedRecordIDs` list against the claim
+    /// registry by product_use_status. This is a breakdown of IDs
+    /// already present in matchedRecordIDs, not a separate scan of
+    /// everything that shaped the visible text — an id that isn't a
+    /// CLM-* claim (a knowledge-record id like "OH-UIK-001", or an
+    /// urgent-contributor id like "urgent.smoke-source") simply doesn't
+    /// resolve against the registry and is dropped from both lists.
+    func claimIDBreakdown(
+        matchedRecordIDs: [String]
+    ) -> (fact: [String], policy: [String]) {
+        let byID = Dictionary(
+            uniqueKeysWithValues: IncidentEvidenceGatedKnowledge.claims.map { ($0.id, $0) }
+        )
+        var fact: [String] = []
+        var policy: [String] = []
+        for id in matchedRecordIDs {
+            guard let claim = byID[id] else { continue }
+            switch claim.productUseStatus {
+            case .visibleGuidanceApproved, .visibleGuidanceScopeLimited:
+                fact.append(id)
+            case .productPolicy:
+                policy.append(id)
+            case .researchOnly, .needsVerification, .rejected:
+                break
+            }
+        }
+        return (fact, policy)
+    }
+
+    /// Test 12 `uncertaintyClaimIDs`: the pack's section 5 excluded_claim_ids
+    /// are a fixed set per Phase 1 record family — not derived from what
+    /// matched, since excluded claims never appear in matchedRecordIDs in
+    /// the first place. Only applies to the urgent/evidence-gated path;
+    /// the ordinary (non-urgent) path matches separate prototype records
+    /// that aren't part of any OH-UIK family, so it never has one of
+    /// these to report.
+    func urgentUncertaintyClaimIDs(
+        incident: VehicleIncident,
+        answers: [String: String]
+    ) -> [String] {
+        if incident.safetySelection == .flashingWarningLight,
+           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+            return ["CLM-MIL-006"]
+        }
+        if incident.safetySelection == .overheatingOrSteam {
+            return ["CLM-OHT-006", "CLM-OHT-007"]
+        }
+        if incident.safetySelection == .unsafeBrakesOrSteering {
+            return answers[IncidentUrgentAnswerKey.concernType] == "Steering"
+                ? ["CLM-STR-005", "CLM-STR-006"]
+                : ["CLM-BRK-006", "CLM-BRK-007"]
+        }
+        return []
+    }
+
+    /// Resolves evidence-gated claim IDs against IncidentEvidenceGatedKnowledge
+    /// and returns only those eligible to affect visible output for this
+    /// vehicle — the single choke point RESEARCH_ONLY/NEEDS_VERIFICATION/
+    /// REJECTED claims cannot pass through.
+    func evidenceClaims(_ ids: String..., vehicle: SavedVehicle) -> [IncidentClaim] {
+        IncidentClaimVisibility.visibleClaims(
+            ids: ids,
+            from: IncidentEvidenceGatedKnowledge.claims,
+            vehicle: vehicle
+        )
+    }
+
+    /// OH-UIK-001 follow_up_questions/smartest_next_step: severe active
+    /// shaking or major power loss is the escalation trigger this app can
+    /// actually answer (via the existing `engineBehavior` question, which
+    /// doubles as MIL-Q3). MIL-Q4 (smoke/raw-fuel odor/overheating/red
+    /// oil warning) is not separately asked here — those symptoms are
+    /// each their own top-level safety selection (.smokeOrFire,
+    /// .strongFuelSmell, .overheatingOrSteam) that a user would normally
+    /// pick instead of "Flashing warning light" as the primary concern,
+    /// so MIL-Q4 is not wired into this path.
+    func milHasSevereActiveSymptom(answers: [String: String]) -> Bool {
+        guard let behavior = answers[IncidentUrgentAnswerKey.engineBehavior] else {
+            return false
+        }
+        return ["Shaking", "Lost power", "Stalled"].contains(behavior)
+    }
+
+    func milAssessment(vehicle: SavedVehicle, severeActiveSymptom: Bool) -> String {
+        if severeActiveSymptom {
+            return "This pattern is consistent with an active engine misfire causing shaking, power loss, or stalling. It does not identify the failed part."
+        }
+        let visible = evidenceClaims("CLM-MIL-001", vehicle: vehicle)
+        if visible.contains(where: { $0.id == "CLM-MIL-001" }) {
+            return "A flashing check-engine light with shaking or rough running can be associated with a misfire condition on this vehicle, per its cited owner's manual. It does not identify the failed part."
+        }
+        return "A flashing check-engine light with shaking or rough running can be associated with a misfire condition on some vehicles. It does not identify the failed part."
+    }
+
+    /// STR-001/002/003 (EPS-specific OEM claims) require confirming the
+    /// exact EPS/power-steering warning, which the current intake only
+    /// approximates via `controlWarning` ("did a warning appear?"). Using
+    /// that as the confirmation signal is a deliberate simplification —
+    /// flagged for review rather than silently treated as equivalent.
+    func brakesOrSteeringAssessment(
+        answers: [String: String],
+        vehicle: SavedVehicle
+    ) -> String {
+        guard answers[IncidentUrgentAnswerKey.concernType] == "Steering" else {
+            // OH-UIK-011: CLM-BRK-001/002 need the exact brake-warning
+            // text, which this intake does not collect, so only the
+            // always-visible CLM-BRK-003/004 back this sentence.
+            return "The braking system is not behaving normally. A soft or spongy pedal may be associated with air in the brake lines or a hydraulic-system leak, but this does not confirm a specific failed component."
+        }
+        if hrvDoNotDriveMessageConfirmed(answers: answers, vehicle: vehicle) {
+            return "The dashboard is showing the exact \"Do not drive\" message described in the cited HR-V owner's manual, which the manual treats as more serious than the EPS indicator alone."
+        }
+        let warningConfirmed = answers[IncidentUrgentAnswerKey.controlWarning] == "Yes"
+        let visible = warningConfirmed
+            ? evidenceClaims("CLM-STR-001", "CLM-STR-003", vehicle: vehicle)
+            : []
+        if !visible.isEmpty {
+            return "The vehicle may have a steering-assistance or steering-control problem. The warning identifies an EPS-system concern for this vehicle, per its cited owner's manual, not the failed component."
+        }
+        return "The vehicle may have a steering-assistance or steering-control problem. A warning identifies a system-level concern, not the failed component."
+    }
+
     func urgentImmediateAction(
         incident: VehicleIncident,
+        vehicle: SavedVehicle,
         action: IncidentRecommendedAction,
         immediateDanger: Bool
     ) -> String {
@@ -433,10 +627,11 @@ private extension IncidentGuidanceEngine {
             return "Stay away from the vehicle and contact emergency services. Do not restart it or approach an active hazard."
         }
         if incident.safetySelection == .flashingWarningLight,
-           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine",
-           answers[IncidentUrgentAnswerKey.warningState] == "Still flashing",
-           answers[IncidentUrgentAnswerKey.engineBehavior] == "Shaking" {
-            return "Shut the engine off once safely stopped. Do not keep driving or rev the engine. Arrange roadside assistance or towing."
+           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+            return milImmediateAction(
+                vehicle: vehicle,
+                severeActiveSymptom: milHasSevereActiveSymptom(answers: answers)
+            )
         }
         if incident.safetySelection == .flashingWarningLight,
            answers[IncidentUrgentAnswerKey.warningSymbol] == "Tire pressure" {
@@ -447,13 +642,83 @@ private extension IncidentGuidanceEngine {
             return "Arrange a diagnostic scan and service. If operation changes or the light begins flashing again, stop and seek roadside help."
         }
         if incident.safetySelection == .overheatingOrSteam {
-            return "Shut the engine off once safely stopped. Do not restart it or open the hot cooling system. Arrange roadside assistance or towing."
+            return overheatingImmediateAction(answers: answers, vehicle: vehicle)
+        }
+        if incident.safetySelection == .unsafeBrakesOrSteering {
+            return brakesOrSteeringImmediateAction(answers: answers, vehicle: vehicle)
         }
         if incident.safetySelection == .engineWillNotStayRunning,
            action == .contactRecentRepairShop {
             return "Do not keep restarting the engine. Contact the recent repair shop with the symptoms and invoice, and arrange transport if needed."
         }
         return actionExplanation(action: action, hasMatches: true)
+    }
+
+    /// OH-UIK-001: fires for any confirmed "Check engine" flashing symbol,
+    /// not only the shaking sub-case — MIL-Q1..Q4 in the pack progressively
+    /// narrow severity from that same starting point. CLM-MIL-002 (Ford)
+    /// and CLM-MIL-003 (Honda Civic Coupe) are mutually exclusive scope
+    /// matches; CLM-MIL-005 (PRODUCT_POLICY) is the always-visible floor.
+    /// When severeActiveSymptom is true this must stay consistent with
+    /// the STOP DRIVING gate from milHasSevereActiveSymptom — advising
+    /// "move to a safe place, decide later whether to keep driving" next
+    /// to a STOP DRIVING banner would contradict it.
+    func milImmediateAction(vehicle: SavedVehicle, severeActiveSymptom: Bool) -> String {
+        if severeActiveSymptom {
+            return "Shut the engine off once safely stopped. Do not keep driving or rev the engine. Arrange roadside assistance or towing."
+        }
+        let visible = evidenceClaims("CLM-MIL-002", "CLM-MIL-003", vehicle: vehicle)
+        let manualCheck = "Use the exact owner's manual before deciding whether the vehicle may be moved again."
+        if visible.contains(where: { $0.id == "CLM-MIL-002" }) {
+            return "Avoid heavy acceleration and deceleration while the light is flashing, per the cited Ford guidance. \(manualCheck)"
+        }
+        if visible.contains(where: { $0.id == "CLM-MIL-003" }) {
+            return "Stop in a safe place, per the cited Honda guidance. \(manualCheck)"
+        }
+        return "If moving, avoid hard acceleration and move to a safe place. \(manualCheck)"
+    }
+
+    /// OH-UIK-006: CLM-OHT-002 (Honda)/CLM-OHT-003 (Toyota RAV4) only
+    /// apply when steam/spray is actually reported (coolingEvidence),
+    /// matching acceptance test 4's principle that a claim's condition
+    /// must be confirmed, not just its vehicle scope.
+    func overheatingImmediateAction(
+        answers: [String: String],
+        vehicle: SavedVehicle
+    ) -> String {
+        let steamLikely = ["Steam", "Bubbling", "More than one"]
+            .contains(answers[IncidentUrgentAnswerKey.coolingEvidence] ?? "")
+        let visible = steamLikely
+            ? evidenceClaims("CLM-OHT-002", "CLM-OHT-003", vehicle: vehicle)
+            : []
+        let base = "Shut the engine off once safely stopped. Do not open the cooling system while it is hot. Use the exact owner's manual before inspection or restart."
+        if visible.contains(where: { $0.id == "CLM-OHT-002" }) {
+            return "Do not open the hood while steam is actively coming from the engine compartment, per the cited Honda manual. \(base)"
+        }
+        if visible.contains(where: { $0.id == "CLM-OHT-003" }) {
+            return "Do not loosen the coolant-reservoir or radiator cap while hot — hot coolant or steam may spray out, per the cited Toyota manual. \(base)"
+        }
+        if steamLikely {
+            return "Steam or spray from an overheated engine can cause serious scalding; keep away from it. \(base)"
+        }
+        return base
+    }
+
+    /// OH-UIK-011/OH-UIK-013.
+    func brakesOrSteeringImmediateAction(
+        answers: [String: String],
+        vehicle: SavedVehicle
+    ) -> String {
+        guard answers[IncidentUrgentAnswerKey.concernType] == "Steering" else {
+            return "If the vehicle cannot slow or stop normally, stop using it and do not road-test it. Confirm any dashboard warning through the exact owner's manual."
+        }
+        if hrvDoNotDriveMessageConfirmed(answers: answers, vehicle: vehicle) {
+            return "Stop as soon as safely possible and contact a Honda dealer, per the cited HR-V owner's manual \"Do not drive\" message. Do not continue driving or attempt to road-test the steering."
+        }
+        if answers[IncidentUrgentAnswerKey.steeringControlLoss] == "No" {
+            return "Stop as soon as safely possible. Do not continue driving or attempt to road-test the steering."
+        }
+        return "First determine whether this is only a warning or whether the vehicle can no longer be directed normally. Confirm the exact warning or message before applying manufacturer-specific continuation guidance."
     }
 
     func urgentResult(
@@ -467,7 +732,7 @@ private extension IncidentGuidanceEngine {
                 && answers[IncidentUrgentAnswerKey.visibleEvidence] == "Liquid")
         let contributors = immediateDanger
             ? []
-            : urgentContributors(for: incident)
+            : urgentContributors(for: incident, vehicle: vehicle)
         let action = urgentRecommendedAction(
             incident: incident,
             immediateDanger: immediateDanger
@@ -476,6 +741,18 @@ private extension IncidentGuidanceEngine {
             "OpenHood has not inspected the vehicle and has not confirmed the cause.",
             "Immediate safety action remains more important than narrowing the possible areas."
         ]
+        // Despite the name, urgentPolicyClaimIDs also returns scope-limited
+        // OEM facts (e.g. CLM-STR-001/CLM-STR-002) alongside PRODUCT_POLICY
+        // ids — claimIDBreakdown below is what actually separates the two
+        // for factClaimIDs/policyClaimIDs (test 12).
+        let citedClaimIDs = immediateDanger
+            ? []
+            : urgentPolicyClaimIDs(incident: incident, vehicle: vehicle)
+        let matchedIDs = contributors.map(\.recordID) + citedClaimIDs
+        let claimBreakdown = claimIDBreakdown(matchedRecordIDs: matchedIDs)
+        let uncertaintyIDs = immediateDanger
+            ? []
+            : urgentUncertaintyClaimIDs(incident: incident, answers: answers)
 
         return IncidentGuidanceResult(
             safetyStatus: safetyStatus(for: incident.safetySelection),
@@ -489,38 +766,94 @@ private extension IncidentGuidanceEngine {
                 : urgentEvidenceRequests(for: incident),
             recommendedAction: action,
             actionExplanation: actionExplanation(action: action, hasMatches: false),
-            actionsToAvoid: urgentActionsToAvoid(for: incident.safetySelection),
+            actionsToAvoid: urgentActionsToAvoid(incident: incident),
             mechanicReadySummary: mechanicSummary(
                 incident: incident,
                 vehicle: vehicle,
                 uncertainty: uncertainty
             ),
             knowledgeVersion: knowledgeVersion,
-            matchedRecordIDs: contributors.map(\.recordID),
+            matchedRecordIDs: matchedIDs,
             confidenceLabel: contributors.isEmpty
                 ? "Not enough information yet"
                 : "Limited confidence — based on what you reported",
             knowledgeStatus: "Universal guidance · Knowledge version \(knowledgeVersion) · Source review pending",
             driveRecommendation: urgentDriveRecommendation(
                 incident: incident,
+                vehicle: vehicle,
                 immediateDanger: immediateDanger
             ),
             plainLanguageAssessment: urgentAssessment(
                 incident: incident,
+                vehicle: vehicle,
                 immediateDanger: immediateDanger
             ),
             immediateAction: urgentImmediateAction(
                 incident: incident,
+                vehicle: vehicle,
                 action: action,
                 immediateDanger: immediateDanger
             ),
             confirmationStep: urgentEvidenceRequests(for: incident).first?.prompt
-                ?? "Emergency responders or a qualified inspector must evaluate the vehicle before further action."
+                ?? "Emergency responders or a qualified inspector must evaluate the vehicle before further action.",
+            factClaimIDs: claimBreakdown.fact,
+            policyClaimIDs: claimBreakdown.policy,
+            uncertaintyClaimIDs: uncertaintyIDs,
+            reportedContext: nil
         )
     }
 
+    /// Claim IDs that actually governed this incident's driving
+    /// status/immediate action — mostly PRODUCT_POLICY claims (always
+    /// visible regardless of vehicle), plus the scope-limited OEM facts
+    /// that can themselves drive the outcome (CLM-STR-001, and now
+    /// CLM-STR-002 for the HR-V "Do not drive" escalation). Resolving
+    /// all of them through evidenceClaims() keeps them on the single
+    /// enforcement chokepoint (if one were ever downgraded to
+    /// RESEARCH_ONLY/NEEDS_VERIFICATION in the registry, it would stop
+    /// appearing here automatically) and surfaces them in
+    /// matchedRecordIDs / "Sources and confidence" instead of being an
+    /// invisible code-level decision — per acceptance test 12's
+    /// requirement that policy- and fact-driven output carry its own
+    /// claim IDs. The caller (urgentResult) further splits this list
+    /// into factClaimIDs/policyClaimIDs by each claim's actual
+    /// product_use_status.
+    func urgentPolicyClaimIDs(
+        incident: VehicleIncident,
+        vehicle: SavedVehicle
+    ) -> [String] {
+        let answers = incident.urgentFollowUpAnswers ?? [:]
+        var ids: [String] = []
+
+        if incident.safetySelection == .flashingWarningLight,
+           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+            ids += evidenceClaims("CLM-MIL-005", vehicle: vehicle).map(\.id)
+            if milHasSevereActiveSymptom(answers: answers) {
+                ids += evidenceClaims("CLM-MIL-005S", vehicle: vehicle).map(\.id)
+            }
+        }
+        if incident.safetySelection == .overheatingOrSteam {
+            ids += evidenceClaims("CLM-OHT-005", vehicle: vehicle).map(\.id)
+        }
+        if incident.safetySelection == .unsafeBrakesOrSteering {
+            if answers[IncidentUrgentAnswerKey.concernType] == "Steering" {
+                ids += evidenceClaims("CLM-STR-001", vehicle: vehicle).map(\.id)
+                if hrvDoNotDriveMessageConfirmed(answers: answers, vehicle: vehicle) {
+                    ids += evidenceClaims("CLM-STR-002", vehicle: vehicle).map(\.id)
+                }
+                if answers[IncidentUrgentAnswerKey.steeringControlLoss] == "No" {
+                    ids += evidenceClaims("CLM-STR-005P", vehicle: vehicle).map(\.id)
+                }
+            } else {
+                ids += evidenceClaims("CLM-BRK-005", vehicle: vehicle).map(\.id)
+            }
+        }
+        return ids
+    }
+
     func urgentContributors(
-        for incident: VehicleIncident
+        for incident: VehicleIncident,
+        vehicle: SavedVehicle
     ) -> [IncidentPossibleContributor] {
         let answer = incident.urgentFollowUpAnswers ?? [:]
 
@@ -543,30 +876,19 @@ private extension IncidentGuidanceEngine {
         case .strongFuelSmell:
             return smellContributors(answers: answer)
         case .overheatingOrSteam:
-            return [
-                urgentContributor(id: "urgent.cooling-temperature", area: .cooling, fact: "The reported gauge or warning answer was \(answer[IncidentUrgentAnswerKey.temperatureIndication] ?? "not known").", explanation: "This pattern may involve cooling-system temperature control, circulation, airflow, or pressure."),
-                urgentContributor(id: "urgent.cooling-fluid", area: .leaksSmokeAndOdors, fact: "The visible cooling sign was \(answer[IncidentUrgentAnswerKey.coolingEvidence] ?? "not identified").", explanation: "Steam, bubbling, or leaking fluid is worth documenting after the vehicle is fully cool; it does not confirm the source.")
-            ]
+            return overheatingContributors()
         case .flashingWarningLight:
-            if answer[IncidentUrgentAnswerKey.warningSymbol] == "Check engine",
-               answer[IncidentUrgentAnswerKey.warningState] == "Still flashing",
-               answer[IncidentUrgentAnswerKey.engineBehavior] == "Shaking" {
-                let reason = "A flashing check-engine light together with shaking or rough running is consistent with an active misfire that can cause further damage."
-                return [
-                    urgentContributor(id: "urgent.misfire-ignition", area: .ignition, fact: reason, explanation: "Ignition is one possible system area; this does not identify a failed coil, plug, or other part."),
-                    urgentContributor(id: "urgent.misfire-fuel", area: .fuelDelivery, fact: reason, explanation: "Fuel delivery is another possible system area that requires scan data and testing."),
-                    urgentContributor(id: "urgent.misfire-air", area: .airOrVacuum, fact: reason, explanation: "Air or vacuum information may be relevant when supported by direct evidence."),
-                    urgentContributor(id: "urgent.misfire-mechanical", area: .mechanicalOrCompression, fact: reason, explanation: "A mechanical or compression condition is a possible category, not a confirmed failure.")
-                ]
+            if answer[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+                return milContributors(
+                    vehicle: vehicle,
+                    severeActiveSymptom: milHasSevereActiveSymptom(answers: answer)
+                )
             }
             return urgentWarningContributors(
                 symbol: answer[IncidentUrgentAnswerKey.warningSymbol]
             )
         case .unsafeBrakesOrSteering:
-            return [
-                urgentContributor(id: "urgent.brake-steering", area: .brakesAndSteering, fact: "You identified \(answer[IncidentUrgentAnswerKey.concernType] ?? "a brake or steering concern") with \(answer[IncidentUrgentAnswerKey.controlBehavior] ?? "an unclear change").", explanation: "This pattern may involve braking operation, steering control, or related suspension hardware and requires qualified inspection."),
-                urgentContributor(id: "urgent.control-wheel", area: .tiresWheelsAndPressure, fact: "The concern occurred \(answer[IncidentUrgentAnswerKey.occurrenceContext] ?? "under an unknown condition").", explanation: "Tire, wheel, or alignment condition can sometimes contribute to pull, shake, wobble, or inconsistent control and is worth checking professionally.")
-            ]
+            return brakesOrSteeringContributors(answers: answer)
         case .engineWillNotStayRunning:
             return [
                 urgentContributor(
@@ -591,6 +913,88 @@ private extension IncidentGuidanceEngine {
         case .noneOfThese, .unsure, nil:
             return []
         }
+    }
+
+    /// OH-UIK-001: fires for any confirmed "Check engine" flashing symbol.
+    /// CLM-MIL-001 (Ford, scope-limited) is the only claim eligible to
+    /// upgrade this from the generic to the vehicle-specific phrasing.
+    func milContributors(
+        vehicle: SavedVehicle,
+        severeActiveSymptom: Bool
+    ) -> [IncidentPossibleContributor] {
+        let visible = evidenceClaims("CLM-MIL-001", vehicle: vehicle)
+        let scopeMatched = visible.contains(where: { $0.id == "CLM-MIL-001" })
+        let fact: String
+        if severeActiveSymptom {
+            fact = scopeMatched
+                ? "A flashing check-engine light together with shaking, power loss, or stalling is consistent with an active misfire on this vehicle, per its cited owner's manual, and can cause further damage."
+                : "A flashing check-engine light together with shaking, power loss, or stalling is consistent with an active misfire that can cause further damage."
+        } else {
+            fact = scopeMatched
+                ? "A flashing check-engine light with shaking or rough running is consistent with an active misfire on this vehicle, per its cited owner's manual."
+                : "A flashing check-engine light with shaking or rough running can be associated with a misfire condition on some vehicles."
+        }
+        return [
+            urgentContributor(
+                id: "OH-UIK-001",
+                area: .engineAndCombustion,
+                fact: fact,
+                explanation: "This does not identify the failed coil, plug, injector, or other component; a code scan and inspection are needed."
+            )
+        ]
+    }
+
+    /// OH-UIK-006: CLM-OHT-005 (PRODUCT_POLICY) is the only claim
+    /// eligible to back the possible-area text itself; OEM claims apply
+    /// to immediate_action/actions_to_avoid instead (see
+    /// overheatingImmediateAction).
+    func overheatingContributors() -> [IncidentPossibleContributor] {
+        [
+            urgentContributor(
+                id: "OH-UIK-006",
+                area: .cooling,
+                fact: "You reported a temperature warning, gauge reading, or visible steam consistent with an overheating event.",
+                explanation: "This may involve cooling-system temperature control, circulation, airflow, or pressure. OpenHood has not confirmed the cause."
+            )
+        ]
+    }
+
+    /// OH-UIK-011/OH-UIK-013: braking and steering are now separate
+    /// contributor sets selected by the reported concernType, rather than
+    /// always returning one merged brakes-and-steering answer.
+    func brakesOrSteeringContributors(
+        answers: [String: String]
+    ) -> [IncidentPossibleContributor] {
+        guard answers[IncidentUrgentAnswerKey.concernType] == "Steering" else {
+            return [
+                urgentContributor(
+                    id: "OH-UIK-011.hydraulic",
+                    area: .hydraulicBrakingSystem,
+                    fact: "You identified \(answers[IncidentUrgentAnswerKey.controlBehavior] ?? "abnormal braking").",
+                    explanation: "A soft or spongy pedal may be associated with air in the brake lines or a hydraulic-system leak, but this does not confirm a specific failed component."
+                ),
+                urgentContributor(
+                    id: "OH-UIK-011.other",
+                    area: .brakesAndSteering,
+                    fact: "The concern occurred \(answers[IncidentUrgentAnswerKey.occurrenceContext] ?? "under an unknown condition").",
+                    explanation: "OpenHood cannot confirm the failed system from pedal feel alone."
+                )
+            ]
+        }
+        return [
+            urgentContributor(
+                id: "OH-UIK-013.assist",
+                area: .powerSteeringOrEPS,
+                fact: "You reported \(answers[IncidentUrgentAnswerKey.controlBehavior] ?? "a steering concern").",
+                explanation: "A warning may involve a system-level power-steering or EPS concern, but it does not identify the failed component."
+            ),
+            urgentContributor(
+                id: "OH-UIK-013.control",
+                area: .steeringControlConcern,
+                fact: "The concern occurred \(answers[IncidentUrgentAnswerKey.occurrenceContext] ?? "under an unknown condition").",
+                explanation: "Whether this is a warning only or an actual loss of directional control determines the safe next step."
+            )
+        ]
     }
 
     func urgentWarningContributors(
@@ -618,13 +1022,9 @@ private extension IncidentGuidanceEngine {
                 fact: "You identified a battery or charging symbol.",
                 explanation: "This may involve electrical power or charging information, but the symbol does not identify a failed component."
             ), urgentContributor(id: "urgent.warning-wiring", area: .electricalAndWiring, fact: "A charging warning was reported.", explanation: "Connections, wiring, or charging-system operation are possible areas for qualified testing.")]
-        case "Check engine":
-            return [urgentContributor(
-                id: "urgent.warning-engine",
-                area: .engineAndCombustion,
-                fact: "You identified a check-engine warning.",
-                explanation: "This may involve an electronically monitored engine system. The exact code is needed to narrow it down."
-            ), urgentContributor(id: "urgent.warning-engine-control", area: .fuelAndIgnition, fact: "The engine behavior was recorded alongside the warning.", explanation: "Fuel or ignition control is one possible system family when supported by scan codes and inspection.")]
+        // "Check engine" is handled entirely by milContributors(vehicle:)
+        // in urgentContributors(for:vehicle:) before this function is
+        // called — OH-UIK-001 supersedes the generic fallback here.
         case "Oil pressure":
             return [urgentContributor(
                 id: "urgent.warning-oil",
@@ -716,15 +1116,6 @@ private extension IncidentGuidanceEngine {
         for incident: VehicleIncident
     ) -> [IncidentEvidenceRequest] {
         let answers = incident.urgentFollowUpAnswers ?? [:]
-        if incident.safetySelection == .flashingWarningLight,
-           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine",
-           answers[IncidentUrgentAnswerKey.warningState] == "Still flashing",
-           answers[IncidentUrgentAnswerKey.engineBehavior] == "Shaking" {
-            return [
-                IncidentEvidenceRequest("Obtain an OBD-II diagnostic scan and record the exact codes and freeze-frame information when available."),
-                IncidentEvidenceRequest("Record every warning that appeared and the shaking already experienced; do not restart to reproduce it.")
-            ]
-        }
         switch incident.safetySelection {
         case .smokeOrFire:
             return [
@@ -739,20 +1130,48 @@ private extension IncidentGuidanceEngine {
                 IncidentEvidenceRequest("Keep the refueling receipt or recent service invoice if the timing is relevant.")
             ]
         case .overheatingOrSteam:
+            // OH-UIK-006 confirmation_step: confirm the warning/gauge,
+            // confirm active steam vs. smoke/unknown vapor, confirm
+            // vehicle identity and exact owner's manual.
             return [
                 IncidentEvidenceRequest("Record the temperature warning or gauge behavior already observed before shutdown."),
+                IncidentEvidenceRequest("Confirm whether the visible material was steam, smoke, or another vapor."),
                 IncidentEvidenceRequest("After the vehicle is fully cool, photograph visible fluid location from a safe standing position."),
                 IncidentEvidenceRequest("Keep records of recent coolant additions or cooling-system work.")
             ]
         case .flashingWarningLight:
+            if answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+                // OH-UIK-001 confirmation_step: confirm exact symbol,
+                // confirm vehicle identity, confirm whether active now.
+                return [
+                    IncidentEvidenceRequest("Confirm the exact symbol is the engine-shaped check-engine indicator, not a different warning."),
+                    IncidentEvidenceRequest("Obtain an OBD-II diagnostic scan and record the exact codes and freeze-frame information when available."),
+                    IncidentEvidenceRequest("Record whether the light is currently flashing, steady, or off, and any shaking or power loss already experienced without restarting to reproduce it."),
+                    IncidentEvidenceRequest("Confirm the vehicle's exact make, model, model year, and market before applying manufacturer-specific continuation guidance.")
+                ]
+            }
             return [
                 IncidentEvidenceRequest("Record the exact symbol and whether it flashed, became steady, or disappeared."),
                 IncidentEvidenceRequest("Request a scan-code report when applicable; keep the exact codes rather than a parts recommendation."),
                 IncidentEvidenceRequest("Record any other warning and the engine behavior that occurred at the same time.")
             ]
         case .unsafeBrakesOrSteering:
+            if answers[IncidentUrgentAnswerKey.concernType] == "Steering" {
+                // OH-UIK-013 confirmation_step: confirm exact warning,
+                // confirm vehicle identity, confirm whether steering
+                // control is actually impaired.
+                return [
+                    IncidentEvidenceRequest("Confirm the exact warning or message and whether steering control is actually impaired, not just heavy or unfamiliar."),
+                    IncidentEvidenceRequest("Describe steering behavior without conducting a road test."),
+                    IncidentEvidenceRequest("Record recent impact, tire service, battery issue, or steering repair."),
+                    IncidentEvidenceRequest("Confirm the vehicle's exact make, model, model year, and market before applying manufacturer-specific continuation guidance.")
+                ]
+            }
+            // OH-UIK-011 confirmation_step: confirm whether stopping
+            // ability changed, confirm exact warning symbol, confirm
+            // whether active now.
             return [
-                IncidentEvidenceRequest("Record the brake or steering behavior already experienced and the speed or maneuver when it occurred."),
+                IncidentEvidenceRequest("Confirm whether stopping ability changed and whether the incident is active now."),
                 IncidentEvidenceRequest("Photograph any warning message while parked, without driving to reproduce it."),
                 IncidentEvidenceRequest("Keep invoices for recent tire, brake, suspension, alignment, or steering work.")
             ]
@@ -769,14 +1188,32 @@ private extension IncidentGuidanceEngine {
     }
 
     func urgentActionsToAvoid(
-        for selection: IncidentSafetySelection?
+        incident: VehicleIncident
     ) -> [String] {
+        let selection = incident.safetySelection
+        let answers = incident.urgentFollowUpAnswers ?? [:]
         var actions = ["Do not continue driving or reproduce the concern."]
         if selection == .overheatingOrSteam {
             actions.append("Do not open a hot cooling system or touch hot components.")
         }
         if selection == .strongFuelSmell || selection == .smokeOrFire {
             actions.append("Do not approach with flames, sparks, or ignition sources.")
+        }
+        if selection == .flashingWarningLight,
+           answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
+            // CLM-MIL-002/CLM-MIL-004
+            actions.append("Do not use heavy acceleration to test the problem.")
+            actions.append("Do not treat the warning as confirming a specific failed coil, plug, injector, or sensor.")
+        }
+        if selection == .unsafeBrakesOrSteering {
+            if answers[IncidentUrgentAnswerKey.concernType] == "Steering" {
+                // CLM-STR-004
+                actions.append("Do not identify a steering rack, motor, pump, module, or sensor as failed from the warning alone.")
+            } else {
+                // CLM-BRK-004/CLM-BRK-005
+                actions.append("Do not road-test a vehicle reported to have reduced braking.")
+                actions.append("Do not name a master cylinder, booster, caliper, hose, or ABS unit as failed from pedal feel alone.")
+            }
         }
         return actions
     }

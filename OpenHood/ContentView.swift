@@ -979,13 +979,6 @@ struct VerifiedConfigurationStartView: View {
         Group {
             if vehicle.manufacturer == "Honda" && vehicle.model == "Civic" {
                 BodyStyleView()
-            } else if vehicle.manufacturer == "Toyota" && vehicle.model == "4Runner" {
-                DrivetrainView()
-                    .onAppear {
-                        vehicle.bodyStyle = "SUV"
-                        vehicle.powertrain = "Gasoline V6"
-                        vehicle.transmission = "5-Speed Automatic"
-                    }
             } else {
                 TransmissionView()
             }
@@ -1193,6 +1186,22 @@ struct DrivetrainView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                NavigationLink {
+                    TrimView()
+                        .onAppear {
+                            vehicle.drivetrain = "Not confirmed"
+                            vehicle.drivetrainSystem = "Not confirmed"
+                            vehicle.trim = ""
+                        }
+                } label: {
+                    ChoiceCard(
+                        icon: "questionmark.circle.fill",
+                        title: "I’m not sure",
+                        subtitle: "You can confirm this later"
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding(24)
         }
@@ -2193,6 +2202,7 @@ struct MaintenanceBaselineView: View {
 // MARK: - Vehicle Home
 struct VehicleHomeView: View {
     @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @EnvironmentObject private var garageStore: GarageStore
 
     var body: some View {
         ScrollView {
@@ -2211,12 +2221,14 @@ struct VehicleHomeView: View {
                     alignment: .leading
                 )
 
-                NavigationLink {
-                    VehicleDashboardView()
-                } label: {
-                    VehicleStageCard()
+                if let activeVehicle = garageStore.activeVehicle {
+                    NavigationLink {
+                        VehicleDetailView(vehicle: activeVehicle)
+                    } label: {
+                        VehicleStageCard()
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
 
                 NavigationLink {
                     SomethingHappenedPlaceholderView()
@@ -2857,165 +2869,6 @@ struct VehicleHomeView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
-// MARK: - Vehicle Dashboard
-
-struct VehicleDashboardView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(vehicle.vehicleName)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-
-                    Text("Your complete vehicle overview")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                VehicleProfileProgressCard()
-
-                HomeSectionHeader(
-                    title: "Vehicle health",
-                    subtitle: "What OpenHood currently knows"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Vehicle Health",
-                        message: "Your vehicle-health baseline will appear here after you confirm service history, symptoms, and inspection information."
-                    )
-                } label: {
-                    VehicleHealthCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Maintenance",
-                    subtitle: "Stay ahead of what comes next"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Maintenance Plan",
-                        message: "OpenHood will build a maintenance plan using your mileage, vehicle configuration, service history, and factory guidance."
-                    )
-                } label: {
-                    MaintenanceSummaryCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Service history",
-                    subtitle: "Everything done to your vehicle"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Service History",
-                        message: "Add repairs, maintenance, inspections, receipts, dates, mileage, parts, and shop information here."
-                    )
-                } label: {
-                    ServiceHistoryCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Help nearby",
-                    subtitle: "Find the right place for the problem"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Nearby Shops",
-                        message: "OpenHood will match nearby repair shops and service centers to your vehicle and selected problem."
-                    )
-                } label: {
-                    NearbyShopsCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Vehicle resources",
-                    subtitle: "Knowledge, documents, and ownership tools"
-                )
-
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ],
-                    spacing: 14
-                ) {
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Specifications",
-                            message: "Engine, drivetrain, fluids, capacities, tires, and factory specifications will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "gauge.with.dots.needle.50percent",
-                            title: "Specs",
-                            subtitle: "Factory information"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Documents",
-                            message: "Receipts, inspections, manuals, estimates, warranties, and reports will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "doc.text.fill",
-                            title: "Documents",
-                            subtitle: "Keep every record"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Known Concerns",
-                            message: "Known concerns and inspection-first guidance for your \(vehicle.model) will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "exclamationmark.triangle.fill",
-                            title: "Concerns",
-                            subtitle: "Know what to inspect"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Owner Resources",
-                            message: "Owner manuals, recall resources, and factory publications will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "books.vertical.fill",
-                            title: "Resources",
-                            subtitle: "Manuals and recalls"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                Spacer(minLength: 30)
-            }
-            .padding(20)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("My Vehicle")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
 // MARK: - Vehicle Stage Card
 
 struct VehicleStageCard: View {
@@ -3113,77 +2966,6 @@ struct VehicleStageCard: View {
             RoundedRectangle(cornerRadius: 30)
                 .stroke(
                     Color.white.opacity(0.09),
-                    lineWidth: 1
-                )
-        }
-    }
-}
-
-// MARK: - Profile Progress
-
-struct VehicleProfileProgressCard: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    private var completedFields: Int {
-        [
-            vehicle.manufacturer,
-            vehicle.model,
-            vehicle.year,
-            vehicle.transmission,
-            vehicle.trim,
-            vehicle.mileage
-        ]
-        .filter {
-            !$0.isEmpty &&
-            $0 != "Not confirmed"
-        }
-        .count
-    }
-
-    private var completion: Double {
-        Double(completedFields) / 6.0
-    }
-
-    private var completionPercentage: Int {
-        Int(completion * 100)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Vehicle profile")
-                        .font(.headline)
-
-                    Text("\(completionPercentage)% complete")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "checklist")
-                    .font(.title2)
-            }
-
-            ProgressView(value: completion)
-                .tint(.primary)
-
-            Text(
-                "A more complete profile helps OpenHood provide more relevant maintenance and diagnostic guidance."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        .padding(20)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(
-            RoundedRectangle(cornerRadius: 22)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(
-                    Color.secondary.opacity(0.12),
                     lineWidth: 1
                 )
         }

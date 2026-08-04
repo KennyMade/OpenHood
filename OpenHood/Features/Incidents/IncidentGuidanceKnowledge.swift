@@ -169,6 +169,108 @@ enum IncidentGuidanceKnowledge {
                 "Which odor description is closest?",
                 "Where was it strongest, and was smoke or liquid visible?"
             ]
+        ),
+        // Unlike the 8 records above, this one is not a needsVerification
+        // placeholder — it's backed by professionally-supported
+        // general-guidance content that was actually checked against
+        // multiple independent sources, and is gated on the structured
+        // noiseQuestions answers (IncidentNoiseAnswerKey) rather than
+        // free-text description matching, since a driver describing
+        // "rattling/grinding" in their own words won't type mechanic
+        // terms like "control arm bushing." required requires the "Over
+        // bumps" timing answer specifically because that's the exact
+        // symptom this content addresses — a noise reported only while
+        // turning or braking isn't in scope here.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted during research (JD Power, 1A Auto)
+        // — both explicitly prohibit reproducing/redistributing their
+        // content without written permission in their terms of use
+        // (checked 2026-08-04), and the underlying facts (worn
+        // bushings/links causing clunking, wear causing squealing) are
+        // well-known, independently corroborated automotive knowledge,
+        // not proprietary to either site. This is the same treatment
+        // NO_EXTERNAL_SOURCE_PRODUCT_POLICY content gets elsewhere (e.g.
+        // CLM-MIL-004 in IncidentEvidenceGatedKnowledge.swift: "OpenHood,
+        // ..." rather than naming an external site) — reviewed content
+        // OpenHood stands behind on its own authority, not a quotable
+        // citation to a specific company. Apply the same check-before-
+        // naming discipline to every future record: a source being
+        // public doesn't make it citable on screen.
+        record(
+            id: "phase1.suspension.bump-noise",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Over bumps")
+            ],
+            support: [
+                .observation(.sound),
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Over bumps"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Rattle"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Clunk"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Grind"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Front"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Rear"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "All over")
+            ],
+            // No contradict signals: `required` above already pins timing
+            // to exactly "Over bumps" (single-choice), so any other
+            // timing value already excludes this record before scoring.
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "This is consistent with suspension or chassis noise under load. Common sources include worn control-arm bushings, sway bar links or bushings, ball joints, or strut mounts — these are possible areas to have inspected, not a confirmed diagnosis.",
+            action: .professionalInspection,
+            questions: [
+                "Does the noise happen on most bumps or only on sharp/hard ones?",
+                "Is there any looseness, clunking when pressing the brake or gas, or visible play at the suspension corner where the noise happens?",
+                "Has any suspension, steering, or wheel work been done recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-suspension-noise-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Bump-Triggered Suspension Noise\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            // Cost figures cross-checked across multiple independent
+            // sources (Jerry, FIXD, RepairPal, AutoZone, repair-community
+            // discussions) tonight, 2026-08-04 — not attributed to any
+            // single named source, same reasoning as sourceReferences
+            // above. Strut mounts intentionally has no number: mount-only
+            // vs. full-strut replacement cost varies too much for a
+            // range to mean anything without inspection.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "control-arm-bushings",
+                    name: "Control-arm bushings",
+                    plainExplanation: "Rubber cushions that let the suspension move quietly. When worn, parts can knock together.",
+                    typicalCostRange: "Roughly $250–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "sway-bar-links-or-bushings",
+                    name: "Sway bar links or bushings",
+                    plainExplanation: "Small links and cushions that help keep the vehicle stable in turns. When worn, they can rattle or clunk.",
+                    typicalCostRange: "Roughly $75–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ball-joints",
+                    name: "Ball joints",
+                    plainExplanation: "Pivot joints that let the wheels turn and move with the suspension. When worn, they can cause a clunking noise or looseness.",
+                    typicalCostRange: "Roughly $200–$400 each"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "strut-mounts",
+                    name: "Strut mounts",
+                    plainExplanation: "Where the suspension attaches to the body of the car. When worn, it can cause noise over bumps.",
+                    typicalCostRange: "Varies significantly depending on whether the full strut needs replacement"
+                )
+            ],
+            repairSearchTerm: "suspension repair"
         )
     ]
 
@@ -186,7 +288,12 @@ enum IncidentGuidanceKnowledge {
             "Do not reproduce a dangerous symptom.",
             "Do not touch hot or moving components or go under an unsupported vehicle."
         ],
-        questions: [String]
+        questions: [String],
+        verificationState: IncidentKnowledgeVerificationState = .needsVerification,
+        contentState: IncidentKnowledgeContentState = .unresolvedHypothesis,
+        sourceReferences: [IncidentGuidanceSourceReference]? = nil,
+        possibleAreaTerms: [IncidentPossibleAreaTerm] = [],
+        repairSearchTerm: String? = nil
     ) -> IncidentGuidanceKnowledgeRecord {
         IncidentGuidanceKnowledgeRecord(
             id: id,
@@ -210,16 +317,18 @@ enum IncidentGuidanceKnowledge {
                 supportedWording: "Possible area based on what you reported",
                 limitedWording: "More information is needed"
             ),
-            verificationState: .needsVerification,
-            contentState: .unresolvedHypothesis,
-            sourceReferences: [
+            verificationState: verificationState,
+            contentState: contentState,
+            sourceReferences: sourceReferences ?? [
                 IncidentGuidanceSourceReference(
                     id: "source-placeholder-\(id)",
                     title: "Reviewed source reference needed",
                     location: nil,
                     isPlaceholder: true
                 )
-            ]
+            ],
+            possibleAreaTerms: possibleAreaTerms,
+            repairSearchTerm: repairSearchTerm
         )
     }
 }

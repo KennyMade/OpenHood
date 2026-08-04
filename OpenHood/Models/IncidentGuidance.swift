@@ -5,6 +5,7 @@ enum IncidentWorkflowFamily: String, Codable, CaseIterable {
     case warningLightOrMessage
     case overheatingOrCooling
     case roughRunningStallingOrPostService
+    case noiseVibrationOrSuspension
 }
 
 enum IncidentSystemCategory: String, Codable, CaseIterable, Identifiable {
@@ -23,6 +24,10 @@ enum IncidentSystemCategory: String, Codable, CaseIterable, Identifiable {
     case fuelDelivery = "Fuel delivery"
     case airOrVacuum = "Air or vacuum"
     case mechanicalOrCompression = "Mechanical or compression condition"
+    case hydraulicBrakingSystem = "Hydraulic pressure or brake-fluid containment"
+    case powerSteeringOrEPS = "Power-steering or EPS system"
+    case steeringControlConcern = "Steering-control concern"
+    case suspensionAndChassis = "Suspension or chassis"
 
     var id: String { rawValue }
 }
@@ -48,11 +53,213 @@ struct IncidentGuidanceSourceReference: Codable, Equatable {
     let isPlaceholder: Bool
 }
 
+/// One jargon term inside a record's possible-area list, shown as its own
+/// tappable row (icon + name) that expands to a one-sentence plain-English
+/// explanation. `typicalCostRange` is a display string, not a number, so
+/// a record can say "varies significantly depending on X" instead of a
+/// false-precision figure when the real range genuinely depends on
+/// factors the record can't know (e.g. strut mounts).
+struct IncidentPossibleAreaTerm: Identifiable, Codable, Equatable {
+    let id: String
+    let name: String
+    let plainExplanation: String
+    let typicalCostRange: String?
+}
+
+// MARK: - Evidence-gated claims (IncidentKnowledgePack-v1.2)
+//
+// Three independent axes per claim, matching the pack's evidence-governance
+// model. These must never be collapsed into a single verification label —
+// a claim can be a DIRECT quote from a VERIFIED_OEM_OR_GOVERNMENT source and
+// still be scope-limited to one manufacturer/model/year, or be an internal
+// OpenHood product-policy rule with no external source at all.
+
+enum IncidentClaimSourceTier: String, Codable {
+    case verifiedOEMOrGovernment
+    case professionallySupportedGeneralGuidance
+    case confirmedSolvedOwnerCase
+    case communityReportedPattern
+    case unresolvedHypothesis
+    case noExternalSourceProductPolicy
+}
+
+enum IncidentClaimSupportType: String, Codable {
+    case direct
+    case inference
+    case none
+    case contradicted
+}
+
+/// Governs whether a claim may affect anything the user sees. Only
+/// `.visibleGuidanceApproved`, `.visibleGuidanceScopeLimited` (when scope
+/// matches), and `.productPolicy` may reach visible output — see
+/// `IncidentClaimVisibility`.
+enum IncidentClaimProductUseStatus: String, Codable {
+    case visibleGuidanceApproved
+    case visibleGuidanceScopeLimited
+    case productPolicy
+    case researchOnly
+    case needsVerification
+    case rejected
+}
+
+/// The applicability gate for a `.visibleGuidanceScopeLimited` claim.
+/// A claim with a scope only ever fires for a vehicle matching every
+/// non-nil field here — no fuzzy/substring matching, since the pack
+/// explicitly forbids e.g. one Honda model's manual covering all Hondas.
+struct IncidentClaimVehicleScope: Codable, Equatable {
+    let makes: [String]?
+    let models: [String]?
+    let bodyStyles: [String]?
+    let modelYears: ClosedRange<Int>?
+    let excludedPowertrainKeywords: [String]?
+    let requiresVerifiedProfile: Bool
+
+    init(
+        makes: [String]? = nil,
+        models: [String]? = nil,
+        bodyStyles: [String]? = nil,
+        modelYears: ClosedRange<Int>? = nil,
+        excludedPowertrainKeywords: [String]? = nil,
+        requiresVerifiedProfile: Bool = true
+    ) {
+        self.makes = makes
+        self.models = models
+        self.bodyStyles = bodyStyles
+        self.modelYears = modelYears
+        self.excludedPowertrainKeywords = excludedPowertrainKeywords
+        self.requiresVerifiedProfile = requiresVerifiedProfile
+    }
+}
+
+struct IncidentClaim: Identifiable, Equatable {
+    let id: String
+    let exactClaim: String
+    let sourceTier: IncidentClaimSourceTier
+    let supportType: IncidentClaimSupportType
+    let productUseStatus: IncidentClaimProductUseStatus
+    let source: String
+    let limitations: String?
+    /// Required and consulted only when productUseStatus == .visibleGuidanceScopeLimited.
+    let scope: IncidentClaimVehicleScope?
+
+    init(
+        id: String,
+        exactClaim: String,
+        sourceTier: IncidentClaimSourceTier,
+        supportType: IncidentClaimSupportType,
+        productUseStatus: IncidentClaimProductUseStatus,
+        source: String,
+        limitations: String? = nil,
+        scope: IncidentClaimVehicleScope? = nil
+    ) {
+        self.id = id
+        self.exactClaim = exactClaim
+        self.sourceTier = sourceTier
+        self.supportType = supportType
+        self.productUseStatus = productUseStatus
+        self.source = source
+        self.limitations = limitations
+        self.scope = scope
+    }
+}
+
+/// Enforces the pack's exclusion rule structurally: callers can only ever
+/// obtain claims that are eligible to affect visible output. There is no
+/// path from a RESEARCH_ONLY/NEEDS_VERIFICATION/REJECTED claim into a
+/// result field other than through here, and here they are always dropped.
+enum IncidentClaimVisibility {
+    static func matchesScope(
+        _ scope: IncidentClaimVehicleScope,
+        vehicle: SavedVehicle
+    ) -> Bool {
+        if scope.requiresVerifiedProfile,
+           vehicle.profileVerification != .verified {
+            return false
+        }
+        if let makes = scope.makes,
+           !makes.contains(where: {
+               $0.caseInsensitiveCompare(vehicle.make) == .orderedSame
+           }) {
+            return false
+        }
+        if let models = scope.models,
+           !models.contains(where: {
+               $0.caseInsensitiveCompare(vehicle.model) == .orderedSame
+           }) {
+            return false
+        }
+        if let bodyStyles = scope.bodyStyles {
+            guard let vehicleBodyStyle = vehicle.bodyStyle,
+                  bodyStyles.contains(where: {
+                      $0.caseInsensitiveCompare(vehicleBodyStyle) == .orderedSame
+                  }) else {
+                return false
+            }
+        }
+        if let years = scope.modelYears {
+            guard let year = vehicle.year, years.contains(year) else {
+                return false
+            }
+        }
+        if let excludedKeywords = scope.excludedPowertrainKeywords,
+           let powertrain = vehicle.powertrain,
+           excludedKeywords.contains(where: {
+               powertrain.localizedCaseInsensitiveContains($0)
+           }) {
+            return false
+        }
+        return true
+    }
+
+    static func isVisible(_ claim: IncidentClaim, vehicle: SavedVehicle) -> Bool {
+        switch claim.productUseStatus {
+        case .visibleGuidanceApproved, .productPolicy:
+            return true
+        case .visibleGuidanceScopeLimited:
+            guard let scope = claim.scope else { return false }
+            return matchesScope(scope, vehicle: vehicle)
+        case .researchOnly, .needsVerification, .rejected:
+            return false
+        }
+    }
+
+    /// Resolves claim IDs against the registry and returns only the
+    /// subset eligible to affect visible output for this vehicle, in the
+    /// order the IDs were requested.
+    static func visibleClaims(
+        ids: [String],
+        from registry: [IncidentClaim],
+        vehicle: SavedVehicle
+    ) -> [IncidentClaim] {
+        let byID = Dictionary(uniqueKeysWithValues: registry.map { ($0.id, $0) })
+        return ids.compactMap { byID[$0] }
+            .filter { isVisible($0, vehicle: vehicle) }
+    }
+}
+
 enum IncidentGuidanceEvidenceSignal: Codable, Equatable {
     case observation(IncidentObservationType)
     case safety(IncidentSafetySelection)
     case descriptionContains(String)
     case recentWork(IncidentRecentWorkResponse)
+    /// A structured routine follow-up answer, e.g. IncidentNoiseAnswerKey
+    /// answers on VehicleIncident.noiseFollowUpAnswers. Unlike
+    /// descriptionContains, this only matches an exact recorded answer —
+    /// no free-text keyword guessing.
+    case noiseAnswer(key: String, value: String)
+}
+
+/// Structured follow-up questions for the noise/vibration/suspension
+/// record family (phase1.suspension.bump-noise) — asked instead of
+/// relying on free-text description matching, since nobody types
+/// "control arm bushing." Answers are stored in
+/// VehicleIncident.noiseFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.noiseAnswer.
+enum IncidentNoiseAnswerKey {
+    static let location = "noiseLocation"
+    static let timing = "noiseTiming"
+    static let sound = "noiseSound"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {
@@ -79,6 +286,15 @@ struct IncidentGuidanceKnowledgeRecord: Identifiable, Codable, Equatable {
     let verificationState: IncidentKnowledgeVerificationState
     let contentState: IncidentKnowledgeContentState
     let sourceReferences: [IncidentGuidanceSourceReference]
+    /// Individual tappable possible-area rows (item 3's tap-to-explain
+    /// pattern). Empty for the 8 placeholder records, which have no
+    /// reviewed per-term content yet — the UI falls back to a plain
+    /// category list for those.
+    let possibleAreaTerms: [IncidentPossibleAreaTerm]
+    /// Pre-filled Maps search, e.g. "suspension repair" — nil when a
+    /// record has no natural single-system repair search (or hasn't
+    /// been given one yet).
+    let repairSearchTerm: String?
 }
 
 struct IncidentSupportingRationale: Equatable {
@@ -92,6 +308,35 @@ struct IncidentPossibleContributor: Identifiable, Equatable {
     let summary: String
     let confidenceWording: String
     let rationale: IncidentSupportingRationale
+    /// Defaulted (not Optional) because this type is never persisted —
+    /// see IncidentGuidanceSnapshotArea for the Codable counterpart that
+    /// does need true Optionals for safe decode of older saved incidents.
+    let terms: [IncidentPossibleAreaTerm]
+    let repairSearchTerm: String?
+    /// True only when the backing record's verificationState is not
+    /// .needsVerification — gates the "Reviewed automotive guidance, not
+    /// a guess" trust line so it's never shown for placeholder content.
+    let isReviewedGuidance: Bool
+
+    init(
+        recordID: String,
+        category: IncidentSystemCategory,
+        summary: String,
+        confidenceWording: String,
+        rationale: IncidentSupportingRationale,
+        terms: [IncidentPossibleAreaTerm] = [],
+        repairSearchTerm: String? = nil,
+        isReviewedGuidance: Bool = false
+    ) {
+        self.recordID = recordID
+        self.category = category
+        self.summary = summary
+        self.confidenceWording = confidenceWording
+        self.rationale = rationale
+        self.terms = terms
+        self.repairSearchTerm = repairSearchTerm
+        self.isReviewedGuidance = isReviewedGuidance
+    }
 
     var id: String { recordID }
 }
@@ -149,6 +394,11 @@ enum IncidentUrgentAnswerKey {
     static let controlBehavior = "controlBehavior"
     static let occurrenceContext = "occurrenceContext"
     static let controlWarning = "controlWarning"
+    static let steeringControlLoss = "steeringControlLoss"
+    /// CLM-STR-002: only asked when the vehicle scope-matches Honda
+    /// HR-V 2025 — see the conditional question in
+    /// SomethingHappenedView.urgentQuestions.
+    static let hrvDoNotDriveMessage = "hrvDoNotDriveMessage"
     static let controlRecentWork = "controlRecentWork"
     static let runningDetail = "runningDetail"
     static let runningRecentWork = "runningRecentWork"
@@ -163,6 +413,13 @@ struct IncidentGuidanceSnapshotArea: Codable, Equatable {
     let confidenceWording: String
     let observedFact: String
     let explanation: String
+    /// True Optionals (not defaulted, unlike IncidentPossibleContributor)
+    /// because this struct is actually persisted to disk — a missing key
+    /// on an Optional property decodes as nil for incidents saved before
+    /// these fields existed; a defaulted non-Optional would not.
+    let terms: [IncidentPossibleAreaTerm]?
+    let repairSearchTerm: String?
+    let isReviewedGuidance: Bool?
 }
 
 struct IncidentGuidanceSnapshot: Codable, Equatable {
@@ -187,6 +444,17 @@ struct IncidentGuidanceSnapshot: Codable, Equatable {
     let plainLanguageAssessment: String?
     let immediateAction: String?
     let confirmationStep: String?
+    /// Test 12 observation/fact/policy/uncertainty breakdown. Optional so
+    /// incidents saved before these fields existed still decode — Swift's
+    /// synthesized Decodable treats a missing key on an Optional property
+    /// as nil, no custom init(from:) required.
+    let factClaimIDs: [String]?
+    let policyClaimIDs: [String]?
+    let uncertaintyClaimIDs: [String]?
+    /// The redesigned Phase 1 result screen's "Rear, over bumps"-style
+    /// line (item 2) — nil for every incident that isn't backed by a
+    /// record family with its own structured follow-up answers.
+    let reportedContext: String?
 }
 
 struct IncidentGuidanceResult: Equatable {
@@ -209,6 +477,21 @@ struct IncidentGuidanceResult: Equatable {
     let plainLanguageAssessment: String
     let immediateAction: String
     let confirmationStep: String
+    /// Test 12: a breakdown of `matchedRecordIDs`, not a replacement for
+    /// it — every id in `matchedRecordIDs` that resolves to a claim in
+    /// IncidentEvidenceGatedKnowledge.claims is classified by that
+    /// claim's own product_use_status. `uncertaintyClaimIDs` is the
+    /// static excluded_claim_ids set (pack section 5) for whichever
+    /// Phase 1 record family fired this incident, independent of
+    /// matchedRecordIDs.
+    let factClaimIDs: [String]
+    let policyClaimIDs: [String]
+    let uncertaintyClaimIDs: [String]
+    /// Not persisted directly — flows into
+    /// IncidentGuidanceSnapshot.reportedContext, which is the Optional,
+    /// decode-safe counterpart. Only the ordinary (non-urgent) path sets
+    /// this to a non-nil value today.
+    let reportedContext: String?
 
     var snapshot: IncidentGuidanceSnapshot {
         IncidentGuidanceSnapshot(
@@ -227,7 +510,10 @@ struct IncidentGuidanceResult: Equatable {
                     category: $0.category,
                     confidenceWording: $0.confidenceWording,
                     observedFact: $0.rationale.observedFact,
-                    explanation: $0.rationale.explanation
+                    explanation: $0.rationale.explanation,
+                    terms: $0.terms,
+                    repairSearchTerm: $0.repairSearchTerm,
+                    isReviewedGuidance: $0.isReviewedGuidance
                 )
             },
             actionExplanation: actionExplanation,
@@ -240,7 +526,11 @@ struct IncidentGuidanceResult: Equatable {
             driveRecommendation: driveRecommendation,
             plainLanguageAssessment: plainLanguageAssessment,
             immediateAction: immediateAction,
-            confirmationStep: confirmationStep
+            confirmationStep: confirmationStep,
+            factClaimIDs: factClaimIDs,
+            policyClaimIDs: policyClaimIDs,
+            uncertaintyClaimIDs: uncertaintyClaimIDs,
+            reportedContext: reportedContext
         )
     }
 }
@@ -253,7 +543,10 @@ extension IncidentGuidanceResult {
                 category: $0,
                 confidenceWording: "Saved possible area",
                 observedFact: "Saved with the incident",
-                explanation: "The original expanded explanation is unavailable in this older snapshot."
+                explanation: "The original expanded explanation is unavailable in this older snapshot.",
+                terms: nil,
+                repairSearchTerm: nil,
+                isReviewedGuidance: nil
             )
         }
 
@@ -271,7 +564,10 @@ extension IncidentGuidanceResult {
                     rationale: IncidentSupportingRationale(
                         observedFact: $0.observedFact,
                         explanation: $0.explanation
-                    )
+                    ),
+                    terms: $0.terms ?? [],
+                    repairSearchTerm: $0.repairSearchTerm,
+                    isReviewedGuidance: $0.isReviewedGuidance ?? false
                 )
             },
             uncertaintyStatements: snapshot.displayedUncertaintyStatements
@@ -296,7 +592,11 @@ extension IncidentGuidanceResult {
                 ?? "Arrange an appropriate inspection.",
             confirmationStep: snapshot.confirmationStep
                 ?? snapshot.safeEvidenceRequests?.first
-                ?? "A qualified inspection may be needed."
+                ?? "A qualified inspection may be needed.",
+            factClaimIDs: snapshot.factClaimIDs ?? [],
+            policyClaimIDs: snapshot.policyClaimIDs ?? [],
+            uncertaintyClaimIDs: snapshot.uncertaintyClaimIDs ?? [],
+            reportedContext: snapshot.reportedContext
         )
     }
 }
