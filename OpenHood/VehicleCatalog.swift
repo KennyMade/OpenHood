@@ -105,6 +105,32 @@ private extension Sequence where Element == String {
     }
 }
 
+// MARK: - Catalog Auto-Fill
+
+extension VehicleYearConfiguration {
+    /// Fields that every verified configuration for this year agrees on.
+    /// A field is left nil when the year has no verified configurations, or
+    /// when configurations disagree (e.g. multiple trims), since no single
+    /// value could be silently filled in with confidence.
+    var autoFillableConfiguration: VehicleVerifiedConfiguration {
+        VehicleVerifiedConfiguration(
+            bodyStyle: unambiguousValue(for: \.bodyStyle),
+            powertrain: unambiguousValue(for: \.powertrain),
+            drivetrain: unambiguousValue(for: \.drivetrain),
+            drivetrainSystem: unambiguousValue(for: \.drivetrainSystem),
+            transmission: unambiguousValue(for: \.transmission),
+            trim: unambiguousValue(for: \.trim)
+        )
+    }
+
+    private func unambiguousValue(
+        for keyPath: KeyPath<VehicleVerifiedConfiguration, String?>
+    ) -> String? {
+        let values = Set(verifiedConfigurations.compactMap { $0[keyPath: keyPath] })
+        return values.count == 1 ? values.first : nil
+    }
+}
+
 // MARK: - Vehicle Model
 
 struct VehicleModel: Identifiable, Hashable {
@@ -596,5 +622,21 @@ struct VehicleCatalog {
             modelName: modelName
         )?
         .verifiedConfiguration(for: year)
+    }
+
+    /// The subset of that year's configuration OpenHood can fill in without
+    /// asking the owner, or nil if the catalog has no verified data for the
+    /// exact make/model/year.
+    static func autoFillConfiguration(
+        makeName: String,
+        modelName: String,
+        year: Int
+    ) -> VehicleVerifiedConfiguration? {
+        verifiedConfiguration(
+            makeName: makeName,
+            modelName: modelName,
+            year: year
+        )?
+        .autoFillableConfiguration
     }
 }

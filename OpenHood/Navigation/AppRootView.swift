@@ -54,10 +54,20 @@ private struct ActiveVehicleBridgeView: View {
 
 @MainActor
 final class OnboardingSession: ObservableObject {
-    let vehicleID = UUID()
+    let vehicleID: UUID
+
+    /// When set, completing this session updates the existing saved vehicle
+    /// instead of adding a new one — used by the "finish setting up this
+    /// vehicle" flow reached from a vehicle's profile after onboarding.
+    private let existingVehicleID: UUID?
 
     private(set) var hasCompleted = false
     @Published private(set) var completedVehicleID: UUID?
+
+    init(existingVehicleID: UUID? = nil) {
+        self.existingVehicleID = existingVehicleID
+        self.vehicleID = existingVehicleID ?? UUID()
+    }
 
     @discardableResult
     func complete(
@@ -70,7 +80,11 @@ final class OnboardingSession: ObservableObject {
 
         let savedVehicle = vehicle.savedVehicle(id: vehicleID)
 
-        guard garageStore.add(savedVehicle) else {
+        let didSave = existingVehicleID != nil
+            ? garageStore.update(savedVehicle)
+            : garageStore.add(savedVehicle)
+
+        guard didSave else {
             return false
         }
 

@@ -61,6 +61,8 @@ struct ContentView: View {
 struct WelcomeView: View {
     var body: some View {
         VStack(spacing: 20) {
+            OnboardingProgressView(step: 1)
+
             Spacer()
 
             ZStack {
@@ -85,7 +87,7 @@ struct WelcomeView: View {
             Spacer()
 
             NavigationLink {
-                VehicleIntroView()
+                AddVehicleView()
             } label: {
                 Text("Get Started")
                     .font(.headline)
@@ -96,42 +98,39 @@ struct WelcomeView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 30)
         }
+        .padding(.horizontal, 24)
     }
 }
 
-// MARK: - Introduction
+// MARK: - Onboarding Progress
 
-struct VehicleIntroView: View {
+struct OnboardingProgressView: View {
+    let step: Int
+
+    private let stepLabels = ["Welcome", "Vehicle", "Confirm"]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Spacer()
-
-            Image(systemName: "steeringwheel")
-                .font(.system(size: 54))
-
-            Text("Build your car’s digital home.")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-
-            Text(
-                "Add the details once. OpenHood will use them to help you understand, care for, and plan around your actual vehicle."
-            )
-            .font(.title3)
-            .foregroundStyle(.secondary)
-
-            Spacer()
-
-            NavigationLink {
-                AddVehicleView()
-            } label: {
-                Text("Continue")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                ForEach(stepLabels.indices, id: \.self) { index in
+                    Capsule()
+                        .fill(
+                            index < step
+                                ? Color.primary
+                                : Color.secondary.opacity(0.22)
+                        )
+                        .frame(height: 4)
+                }
             }
-            .buttonStyle(.borderedProminent)
+
+            Text("Step \(step) of \(stepLabels.count) · \(stepLabels[step - 1])")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(24)
+        .padding(.top, 8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Step \(step) of \(stepLabels.count): \(stepLabels[step - 1])")
     }
 }
 
@@ -141,6 +140,8 @@ struct AddVehicleView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                OnboardingProgressView(step: 2)
+
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Add your vehicle")
                         .font(.largeTitle)
@@ -208,6 +209,8 @@ struct VINScannerPreparationView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                OnboardingProgressView(step: 2)
+
                 ZStack {
                     RoundedRectangle(cornerRadius: 28)
                         .fill(.thinMaterial)
@@ -310,6 +313,8 @@ struct ManufacturerView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
+                OnboardingProgressView(step: 2)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Choose your manufacturer")
                         .font(.largeTitle)
@@ -421,6 +426,8 @@ struct ModelView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
+                OnboardingProgressView(step: 2)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Choose your model")
                         .font(.largeTitle)
@@ -566,15 +573,11 @@ struct YearView: View {
         selectedModel?.productionYears ?? []
     }
 
-    private func hasVerifiedConfiguration(
-        for year: Int
-    ) -> Bool {
-        selectedModel?.verifiedConfiguration(for: year) != nil
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
+                OnboardingProgressView(step: 2)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Choose your year")
                         .font(.largeTitle)
@@ -642,33 +645,15 @@ struct YearView: View {
 
     @ViewBuilder
     private func yearOption(for year: Int) -> some View {
-        if hasVerifiedConfiguration(for: year) {
-            NavigationLink {
-                VerifiedConfigurationStartView()
-                    .onAppear {
-                        prepareVehicle(
-                            for: year,
-                            verification: .verified
-                        )
-                    }
-            } label: {
-                yearCard(for: year)
-            }
-            .buttonStyle(.plain)
-        } else {
-            NavigationLink {
-                RecognizedVehicleYearView(year: year)
-                    .onAppear {
-                        prepareVehicle(
-                            for: year,
-                            verification: .basicUnverified
-                        )
-                    }
-            } label: {
-                yearCard(for: year)
-            }
-            .buttonStyle(.plain)
+        NavigationLink {
+            VehicleConfirmationView()
+                .onAppear {
+                    applyVehicleYear(year, to: vehicle)
+                }
+        } label: {
+            yearCard(for: year)
         }
+        .buttonStyle(.plain)
     }
 
     private func yearCard(for year: Int) -> some View {
@@ -689,81 +674,6 @@ struct YearView: View {
                     )
             }
     }
-
-    private func prepareVehicle(
-        for year: Int,
-        verification: VehicleProfileVerification
-    ) {
-        vehicle.year = String(year)
-        vehicle.bodyStyle = ""
-        vehicle.powertrain = ""
-        vehicle.drivetrain = ""
-        vehicle.drivetrainSystem = ""
-        vehicle.transmission = ""
-        vehicle.trim = ""
-        vehicle.profileVerification = verification
-    }
-}
-
-// MARK: - Basic Vehicle Profile
-
-struct RecognizedVehicleYearView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    let year: Int
-
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 52))
-
-            VStack(spacing: 9) {
-                Text("Vehicle year recognized")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-
-                Text(
-                    "OpenHood recognizes the \(year) \(vehicle.manufacturer) \(vehicle.model), but detailed configuration data is still being expanded."
-                )
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            }
-
-            VStack(alignment: .leading, spacing: 7) {
-                Label("Basic vehicle profile", systemImage: "info.circle.fill")
-                    .font(.headline)
-
-                Text(
-                    "General guidance is available, but transmission, trim, and compatibility information has not been verified for this year."
-                )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-
-            Spacer()
-
-            NavigationLink {
-                ManualVehicleTransmissionView()
-            } label: {
-                Text("Continue")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding(24)
-        .navigationTitle("Model Year")
-        .navigationBarTitleDisplayMode(.inline)
-    }
 }
 
 struct ManualVehicleYearView: View {
@@ -778,6 +688,8 @@ struct ManualVehicleYearView: View {
 
     var body: some View {
         VStack(spacing: 24) {
+            OnboardingProgressView(step: 2)
+
             VStack(spacing: 9) {
                 Text("Enter your model year")
                     .font(.largeTitle)
@@ -820,12 +732,11 @@ struct ManualVehicleYearView: View {
             Spacer()
 
             NavigationLink {
-                ManualVehicleTransmissionView()
+                VehicleConfirmationView()
                     .onAppear {
-                        vehicle.year = year
-                        vehicle.transmission = ""
-                        vehicle.trim = ""
-                        vehicle.profileVerification = .basicUnverified
+                        if let yearNumber = Int(year) {
+                            applyVehicleYear(yearNumber, to: vehicle)
+                        }
                     }
             } label: {
                 Text("Continue")
@@ -845,725 +756,139 @@ struct ManualVehicleYearView: View {
     }
 }
 
-struct ManualVehicleTransmissionView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
+/// Sets the vehicle's year and silently fills in whatever the catalog
+/// unambiguously knows for that make/model/year. Fields the catalog has no
+/// single confirmed answer for are left blank ("not confirmed") rather than
+/// forcing the owner to answer a screen about them.
+private func applyVehicleYear(
+    _ year: Int,
+    to vehicle: VehicleOnboardingData
+) {
+    vehicle.year = String(year)
 
-    private let transmissions = [
-        "Manual",
-        "Automatic",
-        "Other",
-        "I’m not sure"
-    ]
+    let autoFill = VehicleCatalog.autoFillConfiguration(
+        makeName: vehicle.manufacturer,
+        modelName: vehicle.model,
+        year: year
+    )
+
+    vehicle.bodyStyle = autoFill?.bodyStyle ?? ""
+    vehicle.powertrain = autoFill?.powertrain ?? ""
+    vehicle.drivetrain = autoFill?.drivetrain ?? ""
+    vehicle.drivetrainSystem = autoFill?.drivetrainSystem ?? ""
+    vehicle.transmission = autoFill?.transmission ?? ""
+    vehicle.trim = autoFill?.trim ?? ""
+
+    let confirmedAnyDetail = [
+        autoFill?.bodyStyle,
+        autoFill?.powertrain,
+        autoFill?.drivetrain,
+        autoFill?.drivetrainSystem,
+        autoFill?.transmission,
+        autoFill?.trim
+    ].contains { $0 != nil }
+
+    vehicle.profileVerification = confirmedAnyDetail ? .verified : .basicUnverified
+}
+
+// MARK: - Confirmation
+
+struct VehicleConfirmationView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @EnvironmentObject private var garageStore: GarageStore
+    @EnvironmentObject private var onboardingSession: OnboardingSession
+
+    private var confirmedDetails: [(label: String, value: String)] {
+        [
+            ("Body style", vehicle.bodyStyle),
+            ("Powertrain", vehicle.powertrain),
+            ("Drivetrain", vehicle.drivetrain),
+            ("Transmission", vehicle.transmission),
+            ("Trim", vehicle.trim)
+        ].filter { !$0.1.isEmpty }
+    }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 9) {
-                    Text("Choose your transmission")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
+            VStack(spacing: 24) {
+                OnboardingProgressView(step: 3)
 
-                    Text(vehicle.vehicleName)
+                VStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.primary.opacity(0.08))
+                            .frame(width: 88, height: 88)
+
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 40))
+                    }
+
+                    VStack(spacing: 9) {
+                        Text(vehicle.vehicleName)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .multilineTextAlignment(.center)
+
+                        Text(
+                            vehicle.profileVerification == .verified
+                                ? "OpenHood recognizes this vehicle and filled in what it knows."
+                                : "OpenHood has added this vehicle to your garage."
+                        )
                         .font(.body)
                         .foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 6)
-
-                ForEach(transmissions, id: \.self) { transmission in
-                    NavigationLink {
-                        ManualVehicleTrimView()
-                            .onAppear {
-                                vehicle.transmission = transmission == "I’m not sure"
-                                    ? "Not confirmed"
-                                    : transmission
-                                vehicle.trim = ""
-                            }
-                    } label: {
-                        ChoiceCard(
-                            icon: transmission == "I’m not sure"
-                                ? "questionmark.circle.fill"
-                                : "gearshape.fill",
-                            title: transmission,
-                            subtitle: "Basic profile selection"
-                        )
+                        .multilineTextAlignment(.center)
                     }
-                    .buttonStyle(.plain)
                 }
-            }
-            .padding(24)
-        }
-        .navigationTitle("Transmission")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
+                .padding(.top, 8)
 
-struct ManualVehicleTrimView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
+                if !confirmedDetails.isEmpty {
+                    VStack(spacing: 0) {
+                        ForEach(Array(confirmedDetails.enumerated()), id: \.offset) { index, detail in
+                            if index > 0 {
+                                Divider()
+                            }
 
-    @State private var trim = ""
-    @FocusState private var trimFieldIsFocused: Bool
-
-    private var cleanedTrim: String {
-        trim.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    var body: some View {
-        VStack(spacing: 22) {
-            VStack(spacing: 9) {
-                Text("Enter your trim")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
-                Text("Enter the trim if you know it, or continue without confirming it.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            TextField("Trim", text: $trim)
-                .textInputAutocapitalization(.words)
-                .focused($trimFieldIsFocused)
-                .font(.title3)
-                .padding(18)
-                .background(.thinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-
-            Spacer()
-
-            VStack(spacing: 12) {
-                NavigationLink {
-                    MileageView()
-                        .onAppear {
-                            vehicle.trim = cleanedTrim
+                            GarageDetailRow(title: detail.label, value: detail.value)
                         }
+                    }
+                    .background(.thinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                }
+
+                VStack(alignment: .leading, spacing: 7) {
+                    Label("You can add more anytime", systemImage: "info.circle.fill")
+                        .font(.headline)
+
+                    Text(
+                        "Mileage and maintenance history are optional. Add them later from this vehicle's profile whenever you're ready."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+
+                Spacer(minLength: 12)
+
+                Button {
+                    onboardingSession.complete(
+                        vehicle: vehicle,
+                        garageStore: garageStore
+                    )
                 } label: {
-                    Text("Continue")
+                    Text("Enter OpenHood")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(cleanedTrim.isEmpty)
-
-                NavigationLink {
-                    MileageView()
-                        .onAppear {
-                            vehicle.trim = "Not confirmed"
-                        }
-                } label: {
-                    Text("I’m not sure")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-            }
-        }
-        .padding(24)
-        .navigationTitle("Trim")
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            trimFieldIsFocused = true
-        }
-    }
-}
-
-// MARK: - Verified Configuration
-
-struct VerifiedConfigurationStartView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    var body: some View {
-        Group {
-            if vehicle.manufacturer == "Honda" && vehicle.model == "Civic" {
-                BodyStyleView()
-            } else {
-                TransmissionView()
-            }
-        }
-    }
-}
-
-struct BodyStyleView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    private var configuration: VehicleYearConfiguration? {
-        guard let year = Int(vehicle.year) else { return nil }
-        return VehicleCatalog.verifiedConfiguration(
-            makeName: vehicle.manufacturer,
-            modelName: vehicle.model,
-            year: year
-        )
-    }
-
-    private var bodyStyles: [String] {
-        Array(Set(configuration?.verifiedConfigurations.compactMap(\.bodyStyle) ?? [])).sorted()
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                configurationHeader(title: "Choose your body style")
-
-                ForEach(bodyStyles, id: \.self) { bodyStyle in
-                    NavigationLink {
-                        nextView(after: bodyStyle)
-                    } label: {
-                        ChoiceCard(
-                            icon: "car.side.fill",
-                            title: bodyStyle,
-                            subtitle: "2013 Civic \(bodyStyle.lowercased())"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
             }
             .padding(24)
         }
-        .navigationTitle("Body Style")
+        .navigationTitle("Confirm Vehicle")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    @ViewBuilder
-    private func nextView(after bodyStyle: String) -> some View {
-        let matches = configuration?.matchingConfigurations(bodyStyle: bodyStyle) ?? []
-        let powertrains = Array(Set(matches.compactMap(\.powertrain))).sorted()
-
-        if powertrains.count == 1, let powertrain = powertrains.first {
-            TrimView(asksForTransmissionAfterSelection: true)
-                .onAppear {
-                    vehicle.bodyStyle = bodyStyle
-                    vehicle.powertrain = powertrain
-                    vehicle.transmission = ""
-                    vehicle.trim = ""
-                }
-        } else {
-            PowertrainView()
-                .onAppear {
-                    vehicle.bodyStyle = bodyStyle
-                    vehicle.powertrain = ""
-                    vehicle.transmission = ""
-                    vehicle.trim = ""
-                }
-        }
-    }
-
-    private func configurationHeader(title: String) -> some View {
-        VStack(spacing: 9) {
-            Text(title)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-
-            Text(vehicle.vehicleName)
-                .font(.body)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.bottom, 6)
-    }
-}
-
-struct PowertrainView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    private var configuration: VehicleYearConfiguration? {
-        guard let year = Int(vehicle.year) else { return nil }
-        return VehicleCatalog.verifiedConfiguration(
-            makeName: vehicle.manufacturer,
-            modelName: vehicle.model,
-            year: year
-        )
-    }
-
-    private var powertrains: [String] {
-        let matches = configuration?.matchingConfigurations(bodyStyle: vehicle.bodyStyle) ?? []
-        return Array(Set(matches.compactMap(\.powertrain))).sorted()
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 9) {
-                    Text("Choose your powertrain")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-
-                    Text(vehicle.vehicleName)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 6)
-
-                ForEach(powertrains, id: \.self) { powertrain in
-                    NavigationLink {
-                        nextView(after: powertrain)
-                    } label: {
-                        ChoiceCard(
-                            icon: "engine.combustion.fill",
-                            title: powertrain,
-                            subtitle: "Verified 2013 Civic powertrain"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(24)
-        }
-        .navigationTitle("Powertrain")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    @ViewBuilder
-    private func nextView(after powertrain: String) -> some View {
-        let matches = configuration?.matchingConfigurations(
-            bodyStyle: vehicle.bodyStyle,
-            powertrain: powertrain
-        ) ?? []
-        let transmissions = Array(Set(matches.compactMap(\.transmission))).sorted()
-        let trims = Array(Set(matches.compactMap(\.trim))).sorted()
-
-        if transmissions.count == 1,
-           let transmission = transmissions.first,
-           trims.count == 1,
-           let trim = trims.first {
-            MileageView()
-                .onAppear {
-                    vehicle.powertrain = powertrain
-                    vehicle.transmission = transmission
-                    vehicle.trim = trim
-                }
-        } else {
-            TrimView(asksForTransmissionAfterSelection: true)
-                .onAppear {
-                    vehicle.powertrain = powertrain
-                    vehicle.transmission = ""
-                    vehicle.trim = ""
-                }
-        }
-    }
-}
-
-struct DrivetrainView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    private let choices = [
-        (title: "2WD", subtitle: "Rear-wheel drive"),
-        (title: "4WD", subtitle: "Four-wheel drive")
-    ]
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 9) {
-                    Text("Choose your drivetrain")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-
-                    Text(vehicle.vehicleName)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 6)
-
-                ForEach(choices, id: \.title) { choice in
-                    NavigationLink {
-                        TrimView()
-                            .onAppear {
-                                vehicle.drivetrain = choice.title
-                                vehicle.drivetrainSystem = choice.subtitle
-                                vehicle.trim = ""
-                            }
-                    } label: {
-                        ChoiceCard(
-                            icon: "car.side.fill",
-                            title: choice.title,
-                            subtitle: choice.subtitle
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                NavigationLink {
-                    TrimView()
-                        .onAppear {
-                            vehicle.drivetrain = "Not confirmed"
-                            vehicle.drivetrainSystem = "Not confirmed"
-                            vehicle.trim = ""
-                        }
-                } label: {
-                    ChoiceCard(
-                        icon: "questionmark.circle.fill",
-                        title: "I’m not sure",
-                        subtitle: "You can confirm this later"
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(24)
-        }
-        .navigationTitle("Drivetrain")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-// MARK: - Transmission
-
-struct TransmissionView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    private var selectedYear: Int? {
-        Int(vehicle.year)
-    }
-
-    private var configuration: VehicleYearConfiguration? {
-        guard let selectedYear else {
-            return nil
-        }
-
-        return VehicleCatalog.verifiedConfiguration(
-            makeName: vehicle.manufacturer,
-            modelName: vehicle.model,
-            year: selectedYear
-        )
-    }
-
-    private var transmissions: [String] {
-        guard let configuration else { return [] }
-
-        if configuration.verifiedConfigurations.isEmpty {
-            return configuration.transmissions
-        }
-
-        let matches = configuration.matchingConfigurations(
-            bodyStyle: vehicle.bodyStyle.isEmpty ? nil : vehicle.bodyStyle,
-            powertrain: vehicle.powertrain.isEmpty ? nil : vehicle.powertrain,
-            drivetrain: vehicle.drivetrain.isEmpty ? nil : vehicle.drivetrain,
-            trim: vehicle.trim.isEmpty ? nil : vehicle.trim
-        )
-        return Array(Set(matches.compactMap(\.transmission))).sorted()
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 9) {
-                    Text("Choose your transmission")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-
-                    Text(vehicle.vehicleName)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 6)
-
-                if transmissions.isEmpty {
-                    Text("Transmission information is not available yet.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(24)
-                } else {
-                    ForEach(transmissions, id: \.self) { transmission in
-                        transmissionLink(
-                            title: transmission
-                        )
-                    }
-                }
-
-                NavigationLink {
-                    TrimView()
-                        .onAppear {
-                            vehicle.transmission = "Not confirmed"
-                            vehicle.trim = ""
-                        }
-                } label: {
-                    ChoiceCard(
-                        icon: "questionmark.circle.fill",
-                        title: "I’m not sure",
-                        subtitle: "You can confirm this later"
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(24)
-        }
-        .navigationTitle("Transmission")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func transmissionLink(
-        title: String
-    ) -> some View {
-        NavigationLink {
-            nextView(after: title)
-        } label: {
-            ChoiceCard(
-                icon: transmissionIcon(for: title),
-                title: title,
-                subtitle: transmissionSubtitle(for: title)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private func nextView(after transmission: String) -> some View {
-        let matchingTrims: [String] = {
-            guard let configuration else { return [] }
-
-            if configuration.verifiedConfigurations.isEmpty {
-                return configuration.compatibleTrims(for: transmission)
-            }
-
-            let matches = configuration.matchingConfigurations(
-                bodyStyle: vehicle.bodyStyle.isEmpty ? nil : vehicle.bodyStyle,
-                powertrain: vehicle.powertrain.isEmpty ? nil : vehicle.powertrain,
-                drivetrain: vehicle.drivetrain.isEmpty ? nil : vehicle.drivetrain,
-                transmission: transmission
-            )
-            return Array(Set(matches.compactMap(\.trim))).sorted()
-        }()
-
-        if !vehicle.trim.isEmpty {
-            MileageView()
-                .onAppear {
-                    vehicle.transmission = transmission
-                }
-        } else if matchingTrims.count == 1, let trim = matchingTrims.first {
-            MileageView()
-                .onAppear {
-                    vehicle.transmission = transmission
-                    vehicle.trim = trim
-                }
-        } else {
-            TrimView()
-                .onAppear {
-                    vehicle.transmission = transmission
-                    vehicle.trim = ""
-                }
-        }
-    }
-
-    private func transmissionIcon(
-        for transmission: String
-    ) -> String {
-        if transmission.localizedCaseInsensitiveContains("manual") {
-            return "gearshape.2.fill"
-        }
-
-        return "gearshape.fill"
-    }
-
-    private func transmissionSubtitle(
-        for transmission: String
-    ) -> String {
-        if transmission.localizedCaseInsensitiveContains("manual") {
-            return "Driver-operated gear selection"
-        }
-
-        return "Automatic gear selection"
-    }
-}
-
-// MARK: - Trim
-
-struct TrimView: View {
-    @EnvironmentObject private var vehicle: VehicleOnboardingData
-
-    let asksForTransmissionAfterSelection: Bool
-
-    init(asksForTransmissionAfterSelection: Bool = false) {
-        self.asksForTransmissionAfterSelection = asksForTransmissionAfterSelection
-    }
-
-    private var selectedYear: Int? {
-        Int(vehicle.year)
-    }
-
-    private var configuration: VehicleYearConfiguration? {
-        guard let selectedYear else {
-            return nil
-        }
-
-        return VehicleCatalog.verifiedConfiguration(
-            makeName: vehicle.manufacturer,
-            modelName: vehicle.model,
-            year: selectedYear
-        )
-    }
-
-    private var trims: [String] {
-        guard let configuration else { return [] }
-
-        if configuration.verifiedConfigurations.isEmpty {
-            return configuration.compatibleTrims(for: vehicle.transmission)
-        }
-
-        return Array(Set(configuration.matchingConfigurations(
-            bodyStyle: vehicle.bodyStyle.isEmpty ? nil : vehicle.bodyStyle,
-            powertrain: vehicle.powertrain.isEmpty ? nil : vehicle.powertrain,
-            drivetrain: vehicle.drivetrain.isEmpty ? nil : vehicle.drivetrain,
-            transmission: vehicle.transmission.isEmpty ? nil : vehicle.transmission
-        ).compactMap(\.trim))).sorted()
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 9) {
-                    Text("Choose your trim")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-
-                    Text(
-                        "Select the version that best matches your \(vehicle.year) \(vehicle.model)."
-                    )
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                }
-                .padding(.bottom, 6)
-
-                if trims.isEmpty {
-                    Text("Trim information is not available yet.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(24)
-                } else {
-                    ForEach(trims, id: \.self) { trim in
-                        trimLink(title: trim)
-                    }
-                }
-
-                NavigationLink {
-                    MileageView()
-                        .onAppear {
-                            vehicle.trim = "Not confirmed"
-                        }
-                } label: {
-                    ChoiceCard(
-                        icon: "questionmark.circle.fill",
-                        title: "I’m not sure",
-                        subtitle: "You can confirm this later"
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(24)
-        }
-        .navigationTitle("Trim")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func trimLink(
-        title: String
-    ) -> some View {
-        NavigationLink {
-            nextView(after: title)
-        } label: {
-            ChoiceCard(
-                icon: trimIcon(for: title),
-                title: title,
-                subtitle: trimSubtitle(for: title)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private func nextView(after trim: String) -> some View {
-        let matches = configuration?.matchingConfigurations(
-            bodyStyle: vehicle.bodyStyle.isEmpty ? nil : vehicle.bodyStyle,
-            powertrain: vehicle.powertrain.isEmpty ? nil : vehicle.powertrain,
-            drivetrain: vehicle.drivetrain.isEmpty ? nil : vehicle.drivetrain,
-            transmission: vehicle.transmission.isEmpty ? nil : vehicle.transmission,
-            trim: trim
-        ) ?? []
-        let transmissions = Array(Set(matches.compactMap(\.transmission))).sorted()
-
-        if asksForTransmissionAfterSelection && transmissions.count > 1 {
-            TransmissionView()
-                .onAppear {
-                    vehicle.trim = trim
-                    vehicle.transmission = ""
-                }
-        } else {
-            MileageView()
-                .onAppear {
-                    vehicle.trim = trim
-                    if asksForTransmissionAfterSelection,
-                       let transmission = transmissions.first {
-                        vehicle.transmission = transmission
-                    }
-                    if let match = matches.first {
-                        vehicle.drivetrainSystem = match.drivetrainSystem ?? vehicle.drivetrainSystem
-                    }
-                }
-        }
-    }
-
-    private func trimIcon(
-        for trim: String
-    ) -> String {
-        if trim.localizedCaseInsensitiveContains("NISMO") {
-            return "flag.checkered"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Roadster") {
-            return "sun.max.fill"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Track") {
-            return "gauge.with.dots.needle.67percent"
-        }
-
-        return "car.side.fill"
-    }
-
-    private func trimSubtitle(
-        for trim: String
-    ) -> String {
-        if trim == "Si Coupe" {
-            return "Si performance trim · Coupe · Manual only"
-        }
-
-        if trim == "Si Sedan" {
-            return "Si performance trim · Sedan · Manual only"
-        }
-
-        if trim.localizedCaseInsensitiveContains("NISMO") {
-            return "NISMO performance configuration"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Roadster") {
-            return "Convertible configuration"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Track") {
-            return "Factory performance trim · Manual only"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Touring") {
-            return "Comfort and premium equipment"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Performance") {
-            return "Performance-focused equipment"
-        }
-
-        if trim.localizedCaseInsensitiveContains("Anniversary") {
-            return "Special-edition configuration"
-        }
-
-        return "Factory trim configuration"
     }
 }
 

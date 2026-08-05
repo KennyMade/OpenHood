@@ -200,6 +200,7 @@ struct VehicleDetailView: View {
     @EnvironmentObject private var garageStore: GarageStore
     @Environment(\.dismiss) private var dismiss
     @State private var isConfirmingRemoval = false
+    @State private var isFinishingSetup = false
 
     let vehicle: SavedVehicle
 
@@ -257,6 +258,19 @@ struct VehicleDetailView: View {
                 }
 
                 VehicleDetailProfileCard(completion: profileCompletion)
+
+                if profileCompletion < 1.0 {
+                    Button {
+                        isFinishingSetup = true
+                    } label: {
+                        ChoiceCard(
+                            icon: "checklist",
+                            title: "Finish setting up this vehicle",
+                            subtitle: "Add mileage and maintenance history"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 VStack(spacing: 0) {
                     GarageDetailRow(title: "Trim", value: vehicle.trim ?? "Not confirmed")
@@ -444,6 +458,43 @@ struct VehicleDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This removes the vehicle from OpenHood on this device.")
+        }
+        .fullScreenCover(isPresented: $isFinishingSetup) {
+            FinishVehicleSetupView(savedVehicle: vehicle)
+        }
+    }
+}
+
+struct FinishVehicleSetupView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var vehicle: VehicleOnboardingData
+    @StateObject private var setupSession: OnboardingSession
+
+    init(savedVehicle: SavedVehicle) {
+        _vehicle = StateObject(
+            wrappedValue: VehicleOnboardingData(savedVehicle: savedVehicle)
+        )
+        _setupSession = StateObject(
+            wrappedValue: OnboardingSession(existingVehicleID: savedVehicle.id)
+        )
+    }
+
+    var body: some View {
+        NavigationStack {
+            MileageView()
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                    }
+                }
+        }
+        .environmentObject(vehicle)
+        .environmentObject(setupSession)
+        .onChange(of: setupSession.completedVehicleID) { _, vehicleID in
+            guard vehicleID != nil else { return }
+            dismiss()
         }
     }
 }
