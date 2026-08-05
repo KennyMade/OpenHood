@@ -204,6 +204,24 @@ enum IncidentEvidenceGatedKnowledge {
             source: "AAA, \"13 Common Car Problems Explained\".",
             limitations: "\"May\" is mandatory; symptom does not confirm either condition or a particular failed component."
         ),
+        // CLM-OIL-001: unlike CLM-MIL-005 above (a PRODUCT_POLICY claim —
+        // OpenHood's own evidence-gating process, not a driving
+        // instruction), this backs an actual STOP DRIVING decision with
+        // real, corroborated general automotive safety guidance, so it
+        // follows the CLM-BRK-003 pattern instead: PROFESSIONALLY_
+        // SUPPORTED_GENERAL_GUIDANCE tier, DIRECT support,
+        // VISIBLE_GUIDANCE_APPROVED. No vehicle scope needed — a
+        // continuously illuminated oil-pressure warning means the same
+        // thing on any vehicle.
+        IncidentClaim(
+            id: "CLM-OIL-001",
+            exactClaim: "A continuously illuminated oil-pressure warning light while driving indicates possible loss of oil pressure, and the vehicle should be stopped and shut off promptly rather than driven further, since continued operation risks engine damage.",
+            sourceTier: .professionallySupportedGeneralGuidance,
+            supportType: .direct,
+            productUseStatus: .visibleGuidanceApproved,
+            source: "AAA, \"AAA Reminds Drivers to Not Ignore Their Car's Warning Lights\".",
+            limitations: "Applies to a light that stays on while driving; does not confirm the exact cause (low oil level, a failed pump, or a faulty sensor)."
+        ),
         IncidentClaim(
             id: "CLM-BRK-004",
             exactClaim: "OpenHood must not identify a master cylinder, booster, hose, caliper, ABS unit, or other component from pedal feel alone.",

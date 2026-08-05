@@ -109,6 +109,8 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
     var guidanceSnapshot: IncidentGuidanceSnapshot?
     var urgentFollowUpAnswers: [String: String]?
     var noiseFollowUpAnswers: [String: String]?
+    var warningFollowUpAnswers: [String: String]?
+    var fluidFollowUpAnswers: [String: String]?
 
     var urgency: IncidentUrgency? {
         safetySelection?.urgency
@@ -127,7 +129,9 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
         recentWorkNotes: String = "",
         guidanceSnapshot: IncidentGuidanceSnapshot? = nil,
         urgentFollowUpAnswers: [String: String]? = nil,
-        noiseFollowUpAnswers: [String: String]? = nil
+        noiseFollowUpAnswers: [String: String]? = nil,
+        warningFollowUpAnswers: [String: String]? = nil,
+        fluidFollowUpAnswers: [String: String]? = nil
     ) {
         self.id = id
         self.vehicleID = vehicleID
@@ -142,5 +146,7 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
         self.guidanceSnapshot = guidanceSnapshot
         self.urgentFollowUpAnswers = urgentFollowUpAnswers
         self.noiseFollowUpAnswers = noiseFollowUpAnswers
+        self.warningFollowUpAnswers = warningFollowUpAnswers
+        self.fluidFollowUpAnswers = fluidFollowUpAnswers
     }
 }

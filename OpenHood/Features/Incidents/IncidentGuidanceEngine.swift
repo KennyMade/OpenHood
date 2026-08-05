@@ -197,6 +197,10 @@ private extension IncidentGuidanceEngine {
             incident.recentWorkResponse == response
         case .noiseAnswer(let key, let value):
             incident.noiseFollowUpAnswers?[key] == value
+        case .warningAnswer(let key, let value):
+            incident.warningFollowUpAnswers?[key] == value
+        case .fluidAnswer(let key, let value):
+            incident.fluidFollowUpAnswers?[key] == value
         }
     }
 
@@ -393,6 +397,15 @@ private extension IncidentGuidanceEngine {
                 return milHasSevereActiveSymptom(answers: answers)
                     ? .stopDriving
                     : .checkBeforeDriving
+            }
+            if answers[IncidentUrgentAnswerKey.warningSymbol] == "Oil pressure" {
+                // CLM-OIL-001: a continuously illuminated oil-pressure
+                // warning while driving indicates possible loss of oil
+                // pressure — continuing to drive risks engine damage, so
+                // this gets its own deliberate STOP DRIVING decision
+                // instead of falling through to the generic CHECK BEFORE
+                // DRIVING default an unexamined symbol would get.
+                return .stopDriving
             }
             if answers[IncidentUrgentAnswerKey.warningSymbol] == "Tire pressure" {
                 return .checkBeforeDriving
@@ -831,6 +844,10 @@ private extension IncidentGuidanceEngine {
             if milHasSevereActiveSymptom(answers: answers) {
                 ids += evidenceClaims("CLM-MIL-005S", vehicle: vehicle).map(\.id)
             }
+        }
+        if incident.safetySelection == .flashingWarningLight,
+           answers[IncidentUrgentAnswerKey.warningSymbol] == "Oil pressure" {
+            ids += evidenceClaims("CLM-OIL-001", vehicle: vehicle).map(\.id)
         }
         if incident.safetySelection == .overheatingOrSteam {
             ids += evidenceClaims("CLM-OHT-005", vehicle: vehicle).map(\.id)

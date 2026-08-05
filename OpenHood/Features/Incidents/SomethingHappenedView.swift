@@ -184,6 +184,8 @@ private enum IncidentStep: Hashable {
     case cautionSafety
     case observations
     case noiseQuestion(Int)
+    case warningQuestion(Int)
+    case fluidQuestion(Int)
     case description
     case recentWork
     case review
@@ -278,6 +280,10 @@ private struct IncidentIntakeView: View {
             }
         case .noiseQuestion(let index):
             noiseQuestionDestination(index: index)
+        case .warningQuestion(let index):
+            warningQuestionDestination(index: index)
+        case .fluidQuestion(let index):
+            fluidQuestionDestination(index: index)
         case .description:
             IncidentDescriptionView(
                 description: $incident.userDescription,
@@ -401,7 +407,7 @@ private struct IncidentIntakeView: View {
         if let index = nextUnansweredNoiseQuestionIndex {
             appendIfNeeded(.noiseQuestion(index))
         } else {
-            appendIfNeeded(.description)
+            advanceWarningIntake()
         }
     }
 
@@ -418,6 +424,189 @@ private struct IncidentIntakeView: View {
         var answers = incident.noiseFollowUpAnswers ?? [:]
         answers[key] = answer
         incident.noiseFollowUpAnswers = answers
+        saveDraft()
+    }
+
+    /// phase1.warning.record-code / phase1.warning.engine-information:
+    /// structured follow-up asked only when the reported observation
+    /// includes .warningLightOrMessage — see `warningQuestions`. Chained
+    /// after the noise questions (advanceNoiseIntake falls through to
+    /// this once noise questions are answered or not applicable), then
+    /// falls through to the fluid questions below, so a report can
+    /// include a sound, a warning light, a visible fluid, an odor, or
+    /// any combination without any path being skipped.
+    @ViewBuilder
+    private func warningQuestionDestination(index: Int) -> some View {
+        let questions = warningQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .warningQuestion(index) else { return }
+                setWarningAnswer(answer, key: question.answerKey)
+                advanceWarningIntake()
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                advanceWarningIntake()
+            }
+        }
+    }
+
+    private var warningQuestions: [IncidentUrgentQuestion] {
+        guard incident.observationTypes.contains(.warningLightOrMessage) else {
+            return []
+        }
+        return [
+            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "I’m not sure which one"])
+        ]
+    }
+
+    private func advanceWarningIntake() {
+        if let index = nextUnansweredWarningQuestionIndex {
+            appendIfNeeded(.warningQuestion(index))
+        } else {
+            advanceFluidIntake()
+        }
+    }
+
+    private var nextUnansweredWarningQuestionIndex: Int? {
+        warningQuestions.firstIndex { question in
+            guard let answer = incident.warningFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private func setWarningAnswer(_ answer: String, key: String) {
+        var answers = incident.warningFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.warningFollowUpAnswers = answers
+        saveDraft()
+    }
+
+    /// phase1.fluid-smell.visible-fluid / phase1.fluid-smell.unusual-odor:
+    /// structured follow-up asked only when the reported observation
+    /// includes .visible (color question) and/or .smell (odor question)
+    /// — see `fluidQuestions`. Chained after the warning questions
+    /// (advanceWarningIntake falls through to this once warning questions
+    /// are answered or not applicable), then falls through to
+    /// .description itself, same pattern as noise/warning above.
+    ///
+    /// "Electrical or burning plastic" and "Exhaust" are deliberately
+    /// excluded from that fall-through — see escalateToUrgentSafety below.
+    @ViewBuilder
+    private func fluidQuestionDestination(index: Int) -> some View {
+        let questions = fluidQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .fluidQuestion(index) else { return }
+                setFluidAnswer(answer, key: question.answerKey)
+                if question.answerKey == IncidentFluidAnswerKey.odor,
+                   let escalation = dangerousOdorEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else {
+                    advanceFluidIntake()
+                }
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                advanceFluidIntake()
+            }
+        }
+    }
+
+    private var fluidQuestions: [IncidentUrgentQuestion] {
+        var questions: [IncidentUrgentQuestion] = []
+        if incident.observationTypes.contains(.visible) {
+            questions.append(
+                question("What color was the fluid?", key: IncidentFluidAnswerKey.color, choices: ["Green, orange, pink, or yellow", "Brown or black", "Red or reddish", "Clear or light", "I’m not sure"])
+            )
+        }
+        if incident.observationTypes.contains(.smell) {
+            questions.append(
+                question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "I’m not sure"])
+            )
+        }
+        return questions
+    }
+
+    /// OH-UIK gap fix (same tier as the oil-pressure severity fix): Phase 1's
+    /// ordinaryDriveRecommendation can only ever return SERVICE SOON, CHECK
+    /// BEFORE DRIVING, or MONITOR — it has no path to STOP DRIVING. An
+    /// electrical/burning-plastic odor is a real fire-risk precursor and an
+    /// exhaust odor inside the cabin is a real carbon-monoxide risk, so
+    /// neither may resolve to an ordinary Phase 1 result just because the
+    /// person answered the general odor question instead of picking
+    /// "Smoke or fire" / "Strong fuel smell" from the main safety menu up
+    /// front. Rather than inventing a second place that decides "this is a
+    /// stop-driving situation," this reroutes into the exact same urgent
+    /// path those two safety-menu categories already use — same
+    /// safetySelection cases, same urgentFollowUpAnswers keys
+    /// (smokeOdor/smellDescription), same urgentDriveRecommendation switch
+    /// (smokeOrFire/strongFuelSmell both unconditionally return
+    /// .doNotRestart), same urgentContributors content (already has real,
+    /// reviewed handling for exactly these two answer values). See
+    /// escalateToUrgentSafety.
+    private func dangerousOdorEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "Electrical or burning plastic": .smokeOrFire
+        case "Exhaust": .strongFuelSmell
+        default: nil
+        }
+    }
+
+    /// Mirrors the exact mechanism IncidentSafetyQuestionView uses to enter
+    /// the urgent path (set safetySelection, save, push .urgentSafety) —
+    /// the only difference is arriving here mid-flow from the Phase 1 odor
+    /// question instead of the opening safety-check screen. Prefilling the
+    /// matching urgentFollowUpAnswers key means the remaining urgent
+    /// questions for that category (e.g. "Is there an active flame?" for
+    /// smoke/fire) still get asked normally — this does not skip urgent
+    /// intake, it joins it already partway answered.
+    private func escalateToUrgentSafety(_ selection: IncidentSafetySelection) {
+        incident.safetySelection = selection
+        switch selection {
+        case .smokeOrFire:
+            setUrgentAnswer("Electrical or plastic", key: IncidentUrgentAnswerKey.smokeOdor)
+        case .strongFuelSmell:
+            setUrgentAnswer("Exhaust", key: IncidentUrgentAnswerKey.smellDescription)
+        default:
+            saveDraft()
+        }
+        appendIfNeeded(.urgentSafety)
+    }
+
+    private func advanceFluidIntake() {
+        if let index = nextUnansweredFluidQuestionIndex {
+            appendIfNeeded(.fluidQuestion(index))
+        } else {
+            appendIfNeeded(.description)
+        }
+    }
+
+    private var nextUnansweredFluidQuestionIndex: Int? {
+        fluidQuestions.firstIndex { question in
+            guard let answer = incident.fluidFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private func setFluidAnswer(_ answer: String, key: String) {
+        var answers = incident.fluidFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.fluidFollowUpAnswers = answers
         saveDraft()
     }
 

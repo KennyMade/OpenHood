@@ -248,6 +248,18 @@ enum IncidentGuidanceEvidenceSignal: Codable, Equatable {
     /// descriptionContains, this only matches an exact recorded answer —
     /// no free-text keyword guessing.
     case noiseAnswer(key: String, value: String)
+    /// Same idea as noiseAnswer, for the warning-light/message family —
+    /// IncidentWarningAnswerKey answers on
+    /// VehicleIncident.warningFollowUpAnswers. Kept as its own dictionary
+    /// and its own signal case rather than reusing noiseAnswer so the two
+    /// structured follow-up flows can't collide on key names.
+    case warningAnswer(key: String, value: String)
+    /// Same idea as noiseAnswer/warningAnswer, for the fluid-leak/
+    /// unusual-odor family — IncidentFluidAnswerKey answers on
+    /// VehicleIncident.fluidFollowUpAnswers. Its own dictionary and its
+    /// own signal case for the same reason: keeps this flow from
+    /// colliding on key names with the other two.
+    case fluidAnswer(key: String, value: String)
 }
 
 /// Structured follow-up questions for the noise/vibration/suspension
@@ -260,6 +272,28 @@ enum IncidentNoiseAnswerKey {
     static let location = "noiseLocation"
     static let timing = "noiseTiming"
     static let sound = "noiseSound"
+}
+
+/// Structured follow-up question for the warning-light/message record
+/// family (phase1.warning.record-code, phase1.warning.engine-information)
+/// — same reasoning as IncidentNoiseAnswerKey above: asked instead of
+/// relying on free-text description matching. Answers are stored in
+/// VehicleIncident.warningFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.warningAnswer.
+enum IncidentWarningAnswerKey {
+    static let light = "warningLight"
+}
+
+/// Structured follow-up questions for the fluid-leak/unusual-odor record
+/// family (phase1.fluid-smell.visible-fluid, phase1.fluid-smell.unusual-
+/// odor) — same reasoning as IncidentNoiseAnswerKey/IncidentWarningAnswerKey
+/// above. Answers are stored in VehicleIncident.fluidFollowUpAnswers and
+/// matched via IncidentGuidanceEvidenceSignal.fluidAnswer. Two separate
+/// keys (not one) because a single incident can report both a visible
+/// fluid and an unusual odor, each answered independently.
+enum IncidentFluidAnswerKey {
+    static let color = "fluidColor"
+    static let odor = "fluidOdor"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {
