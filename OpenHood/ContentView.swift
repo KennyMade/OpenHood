@@ -332,6 +332,17 @@ struct ManufacturerView: View {
                 ) { region in
                     manufacturerSection(for: region)
                 }
+
+                NavigationLink {
+                    ManualVehicleEntryView()
+                } label: {
+                    ChoiceCard(
+                        icon: "questionmark.circle",
+                        title: "My vehicle isn’t listed",
+                        subtitle: "Create a basic vehicle profile"
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding(24)
         }
@@ -462,6 +473,17 @@ struct ModelView: View {
                         .buttonStyle(.plain)
                     }
                 }
+
+                NavigationLink {
+                    ManualVehicleEntryView()
+                } label: {
+                    ChoiceCard(
+                        icon: "questionmark.circle",
+                        title: "My vehicle isn’t listed",
+                        subtitle: "Create a basic vehicle profile"
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding(24)
         }
@@ -554,6 +576,108 @@ struct ComingSoonModelsCard: View {
         .clipShape(
             RoundedRectangle(cornerRadius: 24)
         )
+    }
+}
+
+// MARK: - Manual Vehicle Entry
+
+/// Fallback entry point for a vehicle whose manufacturer or model isn't in
+/// the catalog yet. Reachable from both ManufacturerView and ModelView.
+/// Feeds the same YearView used by catalog vehicles, so a manufacturer/model
+/// with no verified year data falls through to ManualVehicleYearView exactly
+/// like a catalog vehicle with no verified years would.
+struct ManualVehicleEntryView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+
+    @State private var manufacturer = ""
+    @State private var model = ""
+
+    private enum Field {
+        case manufacturer
+        case model
+    }
+
+    @FocusState private var focusedField: Field?
+
+    private var canContinue: Bool {
+        !manufacturer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        VStack(spacing: 24) {
+            OnboardingProgressView(step: 2)
+
+            VStack(spacing: 9) {
+                Text("Enter your vehicle")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+
+                Text("Type your manufacturer and model. OpenHood will still provide general guidance.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            VStack(spacing: 14) {
+                TextField("Manufacturer", text: $manufacturer)
+                    .textInputAutocapitalization(.words)
+                    .focused($focusedField, equals: .manufacturer)
+                    .padding(18)
+                    .background(.thinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                TextField("Model", text: $model)
+                    .textInputAutocapitalization(.words)
+                    .focused($focusedField, equals: .model)
+                    .padding(18)
+                    .background(.thinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                Label("Basic vehicle profile", systemImage: "info.circle.fill")
+                    .font(.headline)
+
+                Text(
+                    "General guidance is available, but vehicle-specific configuration details have not been verified."
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            Spacer()
+
+            NavigationLink {
+                YearView()
+                    .onAppear {
+                        vehicle.manufacturer = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
+                        vehicle.model = model.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+            } label: {
+                Text("Continue")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!canContinue)
+        }
+        .padding(24)
+        .navigationTitle("Vehicle Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if manufacturer.isEmpty {
+                manufacturer = vehicle.manufacturer
+            }
+
+            focusedField = manufacturer.isEmpty ? .manufacturer : .model
+        }
     }
 }
 
