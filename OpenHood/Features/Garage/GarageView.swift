@@ -199,6 +199,7 @@ struct GarageVehicleCard: View {
 struct VehicleDetailView: View {
     @EnvironmentObject private var garageStore: GarageStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var isConfirmingRemoval = false
     @State private var isFinishingSetup = false
 
@@ -311,133 +312,18 @@ struct VehicleDetailView: View {
                 .buttonStyle(.bordered)
 
                 HomeSectionHeader(
-                    title: "Vehicle health",
-                    subtitle: "What OpenHood currently knows"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Vehicle Health",
-                        message: "Your vehicle-health baseline will appear here after you confirm service history, symptoms, and inspection information."
-                    )
-                } label: {
-                    VehicleHealthCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Maintenance",
-                    subtitle: "Stay ahead of what comes next"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Maintenance Plan",
-                        message: "OpenHood will build a maintenance plan using your mileage, vehicle configuration, service history, and factory guidance."
-                    )
-                } label: {
-                    MaintenanceSummaryCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Service history",
-                    subtitle: "Everything done to your vehicle"
-                )
-
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Service History",
-                        message: "Add repairs, maintenance, inspections, receipts, dates, mileage, parts, and shop information here."
-                    )
-                } label: {
-                    ServiceHistoryCard()
-                }
-                .buttonStyle(.plain)
-
-                HomeSectionHeader(
                     title: "Help nearby",
                     subtitle: "Find the right place for the problem"
                 )
 
-                NavigationLink {
-                    PlaceholderDestinationView(
-                        title: "Nearby Shops",
-                        message: "OpenHood will match nearby repair shops and service centers to your vehicle and selected problem."
-                    )
+                Button {
+                    if let url = MapsHandoff.url(searchingFor: MapsHandoff.genericRepairSearchTerm) {
+                        openURL(url)
+                    }
                 } label: {
                     NearbyShopsCard()
                 }
                 .buttonStyle(.plain)
-
-                HomeSectionHeader(
-                    title: "Vehicle resources",
-                    subtitle: "Knowledge, documents, and ownership tools"
-                )
-
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ],
-                    spacing: 14
-                ) {
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Specifications",
-                            message: "Engine, drivetrain, fluids, capacities, tires, and factory specifications will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "gauge.with.dots.needle.50percent",
-                            title: "Specs",
-                            subtitle: "Factory information"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Documents",
-                            message: "Receipts, inspections, manuals, estimates, warranties, and reports will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "doc.text.fill",
-                            title: "Documents",
-                            subtitle: "Keep every record"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Known Concerns",
-                            message: "Known concerns and inspection-first guidance for your \(vehicle.model) will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "exclamationmark.triangle.fill",
-                            title: "Concerns",
-                            subtitle: "Know what to inspect"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        PlaceholderDestinationView(
-                            title: "Owner Resources",
-                            message: "Owner manuals, recall resources, and factory publications will live here."
-                        )
-                    } label: {
-                        CompactHomeCard(
-                            icon: "books.vertical.fill",
-                            title: "Resources",
-                            subtitle: "Manuals and recalls"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
             }
             .padding(20)
         }

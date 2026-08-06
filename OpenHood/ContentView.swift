@@ -33,7 +33,7 @@ final class VehicleOnboardingData: ObservableObject {
     }
 
     var transmissionDisplay: String {
-        transmission.isEmpty ? "Transmission not confirmed" : transmission
+        transmission.isEmpty ? "Finish setting up your car" : transmission
     }
 
     var mileageDisplay: String {
@@ -87,7 +87,7 @@ struct WelcomeView: View {
             Spacer()
 
             NavigationLink {
-                AddVehicleView()
+                ManufacturerView()
             } label: {
                 Text("Get Started")
                     .font(.headline)
@@ -654,6 +654,7 @@ struct ManualVehicleEntryView: View {
 
 struct YearView: View {
     @EnvironmentObject private var vehicle: VehicleOnboardingData
+    @State private var selectedYear: Int?
 
     private var selectedModel: VehicleModel? {
         VehicleCatalog.model(
@@ -706,17 +707,33 @@ struct YearView: View {
                         RoundedRectangle(cornerRadius: 24)
                     )
                 } else {
-                    LazyVGrid(
-                        columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ],
-                        spacing: 14
-                    ) {
+                    Picker("Year", selection: $selectedYear) {
                         ForEach(years, id: \.self) { year in
-                            yearOption(for: year)
+                            Text(String(year))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .tag(Optional(year))
                         }
                     }
+                    .pickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
+
+                    NavigationLink {
+                        VehicleConfirmationView()
+                            .onAppear {
+                                if let selectedYear {
+                                    applyVehicleYear(selectedYear, to: vehicle)
+                                }
+                            }
+                    } label: {
+                        Text("Continue")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(selectedYear == nil)
                 }
 
                 NavigationLink {
@@ -734,38 +751,23 @@ struct YearView: View {
         }
         .navigationTitle("Year")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    @ViewBuilder
-    private func yearOption(for year: Int) -> some View {
-        NavigationLink {
-            VehicleConfirmationView()
-                .onAppear {
-                    applyVehicleYear(year, to: vehicle)
-                }
-        } label: {
-            yearCard(for: year)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func yearCard(for year: Int) -> some View {
-        Text(String(year))
-            .font(.title2)
-            .fontWeight(.bold)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 22)
-            .background(.thinMaterial)
-            .clipShape(
-                RoundedRectangle(cornerRadius: 18)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(
-                        Color.secondary.opacity(0.12),
-                        lineWidth: 1
-                    )
+        .onAppear {
+            if selectedYear == nil {
+                selectedYear = years.first
             }
+        }
+        // Catching up defaulting via .onChange as well as .onAppear:
+        // ModelView's NavigationLink sets vehicle.model in its own
+        // .onAppear on this same YearView instance, and child .onAppear
+        // callbacks fire before a parent's, so `years` (which depends on
+        // vehicle.model) can still be empty at the moment the .onAppear
+        // above runs. Once vehicle.model actually lands, `years`
+        // recomputes and this catches the default that .onAppear missed.
+        .onChange(of: years) { _, newYears in
+            if selectedYear == nil {
+                selectedYear = newYears.first
+            }
+        }
     }
 }
 
@@ -949,11 +951,11 @@ struct VehicleConfirmationView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Label("You can add more anytime", systemImage: "info.circle.fill")
+                    Label("You’re set — details can wait", systemImage: "info.circle.fill")
                         .font(.headline)
 
                     Text(
-                        "Mileage and maintenance history are optional. Add them later from this vehicle's profile whenever you're ready."
+                        "Mileage and maintenance history are optional and can be added later from this vehicle's profile. You can add more vehicles anytime from the Garage tab."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -1096,7 +1098,7 @@ struct MileageView: View {
 
             VStack(spacing: 12) {
                 NavigationLink {
-                    MaintenanceKnowledgeView()
+                    nextVehicleSetupDestination(vehicle: vehicle)
                         .onAppear {
                             vehicle.mileage = mileage
                         }
@@ -1110,7 +1112,7 @@ struct MileageView: View {
                 .disabled(!canContinue)
 
                 NavigationLink {
-                    MaintenanceKnowledgeView()
+                    nextVehicleSetupDestination(vehicle: vehicle)
                         .onAppear {
                             vehicle.mileage = ""
                         }
@@ -1143,6 +1145,273 @@ struct MileageView: View {
                     mileageFieldIsFocused = false
                 }
             }
+        }
+    }
+}
+
+// MARK: - Vehicle Setup: Missing Specs
+
+/// Only reached from FinishVehicleSetupView's flow (MileageView is not used
+/// anywhere else) — "Finish setting up this vehicle" is the one place a
+/// vehicle can still be missing trim/transmission after the fact, since the
+/// main onboarding confirmation screen completes the vehicle directly
+/// without ever visiting MileageView. Decides which of transmission/trim
+/// (if either) still needs asking, so a vehicle the catalog already
+/// auto-filled never sees an extra screen, and completedFieldCount can
+/// actually reach 6/6 for vehicles the catalog couldn't auto-fill.
+@ViewBuilder
+private func nextVehicleSetupDestination(vehicle: VehicleOnboardingData) -> some View {
+    if vehicle.transmission.isEmpty {
+        VehicleSetupTransmissionView()
+    } else if vehicle.trim.isEmpty {
+        VehicleSetupTrimView()
+    } else {
+        MaintenanceKnowledgeView()
+    }
+}
+
+struct VehicleSetupTransmissionView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+
+    private let choices: [(title: String, icon: String, subtitle: String)] = [
+        ("Automatic", "a.circle.fill", "Shifts on its own"),
+        ("Manual", "m.circle.fill", "Foot clutch and gear shifter"),
+        ("I’m not sure", "questionmark.circle.fill", "Skip for now")
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What transmission does it have?")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+
+                    Text("This is self-reported — OpenHood hasn't verified it.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+
+                ForEach(choices, id: \.title) { choice in
+                    NavigationLink {
+                        nextDestination(for: choice.title)
+                            .onAppear {
+                                vehicle.transmission = choice.title
+                            }
+                    } label: {
+                        ChoiceCard(
+                            icon: choice.icon,
+                            title: choice.title,
+                            subtitle: choice.subtitle
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(24)
+        }
+        .navigationTitle("Transmission")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func nextDestination(for choice: String) -> some View {
+        if choice == "Automatic" {
+            VehicleSetupAutomaticTypeView()
+        } else if vehicle.trim.isEmpty {
+            VehicleSetupTrimView()
+        } else {
+            MaintenanceKnowledgeView()
+        }
+    }
+}
+
+struct VehicleSetupAutomaticTypeView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+
+    private let choices: [(title: String, savedValue: String, icon: String, subtitle: String)] = [
+        ("Traditional automatic", "Automatic", "a.circle.fill", "Torque converter, shifts through fixed gears"),
+        ("CVT (continuously variable)", "CVT (continuously variable)", "infinity.circle.fill", "Continuously variable transmission"),
+        ("Not sure", "Automatic", "questionmark.circle.fill", "Skip for now")
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Traditional automatic, or CVT?")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+
+                    Text("This is self-reported — OpenHood hasn't verified it.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+
+                ForEach(choices, id: \.title) { choice in
+                    NavigationLink {
+                        nextDestination()
+                            .onAppear {
+                                vehicle.transmission = choice.savedValue
+                            }
+                    } label: {
+                        ChoiceCard(
+                            icon: choice.icon,
+                            title: choice.title,
+                            subtitle: choice.subtitle
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(24)
+        }
+        .navigationTitle("Transmission")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func nextDestination() -> some View {
+        if vehicle.trim.isEmpty {
+            VehicleSetupTrimView()
+        } else {
+            MaintenanceKnowledgeView()
+        }
+    }
+}
+
+struct VehicleSetupTrimView: View {
+    @EnvironmentObject private var vehicle: VehicleOnboardingData
+
+    @State private var trimText = ""
+    @FocusState private var trimFieldIsFocused: Bool
+
+    /// Same pattern as "My year isn't listed"/ManualVehicleYearView: offer
+    /// known choices when the catalog has them for this exact make/model/
+    /// year, otherwise fall back to plain text entry with a skip option.
+    private var catalogTrims: [String] {
+        guard let year = Int(vehicle.year) else { return [] }
+        return VehicleCatalog.configuration(
+            makeName: vehicle.manufacturer,
+            modelName: vehicle.model,
+            year: year
+        )?.trims ?? []
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("What trim is it?")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Text("This is self-reported — OpenHood hasn't verified it.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    var body: some View {
+        Group {
+            if catalogTrims.isEmpty {
+                manualEntry
+            } else {
+                catalogChoices
+            }
+        }
+        .navigationTitle("Trim")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private var catalogChoices: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                header
+
+                ForEach(catalogTrims, id: \.self) { trim in
+                    NavigationLink {
+                        MaintenanceKnowledgeView()
+                            .onAppear {
+                                vehicle.trim = trim
+                            }
+                    } label: {
+                        ChoiceCard(
+                            icon: "checkmark.seal.fill",
+                            title: trim,
+                            subtitle: "Factory trim level"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                NavigationLink {
+                    MaintenanceKnowledgeView()
+                        .onAppear {
+                            vehicle.trim = "I’m not sure"
+                        }
+                } label: {
+                    ChoiceCard(
+                        icon: "questionmark.circle.fill",
+                        title: "I’m not sure",
+                        subtitle: "Skip for now"
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(24)
+        }
+    }
+
+    @ViewBuilder
+    private var manualEntry: some View {
+        VStack(spacing: 24) {
+            header
+
+            TextField("Trim (e.g. LX, EX, Sport)", text: $trimText)
+                .textInputAutocapitalization(.words)
+                .focused($trimFieldIsFocused)
+                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.center)
+                .padding(18)
+                .background(.thinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                NavigationLink {
+                    MaintenanceKnowledgeView()
+                        .onAppear {
+                            vehicle.trim = trimText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                } label: {
+                    Text("Continue")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(trimText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                NavigationLink {
+                    MaintenanceKnowledgeView()
+                        .onAppear {
+                            vehicle.trim = "I’m not sure"
+                        }
+                } label: {
+                    Text("I’m not sure")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(24)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            trimFieldIsFocused = false
         }
     }
 }
@@ -2634,12 +2903,12 @@ struct NearbyShopsCard: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Find nearby help")
+                Text("Find a shop")
                     .font(.title3)
                     .fontWeight(.bold)
 
                 Text(
-                    "Search for dealerships, independent repair shops, specialists, and service centers matched to your problem."
+                    "Search for dealerships, independent repair shops, specialists, and service centers near you."
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -2673,6 +2942,30 @@ struct NearbyShopsCard: View {
                 )
         }
     }
+}
+
+// MARK: - Maps Handoff
+
+/// Zero-cost handoff to the user's own Maps app — no ratings API, no
+/// network call this app makes, just a pre-filled search. Shared by the
+/// incident-result "Find a shop" button (SomethingHappenedView, symptom-
+/// specific repairSearchTerm), the Garage vehicle-detail "Find a shop"
+/// card below, and the "Find a shop now" entry point on Something
+/// Happened — all three use the exact same URL construction.
+enum MapsHandoff {
+    static func url(searchingFor searchTerm: String) -> URL? {
+        var components = URLComponents(string: "http://maps.apple.com/")
+        components?.queryItems = [
+            URLQueryItem(name: "q", value: "\(searchTerm) near me")
+        ]
+        return components?.url
+    }
+
+    /// The generic term used wherever the search isn't tied to a specific
+    /// reported problem (Garage vehicle detail, Something Happened's
+    /// "Find a shop now" shortcut) — as opposed to a symptom-specific
+    /// repairSearchTerm from an actual incident result.
+    static let genericRepairSearchTerm = "auto repair shop"
 }
 
 // MARK: - Shared Home Components

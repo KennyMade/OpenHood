@@ -176,6 +176,25 @@ struct PlanRecommendationRecord: Identifiable {
 enum PlanRecommendationLibrary {
     static let reliabilityPrototype: [PlanRecommendationRecord] = [
         PlanRecommendationRecord(
+            id: "reliability-stay-ahead-no-known-concerns",
+            vehicleApplicability: "General guidance; not vehicle-specific",
+            goal: .reliable,
+            focus: "Stay ahead of problems",
+            triggeringAnswers: ["No known concerns"],
+            recommendedInspection: "Compare the saved mileage and service history against typical intervals below to see what's likely due.",
+            conditionalNextStep: "If service records confirm something is already overdue, prioritize that before anything optional.",
+            reason: "Staying ahead of scheduled items is usually cheaper than waiting for something to fail.",
+            partsEstimateStatus: "Reference by item: oil change roughly $35–$100 every 5,000–7,500 miles, tire rotation roughly $25–$75 on the same interval (often bundled with the oil change), cabin and engine air filters roughly $35–$130 combined every 12,000–15,000 miles, brake fluid roughly $173–$205 around every 30,000 miles.",
+            laborEstimateStatus: "Labor is typically included in the ranges above for each item; these are routine service intervals, not a single repair estimate.",
+            benefits: "Keeping to these intervals is one of the cheapest ways to avoid larger repairs later and helps preserve resale value.",
+            tradeoffs: "Actual intervals vary by manufacturer and driving conditions — the owner's manual is the final word for this specific vehicle.",
+            supportingWork: "None of these require a specific concern to justify — they're scheduled regardless of symptoms.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Routine Maintenance Intervals\""
+            ]
+        ),
+        PlanRecommendationRecord(
             id: "reliability-preventive-prototype",
             vehicleApplicability: "Saved vehicle profile; vehicle-specific applicability not yet verified",
             goal: .reliable,
@@ -191,6 +210,106 @@ enum PlanRecommendationLibrary {
             supportingWork: "Supporting work remains conditional until vehicle-specific records and inspection results are available.",
             verificationStatus: .prototype,
             sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-brakes-verified",
+            vehicleApplicability: "Saved vehicle profile; reviewed general automotive guidance, not vehicle-specific inspection findings",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: ["Braking or steering concern"],
+            recommendedInspection: "Have the brakes inspected to check pad wear, rotor condition, hardware, and caliper operation. A squeal while braking is most often just the pad wear indicator doing its job, but glazed pads/rotors, worn hardware, or a sticking caliper can also cause it. This is for a known or intermittent concern you're planning around, not an active problem — if the brakes feel unsafe or aren't stopping normally right now, use Something Happened's safety check instead of planning ahead.",
+            conditionalNextStep: "If inspection confirms low pad wear, glazing, worn hardware, or a sticking caliper, use that finding to define the confirmed repair.",
+            reason: "Squeal while braking can come from several different causes with very different costs, so OpenHood needs the inspection finding before recommending a specific repair.",
+            partsEstimateStatus: "Depends on cause: pad wear indicator ~$150–$400/axle, glazed pads/rotors ~$40–$150/axle to resurface, worn hardware ~$150–$350/axle, sticking caliper ~$300–$600/caliper",
+            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once inspection identifies the specific cause",
+            benefits: "Confirming the cause first avoids paying for pad or rotor replacement when the real issue is worn hardware or a sticking caliper, which cost less.",
+            tradeoffs: "Squeal alone doesn't confirm which part is worn, so inspection may find more than one contributing cause.",
+            supportingWork: "Supporting work such as hardware or caliper service is often bundled with pad replacement when it's the confirmed cause.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Squeal While Braking\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-warning-light-verified",
+            vehicleApplicability: "Saved vehicle profile; reviewed general automotive guidance, not vehicle-specific inspection findings",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: ["Warning light"],
+            recommendedInspection: "Get the exact code read first — many auto parts stores do this for free — before estimating cost. A steady check engine light often points to a loose gas cap, a worn oxygen sensor, or aging spark plugs; a battery or charging symbol often points to the alternator, the battery itself, or the terminals/cables. Which light is on changes everything, so the code or specific light needs to be confirmed before planning further.",
+            conditionalNextStep: "Once the code or specific light is confirmed, use that finding to define the confirmed repair.",
+            reason: "Different warning lights point to completely different systems and costs, so OpenHood needs the actual code or light identified before recommending a specific repair.",
+            partsEstimateStatus: "Spans from near-free to several hundred dollars depending what's confirmed: gas cap usually free to ~$20, oxygen sensor ~$150–$400, spark plugs ~$100–$300/set, battery ~$100–$250, alternator ~$400–$700, terminals/cables ~$20–$150",
+            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once the code or specific light is read",
+            benefits: "Reading the code first, often for free, avoids guessing between low-cost fixes like a gas cap and higher-cost ones like an alternator.",
+            tradeoffs: "A code points to a system, not always the exact part, so some causes still need a hands-on inspection after the code is read.",
+            supportingWork: "Supporting work depends on which system the code or light points to and what the inspection confirms.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Steady Check Engine Light\"",
+                "OpenHood, \"Reviewed General Automotive Guidance — Battery or Charging Warning Light\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-leak-verified",
+            vehicleApplicability: "Saved vehicle profile; reviewed general automotive guidance, not vehicle-specific inspection findings",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: ["Leak"],
+            recommendedInspection: "Fluid color is the fastest way to narrow this down, same as it already does in Something Happened — note where the fluid was visible and its color without touching it, then have it inspected. Coolant (green, orange, pink, or yellow) is the broadest and most common category, usually pointing to a radiator or hose, the water pump, or the radiator cap/reservoir, and is worth inspecting soon with an eye on overheating in the meantime.",
+            conditionalNextStep: "If inspection verifies coolant loss, use the confirmed source (radiator/hose, water pump, or cap/reservoir) to define the repair. Other fluid colors point to different systems and would need their own confirmation.",
+            reason: "Leak color and location point to different systems with very different costs, so OpenHood needs the confirmed source before recommending a specific repair.",
+            partsEstimateStatus: "For a confirmed coolant leak: radiator or hose ~$150–$450, water pump ~$300–$750 including labor, radiator cap or reservoir ~$20–$100. Other fluid colors point to different systems with their own ranges.",
+            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once the source is inspected",
+            benefits: "Identifying the fluid color and source first avoids paying for a water pump when the real issue is a $20 cap.",
+            tradeoffs: "A visible leak doesn't confirm severity — some sources are urgent active coolant loss, others are minor.",
+            supportingWork: "Supporting work depends on the confirmed source and may include a coolant flush or pressure test.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Coolant-Colored Visible Fluid\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-noise-vibration-verified",
+            vehicleApplicability: "Saved vehicle profile; reviewed general automotive guidance, not vehicle-specific inspection findings",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: ["Unusual sound or vibration"],
+            recommendedInspection: "Have the suspension, wheels/tires, and driveline checked — the exact cause depends heavily on when it happens: over bumps often points to worn control-arm bushings, sway bar links/bushings, ball joints, or strut mounts; at highway speed often points to wheel/tire balance or alignment; while turning often points to a CV joint/axle or wheel bearing.",
+            conditionalNextStep: "If inspection confirms one of these causes, use that finding to define the confirmed repair.",
+            reason: "Sound or vibration alone can come from several unrelated systems — suspension, tires, or driveline — with very different costs, so OpenHood needs the inspection finding before recommending a specific repair.",
+            partsEstimateStatus: "Range depends heavily on which cause an inspection confirms: control-arm bushings ~$250–$450, sway bar links/bushings ~$75–$300, ball joints ~$200–$400 each, wheel balance ~$60–$100 for all four, wheel alignment ~$80–$150, CV joint/axle ~$150–$400/side, wheel bearing ~$250–$550/side. Strut mounts and tire condition vary too much for a fixed number without inspection.",
+            laborEstimateStatus: "Also depends heavily on which cause is confirmed; included in the ranges above except where noted as varying",
+            benefits: "Confirming the specific cause first avoids paying for suspension work when the real issue is a much cheaper tire balance, or vice versa.",
+            tradeoffs: "These causes span different systems, so more than one inspection may be needed to fully rule causes in or out.",
+            supportingWork: "Supporting work depends on the confirmed cause and system — suspension, tire/wheel, or driveline.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Bump-Triggered Suspension Noise\"",
+                "OpenHood, \"Reviewed General Automotive Guidance — Vibration at Highway Speed\"",
+                "OpenHood, \"Reviewed General Automotive Guidance — Vibration or Shudder While Turning\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "reliability-current-concern-starting-verified",
+            vehicleApplicability: "Saved vehicle profile; reviewed general automotive guidance, not vehicle-specific inspection findings",
+            goal: .reliable,
+            focus: "Fix something now",
+            triggeringAnswers: ["Starting or running issue"],
+            recommendedInspection: "Have the starting and charging system checked, and get a diagnostic code read if the engine cranks but won't catch. The cause depends on exactly what happens: rapid clicking or a dead-feeling start often points to the battery, terminals/cables, or alternator; a single click more often points to the starter or its relay; cranking without starting often points to the fuel pump, ignition coil, spark plugs, or fuel filter.",
+            conditionalNextStep: "If inspection or the code confirms a specific cause, use that finding to define the confirmed repair.",
+            reason: "Starting and running issues can come from the electrical/charging system or the fuel/ignition system, so OpenHood needs the confirmed cause before recommending a specific repair.",
+            partsEstimateStatus: "Range depends heavily on the confirmed cause: battery ~$150–$450, terminals/cables ~$20–$150, starter ~$400–$800, starter relay/fuse ~$20–$100, alternator ~$400–$900, fuel pump ~$600–$900, ignition coil ~$200–$300, spark plugs ~$100–$300/set, fuel filter ~$100–$300",
+            laborEstimateStatus: "Included in the ranges above; confirmed once the specific cause is inspected or diagnosed by code",
+            benefits: "Confirming the specific cause first avoids paying for a starter or alternator when the real issue is a loose terminal or a weak battery.",
+            tradeoffs: "A code scan narrows the fuel/ignition side but doesn't replace inspection for the electrical/starting side, so both may be needed.",
+            supportingWork: "Supporting work depends on the confirmed cause and may span the charging system or the fuel/ignition system.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "OpenHood, \"Reviewed General Automotive Guidance — Rapid Clicking When Starting\"",
+                "OpenHood, \"Reviewed General Automotive Guidance — Single Click When Starting\"",
+                "OpenHood, \"Reviewed General Automotive Guidance — Cranks But Won't Start, No Unusual Clue\""
+            ]
         ),
         PlanRecommendationRecord(
             id: "reliability-current-concern-prototype",

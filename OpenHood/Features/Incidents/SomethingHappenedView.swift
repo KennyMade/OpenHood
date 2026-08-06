@@ -182,6 +182,7 @@ private enum IncidentStep: Hashable {
     case urgentSafety
     case urgentQuestion(Int)
     case cautionSafety
+    case shopOrDiagnose
     case observations
     case noiseQuestion(Int)
     case warningQuestion(Int)
@@ -196,6 +197,7 @@ private enum IncidentStep: Hashable {
 
 private struct IncidentIntakeView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @ObservedObject var incidentStore: IncidentStore
 
     let vehicle: SavedVehicle
@@ -226,7 +228,7 @@ private struct IncidentIntakeView: View {
                 case .caution:
                     path.append(.cautionSafety)
                 case .routine:
-                    path.append(.observations)
+                    path.append(.shopOrDiagnose)
                 }
             }
             .navigationTitle("Safety check")
@@ -270,8 +272,21 @@ private struct IncidentIntakeView: View {
                 isUrgent: false,
                 primaryTitle: "Continue"
             ) {
-                path.append(.observations)
+                path.append(.shopOrDiagnose)
             }
+        case .shopOrDiagnose:
+            IncidentShopOrDiagnoseChoiceView(
+                onFindShop: {
+                    if let url = MapsHandoff.url(searchingFor: MapsHandoff.genericRepairSearchTerm) {
+                        openURL(url)
+                    }
+                    dismiss()
+                },
+                onDiagnose: {
+                    guard path.last == .shopOrDiagnose else { return }
+                    path.append(.observations)
+                }
+            )
         case .observations:
             IncidentObservationView(
                 selections: $incident.observationTypes,
@@ -1108,6 +1123,44 @@ private struct IncidentSafetyQuestionView: View {
     }
 }
 
+/// Upfront shop-or-diagnose branch — only reached after the safety check
+/// above has already resolved to .routine (or .caution, after its own
+/// confirmation screen) — see IncidentIntakeView.body/destination(for:).
+/// Urgent selections never reach this screen at all, so there is no way to
+/// use "Find a shop now" to dodge the urgent safety path (fire, brakes,
+/// stalling, etc.) — the safety check always runs first, unconditionally.
+/// "Find a shop now" only ever skips the follow-up diagnostic questions
+/// (observations/noise/warning/fluid/starting) below it.
+private struct IncidentShopOrDiagnoseChoiceView: View {
+    let onFindShop: () -> Void
+    let onDiagnose: () -> Void
+
+    var body: some View {
+        IncidentQuestionLayout(
+            title: "What would help most?",
+            message: "You can always change your mind — this doesn’t save anything yet."
+        ) {
+            Button(action: onFindShop) {
+                IncidentChoiceCard(
+                    title: "Find a shop now",
+                    subtitle: "Skip straight to nearby help"
+                )
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onDiagnose) {
+                IncidentChoiceCard(
+                    title: "Figure out what's wrong",
+                    subtitle: "Answer a few quick questions"
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .navigationTitle("Next step")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 private struct IncidentUrgentFollowUpOption: Identifiable {
     let id: String
     let title: String
@@ -1815,11 +1868,7 @@ private struct IncidentGuidanceView: View {
     }
 
     private func openMaps(searchingFor searchTerm: String) {
-        var components = URLComponents(string: "http://maps.apple.com/")
-        components?.queryItems = [
-            URLQueryItem(name: "q", value: "\(searchTerm) near me")
-        ]
-        guard let url = components?.url else { return }
+        guard let url = MapsHandoff.url(searchingFor: searchTerm) else { return }
         openURL(url)
     }
 
@@ -2082,13 +2131,23 @@ private struct IncidentQuestionLayout<Content: View>: View {
 
 private struct IncidentChoiceCard: View {
     let title: String
+    var subtitle: String?
     var isSelected = false
 
     var body: some View {
         HStack(spacing: 14) {
-            Text(title)
-                .font(.headline)
-                .multilineTextAlignment(.leading)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .multilineTextAlignment(.leading)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+            }
 
             Spacer()
 
