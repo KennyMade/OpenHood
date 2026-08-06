@@ -811,7 +811,7 @@ private struct IncidentIntakeView: View {
         }
         return [
             question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
-            question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "I’m not sure"]),
+            question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "Cranks slower or takes longer to start in cold weather", "I’m not sure"]),
             question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"]),
             // "Slipping" and "burning smell" are known-dangerous but
             // deliberately not escalated — see the doc comment on

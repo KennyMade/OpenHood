@@ -574,6 +574,58 @@ enum IncidentGuidanceKnowledge {
             repairSearchTerm: "no start diagnostic"
         ),
         record(
+            id: "phase1.starting.fuel-ignition.cold-start",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "Cranks slower or takes longer to start in cold weather")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "Cranks slower or takes longer to start in cold weather")
+            ],
+            contradict: [],
+            area: .fuelAndIgnition,
+            explanation: "In cold weather, a battery loses a significant portion of its cranking power — enough that a battery that works fine in warm weather can struggle or fail below freezing. Thickened engine oil in cold temperatures adds to the strain. If the car starts fine once it warms up but struggles every cold morning, the battery is the most common cause and worth checking first.",
+            action: .obtainCodeScan,
+            questions: [
+                "Does it start fine once the weather warms up, or is this happening in mild weather too?",
+                "How old is the battery, and has it needed a jump start recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-cold-weather-starting-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Cold Weather Starting Difficulty\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "A battery that's aging or already marginal can lose enough cold-weather power to fail a cold start, even if it still starts the car in warm weather.",
+                    typicalCostRange: "Roughly $150–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-connections",
+                    name: "Battery terminals or connections",
+                    plainExplanation: "Corrosion or a loose connection at the battery terminals reduces the power actually reaching the starter, which shows up worse in cold weather.",
+                    typicalCostRange: "Often free to inspect; cleaning terminals typically under $50 if no parts are needed"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "engine-oil-viscosity",
+                    name: "Engine oil viscosity",
+                    plainExplanation: "The wrong-weight oil for the climate thickens more in cold temperatures, making the engine harder to turn over.",
+                    typicalCostRange: nil
+                )
+            ],
+            repairSearchTerm: "cold weather no start diagnostic"
+        ),
+        record(
             id: "phase1.starting.fuel-ignition.fuel-smell",
             family: .roughRunningStallingOrPostService,
             observations: [.startingOrRunningTrouble],
