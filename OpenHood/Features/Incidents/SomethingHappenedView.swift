@@ -186,6 +186,7 @@ private enum IncidentStep: Hashable {
     case noiseQuestion(Int)
     case warningQuestion(Int)
     case fluidQuestion(Int)
+    case startingQuestion(Int)
     case description
     case recentWork
     case review
@@ -284,6 +285,8 @@ private struct IncidentIntakeView: View {
             warningQuestionDestination(index: index)
         case .fluidQuestion(let index):
             fluidQuestionDestination(index: index)
+        case .startingQuestion(let index):
+            startingQuestionDestination(index: index)
         case .description:
             IncidentDescriptionView(
                 description: $incident.userDescription,
@@ -435,6 +438,11 @@ private struct IncidentIntakeView: View {
     /// falls through to the fluid questions below, so a report can
     /// include a sound, a warning light, a visible fluid, an odor, or
     /// any combination without any path being skipped.
+    ///
+    /// "Temperature warning light" is deliberately excluded from that
+    /// fall-through — see temperatureObservationEscalation below, same
+    /// treatment as "Electrical or burning plastic"/"Exhaust" in
+    /// fluidQuestionDestination.
     @ViewBuilder
     private func warningQuestionDestination(index: Int) -> some View {
         let questions = warningQuestions
@@ -447,7 +455,12 @@ private struct IncidentIntakeView: View {
             ) { answer in
                 guard path.last == .warningQuestion(index) else { return }
                 setWarningAnswer(answer, key: question.answerKey)
-                advanceWarningIntake()
+                if question.answerKey == IncidentWarningAnswerKey.temperatureDetail,
+                   let escalation = temperatureObservationEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else {
+                    advanceWarningIntake()
+                }
             }
         } else {
             IncidentIncompleteIntakeRecoveryView {
@@ -460,9 +473,38 @@ private struct IncidentIntakeView: View {
         guard incident.observationTypes.contains(.warningLightOrMessage) else {
             return []
         }
-        return [
-            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "I’m not sure which one"])
+        var questions = [
+            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "Temperature warning light", "I’m not sure which one"])
         ]
+        // OH-UIK gap fix (same tier as the odor-escalation and
+        // oil-pressure severity fixes): a temperature warning light
+        // reported through general navigation is a real overheating
+        // precursor, and Phase 1's ordinaryDriveRecommendation has no
+        // path to DO NOT RESTART — see phase1.cooling.temperature-control
+        // and temperatureObservationEscalation below for why this record
+        // was removed rather than upgraded with ordinary content. This
+        // follow-up is only asked once "Temperature warning light" is
+        // selected above, so it never fires for an unrelated warning
+        // light (battery, check engine, tire pressure).
+        if incident.warningFollowUpAnswers?[IncidentWarningAnswerKey.light] == "Temperature warning light" {
+            questions.append(
+                question("What did you notice?", key: IncidentWarningAnswerKey.temperatureDetail, choices: ["Temperature gauge reading high or in the red", "Steam or visible vapor", "Warning light for temperature", "Sweet smell with rising temperature", "I’m not sure"])
+            )
+        }
+        return questions
+    }
+
+    /// Mirrors dangerousOdorEscalation exactly, but every answer maps to
+    /// the same urgent selection — see the Part 3 scope note on
+    /// warningQuestions above: there is no safe subset of "what did you
+    /// notice" for an active overheating report, unlike the odor
+    /// question's musty/sweet-coolant choices, so unlike
+    /// dangerousOdorEscalation this has no case that returns nil for a
+    /// real answer.
+    private func temperatureObservationEscalation(for answer: String) -> IncidentSafetySelection? {
+        // Every choice on this question is an overheating precursor —
+        // deliberately unconditional, see the comment above warningQuestions.
+        .overheatingOrSteam
     }
 
     private func advanceWarningIntake() {
@@ -580,6 +622,8 @@ private struct IncidentIntakeView: View {
             setUrgentAnswer("Electrical or plastic", key: IncidentUrgentAnswerKey.smokeOdor)
         case .strongFuelSmell:
             setUrgentAnswer("Exhaust", key: IncidentUrgentAnswerKey.smellDescription)
+        case .overheatingOrSteam:
+            setUrgentAnswer("Yes", key: IncidentUrgentAnswerKey.temperatureIndication)
         default:
             saveDraft()
         }
@@ -590,7 +634,7 @@ private struct IncidentIntakeView: View {
         if let index = nextUnansweredFluidQuestionIndex {
             appendIfNeeded(.fluidQuestion(index))
         } else {
-            appendIfNeeded(.description)
+            advanceStartingIntake()
         }
     }
 
@@ -607,6 +651,74 @@ private struct IncidentIntakeView: View {
         var answers = incident.fluidFollowUpAnswers ?? [:]
         answers[key] = answer
         incident.fluidFollowUpAnswers = answers
+        saveDraft()
+    }
+
+    /// phase1.starting.electrical / phase1.starting.fuel-ignition:
+    /// structured follow-up asked only when the reported observation
+    /// includes .startingOrRunningTrouble — see `startingQuestions`.
+    /// Chained after the fluid questions (advanceFluidIntake falls
+    /// through to this once fluid questions are answered or not
+    /// applicable), then falls through to .description itself, same
+    /// pattern as noise/warning/fluid above. Both questions below are
+    /// asked back-to-back regardless of which answer is given to the
+    /// first — the no-crank/clicking record (phase1.starting.electrical)
+    /// keys off crankBehavior and the cranks-but-won't-catch record
+    /// (phase1.starting.fuel-ignition) keys off crankClues, so a person
+    /// only needs to answer one of the two meaningfully; the other can be
+    /// left at "I’m not sure" without affecting the result.
+    @ViewBuilder
+    private func startingQuestionDestination(index: Int) -> some View {
+        let questions = startingQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .startingQuestion(index) else { return }
+                setStartingAnswer(answer, key: question.answerKey)
+                advanceStartingIntake()
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                advanceStartingIntake()
+            }
+        }
+    }
+
+    private var startingQuestions: [IncidentUrgentQuestion] {
+        guard incident.observationTypes.contains(.startingOrRunningTrouble) else {
+            return []
+        }
+        return [
+            question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
+            question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "I’m not sure"])
+        ]
+    }
+
+    private func advanceStartingIntake() {
+        if let index = nextUnansweredStartingQuestionIndex {
+            appendIfNeeded(.startingQuestion(index))
+        } else {
+            appendIfNeeded(.description)
+        }
+    }
+
+    private var nextUnansweredStartingQuestionIndex: Int? {
+        startingQuestions.firstIndex { question in
+            guard let answer = incident.startingFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private func setStartingAnswer(_ answer: String, key: String) {
+        var answers = incident.startingFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.startingFollowUpAnswers = answers
         saveDraft()
     }
 

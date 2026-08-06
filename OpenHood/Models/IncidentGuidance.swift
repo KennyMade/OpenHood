@@ -260,6 +260,11 @@ enum IncidentGuidanceEvidenceSignal: Codable, Equatable {
     /// own signal case for the same reason: keeps this flow from
     /// colliding on key names with the other two.
     case fluidAnswer(key: String, value: String)
+    /// Same idea as noiseAnswer/warningAnswer/fluidAnswer, for the
+    /// starting-trouble family (phase1.starting.electrical,
+    /// phase1.starting.fuel-ignition) — IncidentStartingAnswerKey answers
+    /// on VehicleIncident.startingFollowUpAnswers.
+    case startingAnswer(key: String, value: String)
 }
 
 /// Structured follow-up questions for the noise/vibration/suspension
@@ -282,6 +287,14 @@ enum IncidentNoiseAnswerKey {
 /// IncidentGuidanceEvidenceSignal.warningAnswer.
 enum IncidentWarningAnswerKey {
     static let light = "warningLight"
+    /// OH-UIK gap fix (same tier as the odor-escalation and oil-pressure
+    /// severity fixes): asked only as a follow-up when `light` is
+    /// answered "Temperature warning light" — see
+    /// SomethingHappenedView.warningQuestions/temperatureEscalation. Every
+    /// answer to this follow-up escalates into the urgent
+    /// .overheatingOrSteam path; it never contributes to an ordinary
+    /// Phase 1 result.
+    static let temperatureDetail = "warningTemperatureDetail"
 }
 
 /// Structured follow-up questions for the fluid-leak/unusual-odor record
@@ -294,6 +307,20 @@ enum IncidentWarningAnswerKey {
 enum IncidentFluidAnswerKey {
     static let color = "fluidColor"
     static let odor = "fluidOdor"
+}
+
+/// Structured follow-up questions for the starting-trouble record family
+/// (phase1.starting.electrical, phase1.starting.fuel-ignition) — same
+/// reasoning as IncidentNoiseAnswerKey/IncidentWarningAnswerKey/
+/// IncidentFluidAnswerKey above. Answers are stored in
+/// VehicleIncident.startingFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.startingAnswer. Two keys because a
+/// no-crank/clicking report (crankBehavior) and a cranks-but-won't-catch
+/// report (crankClues) are asked independently, same reasoning as
+/// IncidentFluidAnswerKey.color/.odor.
+enum IncidentStartingAnswerKey {
+    static let crankBehavior = "startingCrankBehavior"
+    static let crankClues = "startingCrankClues"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {

@@ -201,6 +201,8 @@ private extension IncidentGuidanceEngine {
             incident.warningFollowUpAnswers?[key] == value
         case .fluidAnswer(let key, let value):
             incident.fluidFollowUpAnswers?[key] == value
+        case .startingAnswer(let key, let value):
+            incident.startingFollowUpAnswers?[key] == value
         }
     }
 

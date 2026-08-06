@@ -24,12 +24,77 @@ enum IncidentGuidanceKnowledge {
                 "Was a warning light steady, flashing, or absent?"
             ]
         ),
+        // Same tier as phase1.warning.record-code/engine-information and
+        // the fluid-smell/noise/brake records — reviewed general-guidance
+        // content, not needsVerification placeholders, for the two
+        // starting-trouble families below. phase1.starting.electrical and
+        // phase1.starting.fuel-ignition used to be free-text-only ("a
+        // no-crank...can involve electrical power...but direct testing is
+        // still needed" with open follow-up questions and no real
+        // content) — the same failure mode fixed elsewhere: nobody types
+        // the exact words that would make free-text matching work. Each
+        // is now split into one record per structured answer
+        // (IncidentStartingAnswerKey, asked in
+        // SomethingHappenedView.startingQuestions), mirroring the
+        // check-engine/battery-light and fluid-color/odor splits above.
+        // The original free-text descriptionContains matching is kept,
+        // additive, on the two generic "I'm not sure" records below (not
+        // removed) — same treatment as the fluid-smell generic records.
+        //
+        // Both structured questions (crankBehavior, crankClues) are asked
+        // back-to-back whenever .startingOrRunningTrouble is reported, so
+        // a person only needs to meaningfully answer whichever one
+        // matches what actually happened — the other can be left at "I'm
+        // not sure" without changing the result, since each family's
+        // records key off only its own answer.
+        //
+        // Safety note: a car not starting while parked is an
+        // inconvenience, not a driving-safety hazard, so these stay
+        // SERVICE-SOON-tier — ordinaryDriveRecommendation already forces
+        // SERVICE SOON for any .startingOrRunningTrouble report
+        // regardless of which answer is given. No urgent-path routing is
+        // needed here, unlike the cooling/temperature severity fix.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanations and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (rapid
+        // clicking indicating low battery power reaching the starter
+        // relay but not the starter motor; a single click pointing more
+        // toward the starter/starter relay; no crank/no sound pointing to
+        // battery, connections, or an immobilizer; fuel delivery vs.
+        // ignition being the two general causes of cranks-but-no-start)
+        // are well-known, independently corroborated automotive
+        // knowledge, not proprietary to any one site.
         record(
             id: "phase1.starting.electrical",
             family: .roughRunningStallingOrPostService,
             observations: [.startingOrRunningTrouble, .warningLightOrMessage],
-            support: [
+            required: [
                 .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "I’m not sure")
+            ],
+            // Deliberately NOT including .observation(.startingOrRunningTrouble)
+            // in support (unlike every other record's "I'm not sure" base
+            // above it) — see the matching note on phase1.starting.fuel-
+            // ignition below. Both structured starting questions are asked
+            // back-to-back regardless of each other's answer, so a person
+            // reporting the cranks-but-won't-start scenario (Part 2) has no
+            // real option for crankBehavior and must pick "I'm not sure"
+            // here while giving a real crankClues answer. Counting the
+            // shared observation signal in both this record's support and
+            // phase1.starting.fuel-ignition.no-unusual-clue's support made
+            // them score identically (5) whenever that happened, and the
+            // generic record won the tie purely because "electrical" sorts
+            // before "fuel-ignition" alphabetically — not because it was
+            // more specific. Dropping this one entry brings the generic
+            // fallback's score to 3 (still >= minimumScore 3, so it still
+            // qualifies on its own) while any specific-answer record stays
+            // at 5, so a real answer on the other question always wins.
+            support: [
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "I’m not sure"),
                 .descriptionContains("no crank"),
                 .descriptionContains("will not crank"),
                 .descriptionContains("click")
@@ -44,11 +109,230 @@ enum IncidentGuidanceKnowledge {
             ]
         ),
         record(
+            id: "phase1.starting.electrical.rapid-clicking",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Rapid clicking")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Rapid clicking")
+            ],
+            contradict: [],
+            area: .startingAndElectrical,
+            explanation: "Rapid clicking most often means the battery doesn't have enough power to turn the starter motor, even though there's enough for the starter relay to click. This is the single most common cause of this exact sound.",
+            action: .professionalInspection,
+            questions: [
+                "Is the battery original, or has it been replaced recently?",
+                "Are the battery terminals clean, tight, and free of corrosion?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-rapid-clicking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Rapid Clicking When Starting\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "The battery may be too weak or discharged to turn the starter motor, even though it can still power the smaller starter relay.",
+                    typicalCostRange: "Roughly $150–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-cables",
+                    name: "Battery terminals or cables",
+                    plainExplanation: "Loose, corroded, or damaged connections can limit how much power reaches the starter, even from a good battery.",
+                    typicalCostRange: "Roughly $20–$150"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "alternator",
+                    name: "Alternator",
+                    plainExplanation: "If the battery keeps dying, the alternator may not be recharging it while driving.",
+                    typicalCostRange: "Roughly $400–$700"
+                )
+            ],
+            repairSearchTerm: "battery replacement"
+        ),
+        record(
+            id: "phase1.starting.electrical.single-click",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "One single click")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "One single click")
+            ],
+            contradict: [],
+            area: .startingAndElectrical,
+            explanation: "A single click more often points to the starter itself or the starter relay, rather than the battery.",
+            action: .professionalInspection,
+            questions: [
+                "Has a jump start been tried, and did that change anything?",
+                "Is the battery original, or has it been replaced recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-single-click-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Single Click When Starting\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "starter",
+                    name: "Starter",
+                    plainExplanation: "A worn or failing starter motor can produce a single click without turning the engine over.",
+                    typicalCostRange: "Roughly $400–$800"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "starter-relay-or-fuse",
+                    name: "Starter relay or fuse",
+                    plainExplanation: "A failed relay or blown fuse can prevent the starter from receiving the signal to engage, often producing just one click.",
+                    typicalCostRange: "Roughly $20–$100"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "Still worth ruling out first — a jump start is a fast way to tell whether the battery is the cause.",
+                    typicalCostRange: "Roughly $150–$450"
+                )
+            ],
+            repairSearchTerm: "starter replacement"
+        ),
+        record(
+            id: "phase1.starting.electrical.no-sound",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "No sound at all")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "No sound at all")
+            ],
+            contradict: [],
+            area: .startingAndElectrical,
+            explanation: "No sound at all often points to a dead battery, a poor connection, or in some vehicles an immobilizer or security-system issue. Check for dash lights or interior lights responding at all as a first clue.",
+            action: .professionalInspection,
+            questions: [
+                "Do the dash lights or interior lights respond at all?",
+                "Are the battery terminals clean, tight, and free of corrosion?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-no-sound-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — No Sound When Starting\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "A fully dead battery may not power anything at all, including the starter relay.",
+                    typicalCostRange: "Roughly $150–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-cables",
+                    name: "Battery terminals or cables",
+                    plainExplanation: "A loose or fully disconnected terminal can cut power entirely, even with a good battery.",
+                    typicalCostRange: "Roughly $20–$150"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-switch-or-immobilizer",
+                    name: "Ignition switch or immobilizer system",
+                    plainExplanation: "On some vehicles, a security or immobilizer fault can prevent the starting system from engaging at all.",
+                    typicalCostRange: "Varies significantly — worth a professional diagnosis before estimating"
+                )
+            ],
+            repairSearchTerm: "no start diagnosis"
+        ),
+        record(
+            id: "phase1.starting.electrical.slow-crank",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+            ],
+            contradict: [],
+            area: .startingAndElectrical,
+            explanation: "A slow crank that gives up usually means the battery has some charge but not enough, or a poor connection is limiting how much power reaches the starter.",
+            action: .professionalInspection,
+            questions: [
+                "Is the battery original, or has it been replaced recently?",
+                "Are the battery terminals and grounds clean and tight?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-slow-crank-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Slow Crank When Starting\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "A partially charged or weakening battery can turn the starter slowly but not consistently.",
+                    typicalCostRange: "Roughly $150–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-cables-grounds",
+                    name: "Battery terminals or cables, including grounds",
+                    plainExplanation: "A poor connection anywhere in the starting circuit, including ground straps, can limit power reaching the starter.",
+                    typicalCostRange: "Roughly $20–$150"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "starter",
+                    name: "Starter",
+                    plainExplanation: "A worn starter motor can struggle to turn the engine even with adequate battery power.",
+                    typicalCostRange: "Roughly $400–$800"
+                )
+            ],
+            repairSearchTerm: "starter replacement"
+        ),
+        // Same tier as phase1.starting.electrical.* above. Support
+        // deliberately omits .observation(.startingOrRunningTrouble) for
+        // the same tie-breaking reason documented on phase1.starting.
+        // electrical's own "I'm not sure" base record above — keeps this
+        // generic fallback's score at 3 (vs. 5 for any specific-answer
+        // record) so a real crankBehavior answer on the other question
+        // always outranks this one instead of an alphabetical accident.
+        record(
             id: "phase1.starting.fuel-ignition",
             family: .roughRunningStallingOrPostService,
             observations: [.startingOrRunningTrouble],
-            support: [
+            required: [
                 .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "I’m not sure")
+            ],
+            support: [
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "I’m not sure"),
                 .descriptionContains("cranks but"),
                 .descriptionContains("turns over but"),
                 .descriptionContains("misfire")
@@ -63,28 +347,234 @@ enum IncidentGuidanceKnowledge {
             ]
         ),
         record(
-            id: "phase1.cooling.temperature-control",
-            family: .overheatingOrCooling,
-            observations: [.visible, .warningLightOrMessage],
-            support: [
-                .descriptionContains("overheat"),
-                .descriptionContains("temperature"),
-                .descriptionContains("steam"),
-                .descriptionContains("boiling coolant")
+            id: "phase1.starting.fuel-ignition.no-unusual-clue",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "No unusual smell or sound")
             ],
-            contradict: [.descriptionContains("temperature stayed normal")],
-            area: .cooling,
-            explanation: "Temperature, steam, or boiling-coolant observations can involve coolant containment, circulation, airflow, or pressure control.",
-            action: .professionalInspection,
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "No unusual smell or sound")
+            ],
+            contradict: [],
+            area: .fuelAndIgnition,
+            explanation: "When the engine cranks normally but doesn't catch, with nothing unusual noticed, the two most common general causes are the fuel system not delivering fuel or the ignition system not producing spark. Both need a proper diagnostic to tell apart.",
+            action: .obtainCodeScan,
+            questions: [
+                "Is there a warning message or stored diagnostic code?",
+                "When was the fuel filter or spark plugs last replaced?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-cranks-no-clue-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Cranks But Won't Start, No Unusual Clue\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "fuel-pump",
+                    name: "Fuel pump",
+                    plainExplanation: "A failed or weak fuel pump can leave the engine without enough fuel pressure to start.",
+                    typicalCostRange: "Roughly $600–$900"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failed ignition coil can prevent spark from reaching one or more cylinders.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn or fouled spark plugs may not be able to ignite the fuel mixture.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-filter",
+                    name: "Fuel filter",
+                    plainExplanation: "A clogged fuel filter can restrict fuel flow enough to prevent starting.",
+                    typicalCostRange: "Roughly $100–$300"
+                )
+            ],
+            repairSearchTerm: "no start diagnostic"
+        ),
+        record(
+            id: "phase1.starting.fuel-ignition.fuel-smell",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "Smell of gas/fuel while trying to start")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "Smell of gas/fuel while trying to start")
+            ],
+            contradict: [],
+            area: .fuelAndIgnition,
+            explanation: "A fuel smell during a failed start attempt can mean the engine is getting fuel but not igniting it, or that it's flooded from repeated attempts. Give it a few minutes before trying again rather than repeatedly cranking.",
+            action: .obtainCodeScan,
             avoid: [
-                "Do not open a hot cooling system.",
-                "Do not touch hot or moving components."
+                "Do not keep repeatedly cranking the engine.",
+                "Do not touch hot or moving components or go under an unsupported vehicle."
             ],
             questions: [
-                "What did the temperature gauge or warning message show?",
-                "Was any fluid visible from a safe distance after the vehicle cooled?"
-            ]
+                "How many times was starting attempted before the smell was noticed?",
+                "Is there a warning message or stored diagnostic code?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-cranks-fuel-smell-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Fuel Smell While Cranking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failed ignition coil can prevent spark, leaving unburned fuel to be smelled.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn or fouled spark plugs may not ignite the fuel-air mixture, leaving unburned fuel behind.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-injector",
+                    name: "Fuel injector",
+                    plainExplanation: "A stuck-open or leaking injector can deliver too much fuel during starting attempts.",
+                    typicalCostRange: "Roughly $150–$400 per injector"
+                )
+            ],
+            repairSearchTerm: "no start diagnostic"
         ),
+        record(
+            id: "phase1.starting.fuel-ignition.ticking-sound",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "A clicking or ticking sound from the engine while cranking")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "A clicking or ticking sound from the engine while cranking")
+            ],
+            contradict: [],
+            area: .fuelAndIgnition,
+            explanation: "This is a different sound than the starter clicking covered elsewhere — a ticking from the engine itself while it cranks is worth having inspected before repeated attempts.",
+            action: .professionalInspection,
+            questions: [
+                "Is the ticking coming from the top of the engine or lower down?",
+                "Does it continue if the engine briefly starts and stalls?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-cranks-ticking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Ticking Sound From the Engine While Cranking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            repairSearchTerm: "no start diagnostic"
+        ),
+        record(
+            id: "phase1.starting.fuel-ignition.check-engine-light",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "A recent check-engine light before this happened")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankClues, value: "A recent check-engine light before this happened")
+            ],
+            contradict: [],
+            area: .fuelAndIgnition,
+            explanation: "A check-engine light shortly before a no-start can be a real clue pointing toward the same system that triggered it.",
+            action: .obtainCodeScan,
+            questions: [
+                "Was a diagnostic code recorded before the light was cleared, if it was cleared?",
+                "How long before this did the light first appear?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-cranks-check-engine-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Recent Check-Engine Light Before a No-Start\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing ignition coil can trigger a check-engine light before eventually preventing a start.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-pump",
+                    name: "Fuel pump",
+                    plainExplanation: "A weakening fuel pump can trigger a check-engine light before it fails to deliver enough fuel to start.",
+                    typicalCostRange: "Roughly $600–$900"
+                )
+            ],
+            repairSearchTerm: "no start diagnostic"
+        ),
+        // OH-UIK gap fix (same tier as the odor-escalation and
+        // oil-pressure severity fixes): phase1.cooling.temperature-control
+        // used to live here as a free-text-matched placeholder
+        // ("temperature, steam, or boiling-coolant observations...") that
+        // could resolve to an ordinary Phase 1 result (SERVICE SOON at
+        // best, via ordinaryDriveRecommendation, which has no path to DO
+        // NOT RESTART). Unlike the odor and warning-light placeholders
+        // upgraded elsewhere in this file, there is no safe subset of an
+        // active overheating report — a gauge in the red, steam, or
+        // boiling coolant is always a stop-driving-level situation, and
+        // the app already has real, cited urgent guidance for exactly
+        // this (IncidentSafetySelection.overheatingOrSteam, which
+        // unconditionally returns DO NOT RESTART — see
+        // urgentDriveRecommendation). So instead of upgrading this record
+        // with reviewed content the way phase1.starting.* was above, it
+        // was removed entirely, and the "Temperature warning light"
+        // answer to the warningQuestions light-identification question
+        // now escalates directly into the urgent .overheatingOrSteam path
+        // (see temperatureObservationEscalation/escalateToUrgentSafety in
+        // SomethingHappenedView.swift) — mirroring exactly how
+        // "Electrical or burning plastic"/"Exhaust" escalate out of the
+        // fluid odor question via dangerousOdorEscalation, rather than
+        // inventing a new severity mechanism. No record with this id
+        // computes an ordinary result anymore; removing it (not just
+        // leaving it unreachable) also closes the free-text
+        // descriptionContains fallback that let a typed "overheating"
+        // description alone produce the old capped SERVICE SOON result.
+        //
+        // Known scope gap, intentionally not addressed in this pass: a
+        // user who notices steam/vapor but never checks "A warning light
+        // or message" as an observation (only "Something visible") will
+        // not reach this escalation today, since gating it broadly on
+        // .visible would force every unrelated visible-fluid report (a
+        // red transmission leak, for example) through this same
+        // all-answers-escalate question. Closing that gap needs its own
+        // dedicated visible-observation branch, not a broad gate here.
+        //
         // Same tier as phase1.suspension.bump-noise and
         // phase1.brakes.squeal-while-braking above — reviewed
         // general-guidance content, not needsVerification placeholders.
