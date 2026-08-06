@@ -126,6 +126,7 @@ enum PlanTimeline: String, CaseIterable, Identifiable {
 
 struct PlanFollowUpQuestion: Identifiable {
     let title: String
+    var subtitle: String? = nil
     let options: [PlanQuestionOption]
 
     var id: String {
@@ -220,8 +221,8 @@ enum PlanRecommendationLibrary {
             recommendedInspection: "Have the brakes inspected to check pad wear, rotor condition, hardware, and caliper operation. A squeal while braking is most often just the pad wear indicator doing its job, but glazed pads/rotors, worn hardware, or a sticking caliper can also cause it. This is for a known or intermittent concern you're planning around, not an active problem — if the brakes feel unsafe or aren't stopping normally right now, use Something Happened's safety check instead of planning ahead.",
             conditionalNextStep: "If inspection confirms low pad wear, glazing, worn hardware, or a sticking caliper, use that finding to define the confirmed repair.",
             reason: "Squeal while braking can come from several different causes with very different costs, so OpenHood needs the inspection finding before recommending a specific repair.",
-            partsEstimateStatus: "Depends on cause: pad wear indicator ~$150–$400/axle, glazed pads/rotors ~$40–$150/axle to resurface, worn hardware ~$150–$350/axle, sticking caliper ~$300–$600/caliper",
-            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once inspection identifies the specific cause",
+            partsEstimateStatus: "For a straightforward pad replacement: parts roughly $25–$150/axle, plus $60–$150/axle for rotors if they're also needed. Other causes stay combined: glazed pads/rotors ~$40–$150/axle to resurface, worn hardware ~$150–$350/axle, sticking caliper ~$300–$600/caliper.",
+            laborEstimateStatus: "For a straightforward pad replacement: labor roughly $80–$220/axle, rising to $150–$200/axle if rotors are also done. Included in the combined ranges above for glazed pads/rotors, worn hardware, and sticking caliper — confirmed once inspection identifies the specific cause.",
             benefits: "Confirming the cause first avoids paying for pad or rotor replacement when the real issue is worn hardware or a sticking caliper, which cost less.",
             tradeoffs: "Squeal alone doesn't confirm which part is worn, so inspection may find more than one contributing cause.",
             supportingWork: "Supporting work such as hardware or caliper service is often bundled with pad replacement when it's the confirmed cause.",
@@ -239,8 +240,8 @@ enum PlanRecommendationLibrary {
             recommendedInspection: "Get the exact code read first — many auto parts stores do this for free — before estimating cost. A steady check engine light often points to a loose gas cap, a worn oxygen sensor, or aging spark plugs; a battery or charging symbol often points to the alternator, the battery itself, or the terminals/cables. Which light is on changes everything, so the code or specific light needs to be confirmed before planning further.",
             conditionalNextStep: "Once the code or specific light is confirmed, use that finding to define the confirmed repair.",
             reason: "Different warning lights point to completely different systems and costs, so OpenHood needs the actual code or light identified before recommending a specific repair.",
-            partsEstimateStatus: "Spans from near-free to several hundred dollars depending what's confirmed: gas cap usually free to ~$20, oxygen sensor ~$150–$400, spark plugs ~$100–$300/set, battery ~$100–$250, alternator ~$400–$700, terminals/cables ~$20–$150",
-            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once the code or specific light is read",
+            partsEstimateStatus: "For an oxygen sensor, the most researched cause here: parts roughly $20–$250+. Other causes are typically quoted as one number since labor is minimal: gas cap usually free to ~$20, spark plugs ~$100–$300/set, battery ~$100–$250. Alternator ~$400–$700 and terminals/cables ~$20–$150 also stay combined.",
+            laborEstimateStatus: "For an oxygen sensor: labor roughly $80–$250, confirmed once the code or specific light is read. Gas cap, spark plug, and battery causes don't split cleanly — they're quick, low-labor jobs usually quoted as one number, included above. Alternator and terminals/cables labor is also included in the combined figures above.",
             benefits: "Reading the code first, often for free, avoids guessing between low-cost fixes like a gas cap and higher-cost ones like an alternator.",
             tradeoffs: "A code points to a system, not always the exact part, so some causes still need a hands-on inspection after the code is read.",
             supportingWork: "Supporting work depends on which system the code or light points to and what the inspection confirms.",
@@ -259,8 +260,8 @@ enum PlanRecommendationLibrary {
             recommendedInspection: "Fluid color is the fastest way to narrow this down, same as it already does in Something Happened — note where the fluid was visible and its color without touching it, then have it inspected. Coolant (green, orange, pink, or yellow) is the broadest and most common category, usually pointing to a radiator or hose, the water pump, or the radiator cap/reservoir, and is worth inspecting soon with an eye on overheating in the meantime.",
             conditionalNextStep: "If inspection verifies coolant loss, use the confirmed source (radiator/hose, water pump, or cap/reservoir) to define the repair. Other fluid colors point to different systems and would need their own confirmation.",
             reason: "Leak color and location point to different systems with very different costs, so OpenHood needs the confirmed source before recommending a specific repair.",
-            partsEstimateStatus: "For a confirmed coolant leak: radiator or hose ~$150–$450, water pump ~$300–$750 including labor, radiator cap or reservoir ~$20–$100. Other fluid colors point to different systems with their own ranges.",
-            laborEstimateStatus: "Included in the ranges above for most causes; confirmed once the source is inspected",
+            partsEstimateStatus: "For a confirmed coolant leak from the water pump — the costliest common source, and the one with real cost data available: parts roughly $200–$400. Radiator or hose ~$150–$450 and radiator cap or reservoir ~$20–$100 stay combined. Other fluid colors point to different systems with their own ranges.",
+            laborEstimateStatus: "For the water pump specifically: labor roughly $225–$500 — worth noting labor actually costs more than parts here, since the pump sits deep in the engine. Radiator/hose and cap/reservoir labor stays included in the combined ranges above; confirmed once the source is inspected.",
             benefits: "Identifying the fluid color and source first avoids paying for a water pump when the real issue is a $20 cap.",
             tradeoffs: "A visible leak doesn't confirm severity — some sources are urgent active coolant loss, others are minor.",
             supportingWork: "Supporting work depends on the confirmed source and may include a coolant flush or pressure test.",
@@ -278,8 +279,8 @@ enum PlanRecommendationLibrary {
             recommendedInspection: "Have the suspension, wheels/tires, and driveline checked — the exact cause depends heavily on when it happens: over bumps often points to worn control-arm bushings, sway bar links/bushings, ball joints, or strut mounts; at highway speed often points to wheel/tire balance or alignment; while turning often points to a CV joint/axle or wheel bearing.",
             conditionalNextStep: "If inspection confirms one of these causes, use that finding to define the confirmed repair.",
             reason: "Sound or vibration alone can come from several unrelated systems — suspension, tires, or driveline — with very different costs, so OpenHood needs the inspection finding before recommending a specific repair.",
-            partsEstimateStatus: "Range depends heavily on which cause an inspection confirms: control-arm bushings ~$250–$450, sway bar links/bushings ~$75–$300, ball joints ~$200–$400 each, wheel balance ~$60–$100 for all four, wheel alignment ~$80–$150, CV joint/axle ~$150–$400/side, wheel bearing ~$250–$550/side. Strut mounts and tire condition vary too much for a fixed number without inspection.",
-            laborEstimateStatus: "Also depends heavily on which cause is confirmed; included in the ranges above except where noted as varying",
+            partsEstimateStatus: "Range depends heavily on which cause an inspection confirms. Wheel bearing: parts roughly $122–$177. Sway bar link: parts roughly $63–$98. CV joint parts vary too widely by vehicle for a clean number — see labor below instead. Control-arm bushings ~$250–$450, ball joints ~$200–$400 each, wheel balance ~$60–$100 for all four, and wheel alignment ~$80–$150 stay combined. Strut mounts and tire condition vary too much for a fixed number without inspection.",
+            laborEstimateStatus: "Wheel bearing: labor roughly $227–$333. CV joint: labor roughly $150–$350. Sway bar link: labor roughly $60–$150 per side. For control-arm bushings, ball joints, wheel balance, and wheel alignment, labor is included in the combined figures above — confirmed once inspection identifies the specific cause.",
             benefits: "Confirming the specific cause first avoids paying for suspension work when the real issue is a much cheaper tire balance, or vice versa.",
             tradeoffs: "These causes span different systems, so more than one inspection may be needed to fully rule causes in or out.",
             supportingWork: "Supporting work depends on the confirmed cause and system — suspension, tire/wheel, or driveline.",
@@ -299,8 +300,8 @@ enum PlanRecommendationLibrary {
             recommendedInspection: "Have the starting and charging system checked, and get a diagnostic code read if the engine cranks but won't catch. The cause depends on exactly what happens: rapid clicking or a dead-feeling start often points to the battery, terminals/cables, or alternator; a single click more often points to the starter or its relay; cranking without starting often points to the fuel pump, ignition coil, spark plugs, or fuel filter.",
             conditionalNextStep: "If inspection or the code confirms a specific cause, use that finding to define the confirmed repair.",
             reason: "Starting and running issues can come from the electrical/charging system or the fuel/ignition system, so OpenHood needs the confirmed cause before recommending a specific repair.",
-            partsEstimateStatus: "Range depends heavily on the confirmed cause: battery ~$150–$450, terminals/cables ~$20–$150, starter ~$400–$800, starter relay/fuse ~$20–$100, alternator ~$400–$900, fuel pump ~$600–$900, ignition coil ~$200–$300, spark plugs ~$100–$300/set, fuel filter ~$100–$300",
-            laborEstimateStatus: "Included in the ranges above; confirmed once the specific cause is inspected or diagnosed by code",
+            partsEstimateStatus: "Range depends heavily on the confirmed cause. Starter: parts roughly $80–$500. Battery ~$150–$450, terminals/cables ~$20–$150, starter relay/fuse ~$20–$100, alternator ~$400–$900 total, fuel pump ~$600–$900, ignition coil ~$200–$300, spark plugs ~$100–$300/set, fuel filter ~$100–$300 — these stay combined.",
+            laborEstimateStatus: "Starter: labor roughly $100–$300. Alternator labor is typically $150–$300 of its $400–$900 total. For battery, terminals/cables, starter relay/fuse, fuel pump, ignition coil, spark plugs, and fuel filter, labor is included in the combined figures above; confirmed once the specific cause is inspected or diagnosed by code.",
             benefits: "Confirming the specific cause first avoids paying for a starter or alternator when the real issue is a loose terminal or a weak battery.",
             tradeoffs: "A code scan narrows the fuel/ignition side but doesn't replace inspection for the electrical/starting side, so both may be needed.",
             supportingWork: "Supporting work depends on the confirmed cause and may span the charging system or the fuel/ignition system.",
@@ -621,7 +622,7 @@ struct PlanBuilderPlaceholderView: View {
     private let mileageKey = "What is the current mileage?"
     private let serviceHistoryKey = "How much service history is known?"
     private let concernsKey = "Are there any current concerns?"
-    private let currentIssueKey = "What is happening?"
+    private let currentIssueKey = "What's the concern you're planning around?"
     private let returnToStockKey = "What needs to return to stock?"
 
     private var followUpQuestions: [PlanFollowUpQuestion] {
@@ -706,6 +707,7 @@ struct PlanBuilderPlaceholderView: View {
             return [
                 PlanFollowUpQuestion(
                     title: currentIssueKey,
+                    subtitle: "If you're not sure yet, use Something Happened first to figure out what's going on.",
                     options: reliabilityConcernOptions(includeNoKnownConcerns: false)
                 )
             ]
@@ -838,6 +840,7 @@ struct PlanBuilderPlaceholderView: View {
                 } else if let question = currentFollowUpQuestion {
                     choiceQuestion(
                         title: question.title,
+                        subtitle: question.subtitle,
                         options: question.options
                     ) { answer in
                         answers[question.title] = answer
@@ -1010,13 +1013,14 @@ struct PlanBuilderPlaceholderView: View {
 
     private func choiceQuestion(
         title: String,
+        subtitle: String? = nil,
         options: [PlanQuestionOption],
         selection: @escaping (String) -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: 20) {
             questionHeader(
                 title: title,
-                subtitle: "\(goal.rawValue) · \(focus)"
+                subtitle: subtitle ?? "\(goal.rawValue) · \(focus)"
             )
 
             VStack(spacing: 14) {
@@ -1077,7 +1081,7 @@ struct PlanBuilderPlaceholderView: View {
                 focus: focus,
                 answers: answers
             ) {
-                PlanRecommendedStartingPointCard(recommendation: recommendation)
+                PlanRecommendedStartingPointCard(recommendation: recommendation, timeline: timeline)
                 PlanCostImpactCard(recommendation: recommendation)
             } else {
                 PlanCostImpactCard(recommendation: nil)
@@ -1143,7 +1147,7 @@ struct PlanSelectionSummaryCard: View {
     private var reliabilitySummaryRows: some View {
         let concernKeys = [
             "Are there any current concerns?",
-            "What is happening?",
+            "What's the concern you're planning around?",
             "What needs to return to stock?"
         ]
 
@@ -1186,6 +1190,15 @@ struct PlanSelectionSummaryCard: View {
 
 struct PlanRecommendedStartingPointCard: View {
     let recommendation: PlanRecommendationRecord
+    var timeline: PlanTimeline?
+
+    private var inspectionText: String {
+        guard timeline == .thisMonth else {
+            return recommendation.recommendedInspection
+        }
+
+        return "Worth booking this week — " + recommendation.recommendedInspection
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -1195,7 +1208,7 @@ struct PlanRecommendedStartingPointCard: View {
 
             recommendationRow(
                 title: "Check first",
-                value: recommendation.recommendedInspection
+                value: inspectionText
             )
             recommendationRow(
                 title: "Likely next step",
@@ -1260,17 +1273,21 @@ struct PlanCostImpactCard: View {
                     .fontWeight(.bold)
             }
 
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
                 estimateStatus(
                     title: "Parts",
                     value: recommendation?.partsEstimateStatus
-                        ?? "Pending verified data"
+                        ?? "Pending verified data",
+                    icon: "gearshape.fill",
+                    tint: .blue
                 )
 
                 estimateStatus(
                     title: "Labor",
                     value: recommendation?.laborEstimateStatus
-                        ?? "Pending verified data"
+                        ?? "Pending verified data",
+                    icon: "wrench.fill",
+                    tint: .orange
                 )
             }
 
@@ -1372,16 +1389,30 @@ struct PlanCostImpactCard: View {
 
     private func estimateStatus(
         title: String,
-        value: String
+        value: String,
+        icon: String,
+        tint: Color
     ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        HStack(alignment: .top, spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.15))
+                    .frame(width: 34, height: 34)
 
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
