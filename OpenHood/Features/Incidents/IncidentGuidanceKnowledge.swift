@@ -182,7 +182,7 @@ enum IncidentGuidanceKnowledge {
                     id: "engine-mounts",
                     name: "Engine mounts",
                     plainExplanation: "Worn engine mounts can let the engine shift under load, which can feel like a hesitation or clunk rather than a true power loss.",
-                    typicalCostRange: "Roughly $630–$780"
+                    typicalCostRange: "Roughly $300–$700 per mount"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "vacuum-leak",
@@ -312,7 +312,7 @@ enum IncidentGuidanceKnowledge {
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "The battery may be too weak or discharged to turn the starter motor, even though it can still power the smaller starter relay.",
-                    typicalCostRange: "Roughly $150–$450"
+                    typicalCostRange: "Roughly $150–$400"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery-terminals-or-cables",
@@ -324,7 +324,7 @@ enum IncidentGuidanceKnowledge {
                     id: "alternator",
                     name: "Alternator",
                     plainExplanation: "If the battery keeps dying, the alternator may not be recharging it while driving.",
-                    typicalCostRange: "Roughly $400–$700"
+                    typicalCostRange: "Roughly $400–$900"
                 )
             ],
             repairSearchTerm: "battery replacement"
@@ -370,13 +370,13 @@ enum IncidentGuidanceKnowledge {
                     id: "starter-relay-or-fuse",
                     name: "Starter relay or fuse",
                     plainExplanation: "A failed relay or blown fuse can prevent the starter from receiving the signal to engage, often producing just one click.",
-                    typicalCostRange: "Roughly $20–$100"
+                    typicalCostRange: "Roughly $20–$200"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "Still worth ruling out first — a jump start is a fast way to tell whether the battery is the cause.",
-                    typicalCostRange: "Roughly $150–$450"
+                    typicalCostRange: "Roughly $150–$400"
                 )
             ],
             repairSearchTerm: "starter replacement"
@@ -416,7 +416,7 @@ enum IncidentGuidanceKnowledge {
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "A fully dead battery may not power anything at all, including the starter relay.",
-                    typicalCostRange: "Roughly $150–$450"
+                    typicalCostRange: "Roughly $150–$400"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery-terminals-or-cables",
@@ -468,7 +468,7 @@ enum IncidentGuidanceKnowledge {
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "A partially charged or weakening battery can turn the starter slowly but not consistently.",
-                    typicalCostRange: "Roughly $150–$450"
+                    typicalCostRange: "Roughly $150–$400"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery-terminals-or-cables-grounds",
@@ -550,7 +550,7 @@ enum IncidentGuidanceKnowledge {
                     id: "fuel-pump",
                     name: "Fuel pump",
                     plainExplanation: "A failed or weak fuel pump can leave the engine without enough fuel pressure to start.",
-                    typicalCostRange: "Roughly $600–$900"
+                    typicalCostRange: "Roughly $500–$1,200 — cost depends heavily on whether the pump is easy to access or requires dropping the fuel tank"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "ignition-coil",
@@ -608,7 +608,7 @@ enum IncidentGuidanceKnowledge {
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "A battery that's aging or already marginal can lose enough cold-weather power to fail a cold start, even if it still starts the car in warm weather.",
-                    typicalCostRange: "Roughly $150–$300"
+                    typicalCostRange: "Roughly $150–$400"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery-terminals-or-connections",
@@ -676,7 +676,7 @@ enum IncidentGuidanceKnowledge {
                     id: "fuel-injector",
                     name: "Fuel injector",
                     plainExplanation: "A stuck-open or leaking injector can deliver too much fuel during starting attempts.",
-                    typicalCostRange: "Roughly $150–$400 per injector"
+                    typicalCostRange: "Roughly $150–$600 per injector — direct-injection engines cost more than older port-injection engines"
                 )
             ],
             repairSearchTerm: "no start diagnostic"
@@ -754,7 +754,7 @@ enum IncidentGuidanceKnowledge {
                     id: "fuel-pump",
                     name: "Fuel pump",
                     plainExplanation: "A weakening fuel pump can trigger a check-engine light before it fails to deliver enough fuel to start.",
-                    typicalCostRange: "Roughly $600–$900"
+                    typicalCostRange: "Roughly $500–$1,200 — cost depends heavily on whether the pump is easy to access or requires dropping the fuel tank"
                 )
             ],
             repairSearchTerm: "no start diagnostic"
@@ -890,7 +890,7 @@ enum IncidentGuidanceKnowledge {
                     id: "shift-solenoid",
                     name: "Shift solenoid",
                     plainExplanation: "A shift solenoid controls fluid flow that triggers each gear change. A failing one can cause harsh or delayed shifts.",
-                    typicalCostRange: "Roughly $150–$700 — cost rises if the full solenoid pack needs replacing rather than a single unit"
+                    typicalCostRange: "Roughly $150–$1,500 — cost rises sharply if the full solenoid pack needs replacing rather than a single unit"
                 )
             ],
             repairSearchTerm: "transmission fluid service and diagnostic"
@@ -1041,7 +1041,7 @@ enum IncidentGuidanceKnowledge {
                     id: "oxygen-sensor",
                     name: "Oxygen sensor",
                     plainExplanation: "A sensor that measures exhaust to keep the engine running efficiently. When it wears out, the engine can run less efficiently and trigger this light.",
-                    typicalCostRange: "Roughly $150–$400 including labor"
+                    typicalCostRange: "Roughly $150–$580 — luxury vehicles run higher"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "spark-plugs",
@@ -1088,13 +1088,13 @@ enum IncidentGuidanceKnowledge {
                     id: "battery",
                     name: "Battery",
                     plainExplanation: "The battery itself may be old, damaged, or not holding a charge.",
-                    typicalCostRange: "Roughly $100–$250 including installation"
+                    typicalCostRange: "Roughly $150–$400"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "alternator",
                     name: "Alternator",
                     plainExplanation: "The alternator recharges the battery while the engine runs. When it fails, the battery drains even while driving.",
-                    typicalCostRange: "Roughly $400–$700 including labor"
+                    typicalCostRange: "Roughly $400–$900"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "battery-terminals-or-cables",
@@ -1173,7 +1173,7 @@ enum IncidentGuidanceKnowledge {
                     id: "wheel-speed-sensor",
                     name: "Wheel speed sensor",
                     plainExplanation: "A dirty, damaged, or failed wheel speed sensor is the most common cause of an ABS or traction-control light on its own.",
-                    typicalCostRange: "Roughly $150–$300 per sensor"
+                    typicalCostRange: "Roughly $150–$500 per sensor"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "low-brake-fluid",
@@ -1290,16 +1290,22 @@ enum IncidentGuidanceKnowledge {
             ],
             possibleAreaTerms: [
                 IncidentPossibleAreaTerm(
-                    id: "radiator-or-hose",
-                    name: "Radiator or hose",
-                    plainExplanation: "A cracked radiator or a worn, split coolant hose is one of the most common sources of a coolant leak.",
+                    id: "radiator-hose",
+                    name: "Radiator hose",
+                    plainExplanation: "A worn, split, or cracked coolant hose is one of the most common sources of a coolant leak.",
                     typicalCostRange: "Roughly $150–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "radiator",
+                    name: "Radiator",
+                    plainExplanation: "A cracked, corroded, or leaking radiator is a less common but significantly more expensive source of a coolant leak than a hose.",
+                    typicalCostRange: "Roughly $400–$1,500, more for larger vehicles or if the AC condenser has to come out too"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "water-pump",
                     name: "Water pump",
                     plainExplanation: "The water pump circulates coolant through the engine. A worn seal or bearing can let coolant seep out.",
-                    typicalCostRange: "Roughly $300–$750 including labor"
+                    typicalCostRange: "Roughly $500–$1,100 including labor"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "radiator-cap-or-reservoir",
@@ -1345,7 +1351,7 @@ enum IncidentGuidanceKnowledge {
                     id: "oil-pan-gasket-or-drain-plug",
                     name: "Oil pan gasket or drain plug",
                     plainExplanation: "A worn oil pan gasket or a loose drain plug is one of the most common sources of an oil leak.",
-                    typicalCostRange: "Roughly $100–$300"
+                    typicalCostRange: "Roughly $400–$800 — this job often requires dropping the subframe or exhaust, which is why it costs more than a typical gasket job"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "valve-cover-gasket",
@@ -1394,10 +1400,16 @@ enum IncidentGuidanceKnowledge {
             ],
             possibleAreaTerms: [
                 IncidentPossibleAreaTerm(
-                    id: "power-steering-hose-or-rack",
-                    name: "Power steering hose or rack",
-                    plainExplanation: "A worn power steering hose or a leaking rack seal can let reddish fluid escape, usually nearer the front.",
-                    typicalCostRange: "Roughly $150–$500"
+                    id: "power-steering-hose",
+                    name: "Power steering hose",
+                    plainExplanation: "A worn power steering hose can let reddish fluid escape, usually nearer the front.",
+                    typicalCostRange: "Roughly $150–$400"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "power-steering-rack",
+                    name: "Power steering rack",
+                    plainExplanation: "A leaking rack-and-pinion seal is a less common but far more expensive source of a reddish fluid leak than a hose.",
+                    typicalCostRange: "Roughly $700–$2,400 — one of the more expensive common repairs, get a second opinion before authorizing"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "transmission-pan-gasket-or-seal",
@@ -1506,16 +1518,22 @@ enum IncidentGuidanceKnowledge {
             ],
             possibleAreaTerms: [
                 IncidentPossibleAreaTerm(
-                    id: "radiator-or-hose",
-                    name: "Radiator or hose",
-                    plainExplanation: "A cracked radiator or a worn, split coolant hose is one of the most common sources of a coolant leak.",
+                    id: "radiator-hose",
+                    name: "Radiator hose",
+                    plainExplanation: "A worn, split, or cracked coolant hose is one of the most common sources of a coolant leak.",
                     typicalCostRange: "Roughly $150–$450"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "radiator",
+                    name: "Radiator",
+                    plainExplanation: "A cracked, corroded, or leaking radiator is a less common but significantly more expensive source of a coolant leak than a hose.",
+                    typicalCostRange: "Roughly $400–$1,500, more for larger vehicles or if the AC condenser has to come out too"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "water-pump",
                     name: "Water pump",
                     plainExplanation: "The water pump circulates coolant through the engine. A worn seal or bearing can let coolant seep out.",
-                    typicalCostRange: "Roughly $300–$750 including labor"
+                    typicalCostRange: "Roughly $500–$1,100 including labor"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "radiator-cap-or-reservoir",
@@ -1561,7 +1579,7 @@ enum IncidentGuidanceKnowledge {
                     id: "cabin-air-filter",
                     name: "Cabin air filter",
                     plainExplanation: "A dirty or moisture-trapping cabin air filter is one of the most common sources of a musty smell from the vents.",
-                    typicalCostRange: "Roughly $20–$75"
+                    typicalCostRange: "Roughly $20–$130 — DIY is closer to $20, a shop visit including labor is usually $60–$130"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "ac-evaporator-moisture-buildup",
@@ -1714,7 +1732,7 @@ enum IncidentGuidanceKnowledge {
                     id: "valve-seals",
                     name: "Valve seals",
                     plainExplanation: "Worn valve seals can let oil seep into the combustion chambers, often more noticeable as smoke on startup.",
-                    typicalCostRange: "Roughly $500–$1,200"
+                    typicalCostRange: "Roughly $700–$2,000"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "piston-rings",
@@ -1772,7 +1790,7 @@ enum IncidentGuidanceKnowledge {
                     id: "fuel-injector",
                     name: "Fuel injector",
                     plainExplanation: "A stuck-open or leaking injector can deliver too much fuel, producing black smoke.",
-                    typicalCostRange: "Roughly $150–$400 per injector"
+                    typicalCostRange: "Roughly $150–$600 per injector — direct-injection engines cost more than older port-injection engines"
                 )
             ],
             repairSearchTerm: "black exhaust smoke diagnostic"
@@ -1868,7 +1886,7 @@ enum IncidentGuidanceKnowledge {
                     id: "ball-joints",
                     name: "Ball joints",
                     plainExplanation: "Pivot joints that let the wheels turn and move with the suspension. When worn, they can cause a clunking noise or looseness.",
-                    typicalCostRange: "Roughly $200–$400 each"
+                    typicalCostRange: "Roughly $200–$600 each — lower ball joints cost more than upper ones"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "strut-mounts",
@@ -2003,7 +2021,7 @@ enum IncidentGuidanceKnowledge {
                     id: "cv-joint-or-axle",
                     name: "CV joint or axle",
                     plainExplanation: "A worn CV joint often clicks or pops during turns, especially sharp ones or pulling away from a stop.",
-                    typicalCostRange: "Roughly $150–$400 per side"
+                    typicalCostRange: "Roughly $250–$700 per side"
                 ),
                 IncidentPossibleAreaTerm(
                     id: "wheel-bearing",
@@ -2101,7 +2119,7 @@ enum IncidentGuidanceKnowledge {
                     id: "sticking-caliper",
                     name: "Sticking caliper",
                     plainExplanation: "A caliper that doesn't release cleanly can drag unevenly, building up heat and vibration that can cause squeal.",
-                    typicalCostRange: "Roughly $300–$600 per caliper, more for luxury or performance vehicles"
+                    typicalCostRange: "Roughly $300–$900 per caliper, more for luxury or performance vehicles"
                 )
             ],
             repairSearchTerm: "brake repair"
