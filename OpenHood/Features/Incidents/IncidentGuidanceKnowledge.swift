@@ -707,6 +707,173 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "no start diagnostic"
         ),
+        // Same tier as phase1.starting.electrical/phase1.starting.fuel-
+        // ignition above — reviewed general-guidance content, not
+        // needsVerification placeholders, gated on a structured answer
+        // (IncidentStartingAnswerKey.transmissionBehavior, asked in
+        // SomethingHappenedView.startingQuestions) rather than free-text
+        // description matching.
+        //
+        // Severity note, read carefully before touching this section:
+        // only "Shifting feels harsh or delayed..." and "I'm not sure"
+        // have records below. "The engine revs up but the car doesn't
+        // speed up... (slipping)" and "A burning smell..." are DELIBERATELY
+        // UNHANDLED — real guidance is consistent that both mean stop
+        // driving as soon as it's safely possible (loss of reliable power
+        // delivery; already-degraded fluid risking complete failure), not
+        // a SERVICE-SOON-tier Phase 1 result, the same severity tier this
+        // Phase 1 engine already can't represent (ordinaryDriveRecommendation
+        // only ever returns SERVICE SOON, CHECK BEFORE DRIVING, or
+        // MONITOR — no path to STOP DRIVING).
+        //
+        // Every prior severity fix this session (cooling, oil-pressure,
+        // odor, temperature warning light, ABS/brakes) closed this same
+        // kind of gap by escalating into one of the app's existing 7
+        // IncidentSafetySelection categories via escalateToUrgentSafety.
+        // This one is different: none of the 7 fit without asking a
+        // misleading follow-up question. Checked each category's actual
+        // urgentQuestions wording (not just its name), specifically
+        // against "engine revs fine but the car won't accelerate" (no
+        // smell, no fire, no coolant/temperature sign, no brake/steering
+        // symptom, engine keeps running normally) and "burning smell
+        // after stop-and-go/towing":
+        //   - .smokeOrFire: first question assumes an active flame right
+        //     now ("Is there an active flame? Answer only from a safe
+        //     distance.") — wrong premise for a smell with no fire, and
+        //     entirely wrong for slipping (no smoke/smell at all).
+        //   - .strongFuelSmell: first question forces a fuel-oriented
+        //     description (Gasoline/Burning oil/Sweet or coolant-like/
+        //     Electrical or plastic/Exhaust) under a "strong fuel smell"
+        //     framing — mischaracterizes a transmission-fluid smell as a
+        //     fuel leak, and doesn't apply at all to slipping (no smell).
+        //   - .overheatingOrSteam: first question asks whether "the gauge
+        //     or warning indicate[d] overheating" — most vehicles have no
+        //     transmission-temperature gauge, so this forces a coolant/
+        //     engine-temperature framing that doesn't fit either symptom.
+        //   - .flashingWarningLight: first question assumes a specific
+        //     dashboard light flashed (Check engine/Oil pressure/
+        //     Temperature/Brake/Charging/Tire pressure) — many transmission
+        //     slips or burning smells present with no dashboard light at
+        //     all, so this forces a false premise.
+        //   - .unsafeBrakesOrSteering: the closest guess by theme (loss of
+        //     reliable vehicle control), but its first question forces
+        //     "What is the main concern? Braking / Steering / Both / I'm
+        //     not sure" — slipping is neither a braking nor a steering
+        //     symptom (the brakes and steering both work normally; the
+        //     problem is the engine not transferring power to the wheels),
+        //     so answering this question honestly means picking "I'm not
+        //     sure" for a question that does apply to the person's car,
+        //     just not to their problem — a misleading fit, not a clean
+        //     one, despite the surface-level "loss of control" similarity.
+        //   - .engineWillNotStayRunning: first question ("What happens
+        //     when it runs? Starts and immediately stops/Idles roughly/
+        //     Shakes or misfires/Stalls when placed in gear") is about the
+        //     ENGINE stalling or misfiring — but transmission slipping is
+        //     specifically the engine running fine while the car doesn't
+        //     accelerate, the opposite premise.
+        //   - .noneOfThese: not an urgent category at all (routine path),
+        //     so it can't produce the required stop-driving-tier result
+        //     regardless of fit.
+        // Conclusion: no existing category fits both dangerous answers
+        // without a misleading premise. Per instruction, this is left
+        // unwired rather than forced — selecting either answer currently
+        // falls through to an ordinary Phase 1 result (typically SERVICE
+        // SOON, forced by the .startingOrRunningTrouble observation floor
+        // in ordinaryDriveRecommendation, generally with no record
+        // actually matching that specific answer) instead of the correct
+        // stop-driving treatment. This is a known, called-out gap — not
+        // an oversight — pending a product decision on whether a new
+        // IncidentSafetySelection category is needed for "transmission
+        // failing under load" specifically.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanation and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (harsh/
+        // delayed shifts pointing to fluid condition or a shift solenoid;
+        // slipping and burning smell both being stop-driving-tier
+        // symptoms rather than routine service items) are well-known,
+        // independently corroborated automotive knowledge, not
+        // proprietary to any one site.
+        record(
+            id: "phase1.transmission.harsh-shifting",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.transmissionBehavior, value: "Shifting feels harsh or delayed, but the car drives normally otherwise")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.transmissionBehavior, value: "Shifting feels harsh or delayed, but the car drives normally otherwise")
+            ],
+            contradict: [],
+            area: .mechanicalOrCompression,
+            explanation: "Harsh or delayed shifts on their own, with no burning smell and no loss of power, most often point to low or worn transmission fluid, or a shift solenoid that's starting to fail. This is worth having checked soon, but it's not an immediate driving hazard by itself.",
+            action: .professionalInspection,
+            questions: [
+                "When was the transmission fluid last checked or changed?",
+                "Does the delay happen more when the transmission is cold, or all the time?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-transmission-harsh-shifting-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Harsh or Delayed Shifting\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "transmission-fluid",
+                    name: "Transmission fluid level or condition",
+                    plainExplanation: "Low or worn transmission fluid is one of the most common, cheapest causes of harsh or delayed shifting.",
+                    typicalCostRange: "Roughly $80–$250 for a standard service"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "shift-solenoid",
+                    name: "Shift solenoid",
+                    plainExplanation: "A shift solenoid controls fluid flow that triggers each gear change. A failing one can cause harsh or delayed shifts.",
+                    typicalCostRange: "Roughly $150–$700 — cost rises if the full solenoid pack needs replacing rather than a single unit"
+                )
+            ],
+            repairSearchTerm: "transmission fluid service and diagnostic"
+        ),
+        record(
+            id: "phase1.transmission",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.transmissionBehavior, value: "I’m not sure")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.transmissionBehavior, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .mechanicalOrCompression,
+            explanation: "Transmission symptoms can range from a simple fluid or solenoid issue to something more serious. If you notice the engine revving without the car speeding up, or a burning smell, treat that as more serious and stop driving as soon as it's safely possible — otherwise, this is worth a professional inspection to narrow down.",
+            action: .professionalInspection,
+            questions: [
+                "Does the car drive normally otherwise, or has power delivery changed too?",
+                "Is there any unusual smell, especially after stop-and-go driving or towing?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-transmission-general-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Transmission Behavior, Not Yet Narrowed Down\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
         // OH-UIK gap fix (same tier as the odor-escalation and
         // oil-pressure severity fixes): phase1.cooling.temperature-control
         // used to live here as a free-text-matched placeholder
@@ -1353,6 +1520,211 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "cabin air filter replacement"
         ),
+        // Same tier as the fluid-color/odor records above — reviewed
+        // general-guidance content, not needsVerification placeholders,
+        // gated on a structured answer (IncidentFluidAnswerKey.
+        // exhaustSmokeColor, asked in SomethingHappenedView.fluidQuestions
+        // alongside color/odor) rather than free-text description
+        // matching. This is genuinely simpler than the odor/warning-light
+        // splits above: all four answers are safe as SERVICE SOON-tier
+        // Phase 1 content on their own, since none of them is an
+        // immediate driving hazard the way active fire, carbon monoxide,
+        // or oil-pressure loss are — no escalation needed here, unlike
+        // "Electrical or burning plastic"/"Exhaust" on the odor question
+        // above. This is for someone describing exhaust smoke color after
+        // the fact or during a milder moment ("I noticed blue smoke on
+        // startup"), reached through general navigation — it does not
+        // change or duplicate the existing "Smoke or fire" urgent
+        // category in the main safety menu, which stays the answer for
+        // continuous/heavy smoke happening right now.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanations and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (white smoke
+        // as normal cold-start condensation vs. persistent coolant-burning/
+        // head-gasket signs; blue smoke as burning oil from valve seals or
+        // piston rings; black smoke as a rich fuel-air mixture from an air
+        // filter, sensor, or injector) are well-known, independently
+        // corroborated automotive knowledge, not proprietary to any one
+        // site.
+        record(
+            id: "phase1.exhaust-smoke",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible, .smell],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "I’m not sure")
+            ],
+            support: [
+                .observation(.visible),
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .leaksSmokeAndOdors,
+            explanation: "Exhaust smoke color is a useful clue, but without knowing the color, a direct inspection is the most reliable way to narrow down whether this involves coolant, oil, or the fuel-air mixture.",
+            action: .professionalInspection,
+            questions: [
+                "Does the smoke happen mainly on startup, or does it continue once the engine is warm?",
+                "Does it happen more at idle, or under acceleration?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-exhaust-smoke-general-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Exhaust Smoke, Color Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
+        record(
+            id: "phase1.exhaust-smoke.white",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible, .smell],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "White or light gray")
+            ],
+            support: [
+                .observation(.visible),
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "White or light gray")
+            ],
+            contradict: [],
+            area: .cooling,
+            explanation: "A small amount of white smoke on a cold morning is usually just condensation burning off and is normal — it should stop once the engine warms up. If it's thick, doesn't go away once the engine is warm, or keeps happening, it can mean coolant is getting into the engine's combustion chambers, which is worth having checked soon.",
+            action: .professionalInspection,
+            questions: [
+                "Does the smoke go away once the engine warms up, or does it continue?",
+                "Has the coolant level been checked recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-exhaust-smoke-white-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — White or Light Gray Exhaust Smoke\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "head-gasket",
+                    name: "Head gasket",
+                    plainExplanation: "A blown or leaking head gasket can let coolant enter the combustion chambers, producing thick white smoke that doesn't go away once the engine is warm.",
+                    typicalCostRange: "Roughly $1,000–$3,500, most of the cost is labor"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "cracked-engine-component",
+                    name: "Cracked engine component",
+                    plainExplanation: "A cracked cylinder head or engine block can also let coolant reach the combustion chambers, though this is less common than a head gasket.",
+                    typicalCostRange: "Varies significantly — needs professional diagnosis before estimating"
+                )
+            ],
+            repairSearchTerm: "white exhaust smoke diagnostic"
+        ),
+        record(
+            id: "phase1.exhaust-smoke.blue",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible, .smell],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "Blue or blue-gray")
+            ],
+            support: [
+                .observation(.visible),
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "Blue or blue-gray")
+            ],
+            contradict: [],
+            area: .lubricationAndOilPressure,
+            explanation: "Blue or blue-gray smoke usually means the engine is burning oil, often more noticeable on startup or when accelerating. Common causes are worn valve seals or worn piston rings — both are more about age and mileage than a single sudden failure.",
+            action: .professionalInspection,
+            questions: [
+                "Is the smoke more noticeable on startup, or during acceleration?",
+                "Has oil consumption between changes increased recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-exhaust-smoke-blue-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Blue or Blue-Gray Exhaust Smoke\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "valve-seals",
+                    name: "Valve seals",
+                    plainExplanation: "Worn valve seals can let oil seep into the combustion chambers, often more noticeable as smoke on startup.",
+                    typicalCostRange: "Roughly $500–$1,200"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "piston-rings",
+                    name: "Piston rings",
+                    plainExplanation: "Worn piston rings can let oil past into the combustion chambers, often more noticeable under acceleration. This is a much bigger job than valve seals — professional diagnosis first is worth it before assuming this is the cause.",
+                    typicalCostRange: "Roughly $2,000–$3,000"
+                )
+            ],
+            repairSearchTerm: "blue exhaust smoke diagnostic"
+        ),
+        record(
+            id: "phase1.exhaust-smoke.black",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible, .smell],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "Black")
+            ],
+            support: [
+                .observation(.visible),
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.exhaustSmokeColor, value: "Black")
+            ],
+            contradict: [],
+            area: .intakeAndAirMeasurement,
+            explanation: "Black smoke usually means the engine is burning too much fuel relative to air — more fuel is going in than is being properly burned. Common general causes include a clogged air filter, a failing sensor that's misreading the air-fuel mixture, or a fuel injector issue.",
+            action: .professionalInspection,
+            questions: [
+                "When was the air filter last replaced?",
+                "Has fuel economy changed recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-exhaust-smoke-black-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Black Exhaust Smoke\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "air-filter",
+                    name: "Air filter",
+                    plainExplanation: "A clogged air filter restricts airflow, making the fuel-air mixture too rich and one of the most common, cheapest causes of black smoke.",
+                    typicalCostRange: "Roughly $20–$75"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "oxygen-or-maf-sensor",
+                    name: "Oxygen or mass airflow sensor",
+                    plainExplanation: "A failing sensor can misreport the air-fuel mixture, causing the engine to run richer than it should.",
+                    typicalCostRange: "Roughly $150–$400"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-injector",
+                    name: "Fuel injector",
+                    plainExplanation: "A stuck-open or leaking injector can deliver too much fuel, producing black smoke.",
+                    typicalCostRange: "Roughly $150–$400 per injector"
+                )
+            ],
+            repairSearchTerm: "black exhaust smoke diagnostic"
+        ),
         // Unlike the 8 records above, this one is not a needsVerification
         // placeholder — it's backed by professionally-supported
         // general-guidance content that was actually checked against
@@ -1608,16 +1980,23 @@ enum IncidentGuidanceKnowledge {
         // corroborated automotive knowledge, not proprietary to any one
         // site.
         //
-        // Known next gap, intentionally not addressed in this pass:
-        // selecting "While braking" + "Grind" still falls through to the
-        // generic result. Grinding while braking is a distinct, more
-        // serious case (possible metal-on-metal contact) that deserves
-        // its own scoped pass rather than being folded in here — and
-        // since this engine's drive-recommendation severity is driven by
-        // reported observation types, not per-record, escalating that
-        // case properly likely needs a new question capturing whether
-        // stopping distance or pedal feel has changed, not just a content
-        // record.
+        // OH-UIK gap fix (same tier as the ABS+brake-light severity fix):
+        // "While braking" + "Grind" used to fall through to the generic
+        // result — this record's own `support` only rewards a "Squeal"
+        // sound answer, so "Grind" never scored high enough to qualify,
+        // but nothing routed it anywhere safer either. Metal-on-metal
+        // brake grinding means the pads are worn through and stopping
+        // distance/control are compromised — a real, unanimous stop-
+        // driving case, not general content this Phase 1 engine could
+        // safely word (ordinaryDriveRecommendation has no path to STOP
+        // DRIVING). Rather than writing general content for it, "While
+        // braking" + "Grind" now escalates directly into the existing
+        // urgent .unsafeBrakesOrSteering path before Phase 1 evaluation
+        // ever runs — see brakeGrindEscalation/escalateToUrgentSafety in
+        // SomethingHappenedView.swift, reusing the exact same mechanism
+        // the ABS+brake-light fix already wired. "While braking" +
+        // "Squeal" is untouched below; it's the existing, correct
+        // wear-indicator content.
         record(
             id: "phase1.brakes.squeal-while-braking",
             family: .noiseVibrationOrSuspension,

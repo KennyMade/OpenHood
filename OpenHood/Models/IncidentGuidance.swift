@@ -310,25 +310,37 @@ enum IncidentWarningAnswerKey {
 
 /// Structured follow-up questions for the fluid-leak/unusual-odor record
 /// family (phase1.fluid-smell.visible-fluid, phase1.fluid-smell.unusual-
-/// odor) — same reasoning as IncidentNoiseAnswerKey/IncidentWarningAnswerKey
-/// above. Answers are stored in VehicleIncident.fluidFollowUpAnswers and
-/// matched via IncidentGuidanceEvidenceSignal.fluidAnswer. Two separate
-/// keys (not one) because a single incident can report both a visible
-/// fluid and an unusual odor, each answered independently.
+/// odor, phase1.exhaust-smoke.*) — same reasoning as
+/// IncidentNoiseAnswerKey/IncidentWarningAnswerKey above. Answers are
+/// stored in VehicleIncident.fluidFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.fluidAnswer. Three separate keys (not
+/// one) because a single incident can report a visible fluid, an unusual
+/// odor, and exhaust smoke color, each answered independently.
 enum IncidentFluidAnswerKey {
     static let color = "fluidColor"
     static let odor = "fluidOdor"
+    /// phase1.exhaust-smoke.* split — see SomethingHappenedView.
+    /// fluidQuestions. Shares this dictionary/signal rather than getting
+    /// its own answer-key enum: it's the same general "what did you
+    /// notice" family as color/odor, just a third independent question,
+    /// asked whenever either .visible or .smell is reported (unlike color/
+    /// odor, which are each gated on their own single observation). All
+    /// four answers are safe, ordinary Phase 1 content — no escalation,
+    /// unlike odor's "Electrical or burning plastic"/"Exhaust".
+    static let exhaustSmokeColor = "fluidExhaustSmokeColor"
 }
 
 /// Structured follow-up questions for the starting-trouble record family
 /// (phase1.starting.electrical, phase1.starting.fuel-ignition,
-/// phase1.starting.engine-operation) — same reasoning as
-/// IncidentNoiseAnswerKey/IncidentWarningAnswerKey/IncidentFluidAnswerKey
-/// above. Answers are stored in VehicleIncident.startingFollowUpAnswers and
-/// matched via IncidentGuidanceEvidenceSignal.startingAnswer. Three keys
-/// because a no-crank/clicking report (crankBehavior), a cranks-but-won't-
-/// catch report (crankClues), and a post-start running-behavior report
-/// (whatsHappening) are asked independently, same reasoning as
+/// phase1.starting.engine-operation, phase1.transmission) — same
+/// reasoning as IncidentNoiseAnswerKey/IncidentWarningAnswerKey/
+/// IncidentFluidAnswerKey above. Answers are stored in
+/// VehicleIncident.startingFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.startingAnswer. Four keys because a
+/// no-crank/clicking report (crankBehavior), a cranks-but-won't-catch
+/// report (crankClues), a post-start running-behavior report
+/// (whatsHappening), and a transmission-behavior report
+/// (transmissionBehavior) are asked independently, same reasoning as
 /// IncidentFluidAnswerKey.color/.odor.
 enum IncidentStartingAnswerKey {
     static let crankBehavior = "startingCrankBehavior"
@@ -341,6 +353,20 @@ enum IncidentStartingAnswerKey {
     /// Phase 1 evaluation ever runs, same mechanism as
     /// dangerousOdorEscalation/temperatureObservationEscalation.
     static let whatsHappening = "startingWhatsHappening"
+    /// phase1.transmission split — see SomethingHappenedView.
+    /// startingQuestions. Only "Shifting feels harsh or delayed..." and
+    /// "I'm not sure" resolve to an ordinary Phase 1 record today.
+    /// "Slipping" and "burning smell" are known-dangerous (real guidance:
+    /// stop driving as soon as safely possible) but are DELIBERATELY NOT
+    /// escalated as of this writing — none of the app's 7 existing
+    /// IncidentSafetySelection categories fit without asking a misleading
+    /// follow-up question (checked against each category's actual
+    /// urgentQuestions wording, not just its name; see the review notes
+    /// where this key was introduced). Until a product decision adds a
+    /// category that fits, selecting either of those two answers falls
+    /// through to an ordinary Phase 1 result with no matching record —
+    /// a known, called-out gap, not an oversight.
+    static let transmissionBehavior = "startingTransmissionBehavior"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {

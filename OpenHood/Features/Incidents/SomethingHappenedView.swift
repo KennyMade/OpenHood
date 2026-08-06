@@ -373,6 +373,13 @@ private struct IncidentIntakeView: View {
     /// urgent-question step pattern above, but for the routine intake
     /// path, so IncidentGuidanceEngine can match against exact recorded
     /// answers (IncidentNoiseAnswerKey) instead of free-text guessing.
+    ///
+    /// "While braking" + "Grind" is deliberately excluded from the
+    /// fall-through below — see brakeGrindEscalation. The `sound` question
+    /// is always the last of the three asked (location, timing, sound, in
+    /// that fixed order — see `noiseQuestions`), so by the time it's
+    /// answered, `timing` is guaranteed to already be recorded, making it
+    /// safe to check both answers together only when `sound` is answered.
     @ViewBuilder
     private func noiseQuestionDestination(index: Int) -> some View {
         let questions = noiseQuestions
@@ -385,7 +392,12 @@ private struct IncidentIntakeView: View {
             ) { answer in
                 guard path.last == .noiseQuestion(index) else { return }
                 setNoiseAnswer(answer, key: question.answerKey)
-                advanceNoiseIntake()
+                if question.answerKey == IncidentNoiseAnswerKey.sound,
+                   let escalation = brakeGrindEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else {
+                    advanceNoiseIntake()
+                }
             }
         } else {
             IncidentIncompleteIntakeRecoveryView {
@@ -404,6 +416,29 @@ private struct IncidentIntakeView: View {
             question("When does it happen?", key: IncidentNoiseAnswerKey.timing, choices: ["Over bumps", "While turning", "While braking", "Constant", "Only at speed", "I’m not sure"]),
             question("What does it sound like?", key: IncidentNoiseAnswerKey.sound, choices: ["Rattle", "Clunk", "Grind", "Squeal", "I’m not sure"])
         ]
+    }
+
+    /// OH-UIK gap fix (same tier as the ABS+brake-light and odor/cooling
+    /// severity fixes): a known gap called out in phase1.brakes.squeal-
+    /// while-braking's own comment — "While braking" + "Grind" used to
+    /// fall through to the generic result instead of matching anything
+    /// (that record's `support` only rewards a "Squeal" sound answer, so
+    /// "Grind" never scored high enough to qualify, but nothing routed it
+    /// anywhere safer either). Metal-on-metal brake grinding means the
+    /// pads are worn through and stopping distance/control are
+    /// compromised — every source is unanimous: stop driving as soon as
+    /// it's safely possible, not SERVICE-SOON-tier content. Reuses the
+    /// exact escalation the ABS+brake-light fix already wired — same
+    /// .unsafeBrakesOrSteering case in escalateToUrgentSafety, same
+    /// setUrgentAnswer("Braking", key: IncidentUrgentAnswerKey.concernType)
+    /// prefill — rather than a new pattern. "While braking" + "Squeal" is
+    /// untouched; that's the existing, correct wear-indicator content.
+    private func brakeGrindEscalation(for answer: String) -> IncidentSafetySelection? {
+        guard answer == "Grind",
+              incident.noiseFollowUpAnswers?[IncidentNoiseAnswerKey.timing] == "While braking" else {
+            return nil
+        }
+        return .unsafeBrakesOrSteering
     }
 
     private func advanceNoiseIntake() {
@@ -561,9 +596,10 @@ private struct IncidentIntakeView: View {
         saveDraft()
     }
 
-    /// phase1.fluid-smell.visible-fluid / phase1.fluid-smell.unusual-odor:
-    /// structured follow-up asked only when the reported observation
-    /// includes .visible (color question) and/or .smell (odor question)
+    /// phase1.fluid-smell.visible-fluid / phase1.fluid-smell.unusual-odor /
+    /// phase1.exhaust-smoke.*: structured follow-up asked only when the
+    /// reported observation includes .visible (color question) and/or
+    /// .smell (odor question), or either one (exhaust smoke color question)
     /// — see `fluidQuestions`. Chained after the warning questions
     /// (advanceWarningIntake falls through to this once warning questions
     /// are answered or not applicable), then falls through to
@@ -571,6 +607,13 @@ private struct IncidentIntakeView: View {
     ///
     /// "Electrical or burning plastic" and "Exhaust" are deliberately
     /// excluded from that fall-through — see escalateToUrgentSafety below.
+    /// The exhaust smoke color question has no such exclusion — all four
+    /// answers are safe, ordinary Phase 1 content (see
+    /// IncidentGuidanceKnowledge's phase1.exhaust-smoke.* records); this is
+    /// for someone describing exhaust color after the fact or during a
+    /// milder moment, not the existing "Smoke or fire" urgent category for
+    /// continuous/heavy smoke happening right now, which this doesn't
+    /// change or duplicate.
     @ViewBuilder
     private func fluidQuestionDestination(index: Int) -> some View {
         let questions = fluidQuestions
@@ -607,6 +650,11 @@ private struct IncidentIntakeView: View {
         if incident.observationTypes.contains(.smell) {
             questions.append(
                 question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "I’m not sure"])
+            )
+        }
+        if incident.observationTypes.contains(.visible) || incident.observationTypes.contains(.smell) {
+            questions.append(
+                question("What color was the exhaust smoke?", key: IncidentFluidAnswerKey.exhaustSmokeColor, choices: ["White or light gray", "Blue or blue-gray", "Black", "I’m not sure"])
             )
         }
         return questions
@@ -691,24 +739,31 @@ private struct IncidentIntakeView: View {
     }
 
     /// phase1.starting.electrical / phase1.starting.fuel-ignition /
-    /// phase1.starting.engine-operation: structured follow-up asked only
-    /// when the reported observation includes .startingOrRunningTrouble —
-    /// see `startingQuestions`. Chained after the fluid questions
-    /// (advanceFluidIntake falls through to this once fluid questions are
-    /// answered or not applicable), then falls through to .description
-    /// itself, same pattern as noise/warning/fluid above. All three
-    /// questions below are asked back-to-back regardless of which answer
-    /// is given to the others — the no-crank/clicking record
-    /// (phase1.starting.electrical) keys off crankBehavior, the
+    /// phase1.starting.engine-operation / phase1.transmission: structured
+    /// follow-up asked only when the reported observation includes
+    /// .startingOrRunningTrouble — see `startingQuestions`. Chained after
+    /// the fluid questions (advanceFluidIntake falls through to this once
+    /// fluid questions are answered or not applicable), then falls
+    /// through to .description itself, same pattern as noise/warning/fluid
+    /// above. All four questions below are asked back-to-back regardless
+    /// of which answer is given to the others — the no-crank/clicking
+    /// record (phase1.starting.electrical) keys off crankBehavior, the
     /// cranks-but-won't-catch record (phase1.starting.fuel-ignition) keys
-    /// off crankClues, and the post-start running-behavior record
-    /// (phase1.starting.engine-operation) keys off whatsHappening, so a
-    /// person only needs to answer whichever one meaningfully matches
-    /// what actually happened; the others can be left at "I’m not sure"
-    /// without affecting the result.
+    /// off crankClues, the post-start running-behavior record
+    /// (phase1.starting.engine-operation) keys off whatsHappening, and the
+    /// transmission-behavior record (phase1.transmission) keys off
+    /// transmissionBehavior, so a person only needs to answer whichever
+    /// one meaningfully matches what actually happened; the others can be
+    /// left at "I’m not sure" without affecting the result.
     ///
     /// "The engine actually shuts off or dies" is deliberately excluded
     /// from the fall-through below — see engineOperationEscalation.
+    /// "Slipping" and "burning smell" on the transmission question are
+    /// ALSO known-dangerous but are NOT excluded/escalated — see the doc
+    /// comment on IncidentStartingAnswerKey.transmissionBehavior for why:
+    /// none of the app's 7 existing urgent categories fit without a
+    /// misleading follow-up question. This is a deliberate, called-out gap
+    /// pending a product decision, not an oversight.
     @ViewBuilder
     private func startingQuestionDestination(index: Int) -> some View {
         let questions = startingQuestions
@@ -742,7 +797,14 @@ private struct IncidentIntakeView: View {
         return [
             question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
             question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "I’m not sure"]),
-            question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"])
+            question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"]),
+            // "Slipping" and "burning smell" are known-dangerous but
+            // deliberately not escalated — see the doc comment on
+            // IncidentStartingAnswerKey.transmissionBehavior for why none
+            // of the app's 7 existing urgent categories fit cleanly.
+            // Unlike whatsHappening above, this question has no
+            // corresponding escalation branch in startingQuestionDestination.
+            question("What’s happening with the transmission?", key: IncidentStartingAnswerKey.transmissionBehavior, choices: ["Shifting feels harsh or delayed, but the car drives normally otherwise", "The engine revs up but the car doesn’t speed up the way it should (slipping)", "A burning smell, especially after stop-and-go driving or towing", "I’m not sure"])
         ]
     }
 
