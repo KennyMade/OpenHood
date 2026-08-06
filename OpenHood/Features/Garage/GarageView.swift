@@ -124,7 +124,7 @@ struct GarageVehicleCard: View {
         case .verified:
             return "Verified configuration"
         case .basicUnverified:
-            return "Basic profile · Configuration details unverified"
+            return "Basic profile · Some details self-reported"
         }
     }
 
@@ -223,7 +223,7 @@ struct VehicleDetailView: View {
         case .verified:
             return "Verified configuration"
         case .basicUnverified:
-            return "Basic profile · Configuration details unverified"
+            return "Basic profile · Some details self-reported"
         }
     }
 
@@ -287,6 +287,14 @@ struct VehicleDetailView: View {
                     )
                     Divider()
                     GarageDetailRow(title: "Profile", value: verificationText)
+
+                    if vehicle.profileVerification == .basicUnverified {
+                        Text("Mileage, trim, and transmission were entered by you and haven't been checked against a catalog. This doesn't affect the accuracy of driving guidance.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                    }
                 }
                 .background(Color(.secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 22))
