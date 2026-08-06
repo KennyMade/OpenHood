@@ -31,11 +31,16 @@ struct MainTabView: View {
                 }
             }
 
-            Tab("Plan", systemImage: "wrench.and.screwdriver.fill", value: .plan) {
-                NavigationStack {
-                    VehiclePlanView()
-                }
-            }
+            // Plan tab hidden for this build — not part of the app's
+            // current story (Garage + Something Happened + Profile) while
+            // it's still early. The Plan code itself (VehiclePlanView and
+            // friends, ~1,274 lines) is untouched on disk, just not
+            // presented here.
+            // Tab("Plan", systemImage: "wrench.and.screwdriver.fill", value: .plan) {
+            //     NavigationStack {
+            //         VehiclePlanView()
+            //     }
+            // }
 
             Tab("Learn", systemImage: "book.closed.fill", value: .learn) {
                 NavigationStack {

@@ -439,10 +439,11 @@ private struct IncidentIntakeView: View {
     /// include a sound, a warning light, a visible fluid, an odor, or
     /// any combination without any path being skipped.
     ///
-    /// "Temperature warning light" is deliberately excluded from that
-    /// fall-through — see temperatureObservationEscalation below, same
-    /// treatment as "Electrical or burning plastic"/"Exhaust" in
-    /// fluidQuestionDestination.
+    /// "Temperature warning light" and "ABS or traction control light"
+    /// are deliberately excluded from that fall-through when their
+    /// follow-up answer is dangerous — see temperatureObservationEscalation
+    /// and absTractionEscalation below, same treatment as "Electrical or
+    /// burning plastic"/"Exhaust" in fluidQuestionDestination.
     @ViewBuilder
     private func warningQuestionDestination(index: Int) -> some View {
         let questions = warningQuestions
@@ -457,6 +458,9 @@ private struct IncidentIntakeView: View {
                 setWarningAnswer(answer, key: question.answerKey)
                 if question.answerKey == IncidentWarningAnswerKey.temperatureDetail,
                    let escalation = temperatureObservationEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else if question.answerKey == IncidentWarningAnswerKey.absBrakeCheck,
+                          let escalation = absTractionEscalation(for: answer) {
                     escalateToUrgentSafety(escalation)
                 } else {
                     advanceWarningIntake()
@@ -474,7 +478,7 @@ private struct IncidentIntakeView: View {
             return []
         }
         var questions = [
-            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "Temperature warning light", "I’m not sure which one"])
+            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "Temperature warning light", "ABS or traction control light", "I’m not sure which one"])
         ]
         // OH-UIK gap fix (same tier as the odor-escalation and
         // oil-pressure severity fixes): a temperature warning light
@@ -491,6 +495,17 @@ private struct IncidentIntakeView: View {
                 question("What did you notice?", key: IncidentWarningAnswerKey.temperatureDetail, choices: ["Temperature gauge reading high or in the red", "Steam or visible vapor", "Warning light for temperature", "Sweet smell with rising temperature", "I’m not sure"])
             )
         }
+        // ABS-alone is safe, ordinary Phase 1 content (see
+        // phase1.warning.abs-traction-alone) — but ABS combined with the
+        // regular brake warning light, or an unconfirmed answer, is a real
+        // hydraulic-system possibility that escalates instead (see
+        // absTractionEscalation). This follow-up is only asked once "ABS
+        // or traction control light" is selected above.
+        if incident.warningFollowUpAnswers?[IncidentWarningAnswerKey.light] == "ABS or traction control light" {
+            questions.append(
+                question("Is the regular brake warning light also on?", key: IncidentWarningAnswerKey.absBrakeCheck, choices: ["No, just this one", "Yes, both are on", "I’m not sure"])
+            )
+        }
         return questions
     }
 
@@ -505,6 +520,21 @@ private struct IncidentIntakeView: View {
         // Every choice on this question is an overheating precursor —
         // deliberately unconditional, see the comment above warningQuestions.
         .overheatingOrSteam
+    }
+
+    /// Mirrors dangerousOdorEscalation exactly: unlike
+    /// temperatureObservationEscalation, this one DOES have a safe
+    /// answer — "No, just this one" returns nil and resolves to real,
+    /// reviewed Phase 1 content (phase1.warning.abs-traction-alone).
+    /// "Yes, both are on" and "I'm not sure" both escalate, since the
+    /// regular brake warning light being on at the same time is a real
+    /// hydraulic-system possibility, and an unconfirmed answer can't be
+    /// assumed safe either.
+    private func absTractionEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "Yes, both are on", "I’m not sure": .unsafeBrakesOrSteering
+        default: nil
+        }
     }
 
     private func advanceWarningIntake() {
@@ -624,6 +654,12 @@ private struct IncidentIntakeView: View {
             setUrgentAnswer("Exhaust", key: IncidentUrgentAnswerKey.smellDescription)
         case .overheatingOrSteam:
             setUrgentAnswer("Yes", key: IncidentUrgentAnswerKey.temperatureIndication)
+        case .unsafeBrakesOrSteering:
+            // Only absTractionEscalation routes here today, and it's
+            // always specifically about the ABS/traction-control and
+            // regular brake lights — not steering — so the main-concern
+            // question is already answered by context.
+            setUrgentAnswer("Braking", key: IncidentUrgentAnswerKey.concernType)
         default:
             saveDraft()
         }
@@ -654,19 +690,25 @@ private struct IncidentIntakeView: View {
         saveDraft()
     }
 
-    /// phase1.starting.electrical / phase1.starting.fuel-ignition:
-    /// structured follow-up asked only when the reported observation
-    /// includes .startingOrRunningTrouble — see `startingQuestions`.
-    /// Chained after the fluid questions (advanceFluidIntake falls
-    /// through to this once fluid questions are answered or not
-    /// applicable), then falls through to .description itself, same
-    /// pattern as noise/warning/fluid above. Both questions below are
-    /// asked back-to-back regardless of which answer is given to the
-    /// first — the no-crank/clicking record (phase1.starting.electrical)
-    /// keys off crankBehavior and the cranks-but-won't-catch record
-    /// (phase1.starting.fuel-ignition) keys off crankClues, so a person
-    /// only needs to answer one of the two meaningfully; the other can be
-    /// left at "I’m not sure" without affecting the result.
+    /// phase1.starting.electrical / phase1.starting.fuel-ignition /
+    /// phase1.starting.engine-operation: structured follow-up asked only
+    /// when the reported observation includes .startingOrRunningTrouble —
+    /// see `startingQuestions`. Chained after the fluid questions
+    /// (advanceFluidIntake falls through to this once fluid questions are
+    /// answered or not applicable), then falls through to .description
+    /// itself, same pattern as noise/warning/fluid above. All three
+    /// questions below are asked back-to-back regardless of which answer
+    /// is given to the others — the no-crank/clicking record
+    /// (phase1.starting.electrical) keys off crankBehavior, the
+    /// cranks-but-won't-catch record (phase1.starting.fuel-ignition) keys
+    /// off crankClues, and the post-start running-behavior record
+    /// (phase1.starting.engine-operation) keys off whatsHappening, so a
+    /// person only needs to answer whichever one meaningfully matches
+    /// what actually happened; the others can be left at "I’m not sure"
+    /// without affecting the result.
+    ///
+    /// "The engine actually shuts off or dies" is deliberately excluded
+    /// from the fall-through below — see engineOperationEscalation.
     @ViewBuilder
     private func startingQuestionDestination(index: Int) -> some View {
         let questions = startingQuestions
@@ -679,7 +721,12 @@ private struct IncidentIntakeView: View {
             ) { answer in
                 guard path.last == .startingQuestion(index) else { return }
                 setStartingAnswer(answer, key: question.answerKey)
-                advanceStartingIntake()
+                if question.answerKey == IncidentStartingAnswerKey.whatsHappening,
+                   let escalation = engineOperationEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else {
+                    advanceStartingIntake()
+                }
             }
         } else {
             IncidentIncompleteIntakeRecoveryView {
@@ -694,8 +741,38 @@ private struct IncidentIntakeView: View {
         }
         return [
             question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
-            question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "I’m not sure"])
+            question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "I’m not sure"]),
+            question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"])
         ]
+    }
+
+    /// OH-UIK gap fix (same tier as the odor-escalation and
+    /// temperature-warning-light severity fixes): phase1.starting.
+    /// engine-operation used to be a single free-text-matched placeholder
+    /// whose support list included "will not stay running" — meaning a
+    /// real stalling report could resolve to an ordinary Phase 1 result
+    /// (SERVICE SOON at best, via ordinaryDriveRecommendation, which has
+    /// no path to DO NOT RESTART). An engine that actually shuts off or
+    /// dies can mean losing power steering and power brake assist, a real
+    /// safety risk especially while driving — the same category the app
+    /// already has real, cited urgent guidance for
+    /// (IncidentSafetySelection.engineWillNotStayRunning, which
+    /// unconditionally returns DO NOT RESTART — see
+    /// urgentDriveRecommendation). So this answer routes into that exact
+    /// urgent path instead of ever reaching Phase 1 evaluation, mirroring
+    /// dangerousOdorEscalation/temperatureObservationEscalation exactly.
+    /// The other three answers (rough idle, hesitation, "I’m not sure")
+    /// are genuinely not a driving hazard while the engine keeps running,
+    /// so they resolve normally as real Phase 1 records — see
+    /// phase1.starting.engine-operation.rough-idle,
+    /// phase1.starting.engine-operation.hesitation, and the
+    /// "I’m not sure" fallback under the original record id in
+    /// IncidentGuidanceKnowledge.
+    private func engineOperationEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "The engine actually shuts off or dies": .engineWillNotStayRunning
+        default: nil
+        }
     }
 
     private func advanceStartingIntake() {

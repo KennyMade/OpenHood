@@ -39,6 +39,12 @@ struct IncidentGuidanceEngine {
         )
         let matchedIDs = matchedRecords.map(\.id)
         let claimBreakdown = claimIDBreakdown(matchedRecordIDs: matchedIDs)
+        // "Do this now" wording fix: name the top possible area instead of
+        // a single static sentence reused across every record. Falls back
+        // to the generic wording inside actionExplanation when the top
+        // match has no possibleAreaTerms yet (e.g. the "I'm not sure"
+        // branches that intentionally have none).
+        let topPossibleAreaTermName = selected.first?.record.possibleAreaTerms.first?.name
 
         return IncidentGuidanceResult(
             safetyStatus: safetyStatus(for: incident.safetySelection),
@@ -71,7 +77,8 @@ struct IncidentGuidanceEngine {
             recommendedAction: action,
             actionExplanation: actionExplanation(
                 action: action,
-                hasMatches: hasMatches
+                hasMatches: hasMatches,
+                topPossibleAreaTermName: topPossibleAreaTermName
             ),
             actionsToAvoid: actionsToAvoid(
                 records: matchedRecords,
@@ -98,7 +105,8 @@ struct IncidentGuidanceEngine {
             ),
             immediateAction: actionExplanation(
                 action: action,
-                hasMatches: hasMatches
+                hasMatches: hasMatches,
+                topPossibleAreaTermName: topPossibleAreaTermName
             ),
             confirmationStep: evidenceRequests(
                 records: matchedRecords,
@@ -329,9 +337,20 @@ private extension IncidentGuidanceEngine {
         return Array(actions.filter { seen.insert($0).inserted }.prefix(3))
     }
 
+    /// "Do this now" wording fix (quick, high-leverage — touches every
+    /// result screen): the old .professionalInspection wording was a
+    /// single static sentence reused across every record regardless of
+    /// what was actually found. When the top-ranked match has a real
+    /// possibleAreaTerm, name it instead — data the result already has,
+    /// ordered, at this point (selectDistinctAreas already ranked it
+    /// first). Falls back to the old generic sentence when there's no
+    /// term to name (e.g. the "I'm not sure" branches that intentionally
+    /// ship with an empty possibleAreaTerms list) or for the urgent path's
+    /// rare fallback use of this function, which doesn't pass one.
     func actionExplanation(
         action: IncidentRecommendedAction,
-        hasMatches: Bool
+        hasMatches: Bool,
+        topPossibleAreaTermName: String? = nil
     ) -> String {
         switch action {
         case .moreInformation:
@@ -343,9 +362,13 @@ private extension IncidentGuidanceEngine {
         case .contactRecentRepairShop:
             "The timing makes the recently serviced area useful context to recheck, but it does not prove the work caused the concern."
         case .professionalInspection:
-            hasMatches
-                ? "A qualified inspection may be needed to separate the possible areas using direct evidence."
-                : "More information is needed before selecting an inspection area."
+            if hasMatches, let topPossibleAreaTermName {
+                "A shop can start by checking \(topPossibleAreaTermName) — that's usually the fastest way to narrow this down."
+            } else if hasMatches {
+                "A qualified inspection may be needed to separate the possible areas using direct evidence."
+            } else {
+                "More information is needed before selecting an inspection area."
+            }
         case .roadsideAssistance:
             "Stop driving and arrange transport for the vehicle."
         case .emergencyServices:

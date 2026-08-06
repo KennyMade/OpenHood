@@ -4,25 +4,194 @@ enum IncidentGuidanceKnowledge {
     static let contentVersion = 1
 
     static let records: [IncidentGuidanceKnowledgeRecord] = [
+        // OH-UIK gap fix (same tier as the odor-escalation and
+        // temperature-warning-light severity fixes): phase1.starting.
+        // engine-operation used to be a single free-text-matched
+        // placeholder whose support list literally included "will not
+        // stay running" — meaning this record could absorb an actual
+        // stalling report and cap it at SERVICE SOON via
+        // ordinaryDriveRecommendation, which has no path to DO NOT
+        // RESTART. It is now split into one record per structured answer
+        // (IncidentStartingAnswerKey.whatsHappening, asked in
+        // SomethingHappenedView.startingQuestions), mirroring the
+        // check-engine/battery-light and fluid-color/odor splits above —
+        // except the dangerous answer, "The engine actually shuts off or
+        // dies," gets no record here at all. It escalates directly into
+        // IncidentSafetySelection.engineWillNotStayRunning before Phase 1
+        // evaluation ever runs (see engineOperationEscalation in
+        // SomethingHappenedView.swift), the same mechanism already used
+        // for "Electrical or burning plastic"/"Exhaust" on the odor
+        // question and "Temperature warning light" on the warning-light
+        // question. Removing the free-text "will not stay running" match
+        // (not just leaving it unreachable) closes the same gap the
+        // odor/cooling fixes closed: a typed description alone can no
+        // longer produce the old capped SERVICE SOON result for a real
+        // stall.
+        //
+        // The original free-text descriptionContains matching (minus
+        // "will not stay running") is kept, additive, on the "I'm not
+        // sure" record below under the original record id — same
+        // treatment as the fluid-smell generic records.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanations and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (rough idle
+        // pointing to vacuum leaks, dirty throttle bodies, or worn spark
+        // plugs; hesitation while driving sharing those same causes or
+        // worn engine mounts) are well-known, independently corroborated
+        // automotive knowledge, not proprietary to any one site.
         record(
             id: "phase1.starting.engine-operation",
             family: .roughRunningStallingOrPostService,
             observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "I’m not sure")
+            ],
             support: [
                 .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "I’m not sure"),
                 .descriptionContains("rough"),
                 .descriptionContains("misfire"),
-                .descriptionContains("sputter"),
-                .descriptionContains("will not stay running")
+                .descriptionContains("sputter")
             ],
             contradict: [.descriptionContains("runs smoothly")],
             area: .engineAndCombustion,
-            explanation: "Uneven operation or difficulty remaining running can involve combustion quality, but observations alone do not identify a failed component.",
+            explanation: "Uneven engine operation can involve combustion quality, air or fuel delivery, or engine mounts, but without knowing exactly what's happening, a direct inspection is the most reliable next step.",
             action: .professionalInspection,
             questions: [
                 "Does it happen while starting, idling, or already moving?",
                 "Was a warning light steady, flashing, or absent?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-engine-operation-general-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Engine Operation, Not Yet Narrowed Down\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
+        ),
+        record(
+            id: "phase1.starting.engine-operation.rough-idle",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Rough or shaky idle, but the engine keeps running")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Rough or shaky idle, but the engine keeps running")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "A rough idle most often points to a vacuum leak, a dirty throttle body, or worn spark plugs. A useful clue: if the roughness goes away once you're driving faster, that leans toward a vacuum leak; if it's present at all speeds, that leans toward plugs or coils.",
+            action: .professionalInspection,
+            questions: [
+                "Does the roughness improve once you're driving faster, or is it present at all speeds?",
+                "When were the spark plugs last replaced?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-rough-idle-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Rough or Shaky Idle\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "vacuum-leak",
+                    name: "Vacuum leak (hoses or gaskets)",
+                    plainExplanation: "A crack or loose connection in a vacuum hose or gasket lets in unmetered air, which can make the idle rough — often more noticeable at idle than at speed.",
+                    typicalCostRange: "Roughly $150–$600 depending on location"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "throttle-body",
+                    name: "Throttle body cleaning or service",
+                    plainExplanation: "Carbon buildup in the throttle body can disrupt airflow at idle.",
+                    typicalCostRange: "Roughly $75–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn spark plugs can cause uneven combustion that shows up as a rough idle at any speed.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing ignition coil can cause a misfire that feels like a rough idle.",
+                    typicalCostRange: "Roughly $200–$300"
+                )
+            ],
+            repairSearchTerm: "rough idle diagnostic"
+        ),
+        record(
+            id: "phase1.starting.engine-operation.hesitation",
+            family: .roughRunningStallingOrPostService,
+            observations: [.startingOrRunningTrouble],
+            required: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Occasional stumble or hesitation while driving, engine keeps running")
+            ],
+            support: [
+                .observation(.startingOrRunningTrouble),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Occasional stumble or hesitation while driving, engine keeps running")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "Occasional hesitation while driving, without the engine ever fully dying, often points to the same causes as rough idle, or to worn engine mounts if it's felt more as a shake or clunk than a power loss.",
+            action: .professionalInspection,
+            questions: [
+                "Does it feel more like a loss of power, or more like a shake or clunk?",
+                "Have the engine mounts ever been inspected?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-engine-hesitation-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Hesitation While Driving\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn spark plugs can cause a momentary misfire that feels like hesitation while driving.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing ignition coil can cause an intermittent misfire under load.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "engine-mounts",
+                    name: "Engine mounts",
+                    plainExplanation: "Worn engine mounts can let the engine shift under load, which can feel like a hesitation or clunk rather than a true power loss.",
+                    typicalCostRange: "Roughly $630–$780"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "vacuum-leak",
+                    name: "Vacuum leak",
+                    plainExplanation: "A vacuum leak can cause an inconsistent air-fuel mixture that shows up as hesitation under certain driving conditions.",
+                    typicalCostRange: "Roughly $150–$600"
+                )
+            ],
+            repairSearchTerm: "engine hesitation diagnostic"
         ),
         // Same tier as phase1.warning.record-code/engine-information and
         // the fluid-smell/noise/brake records — reviewed general-guidance
@@ -122,7 +291,7 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [],
             area: .startingAndElectrical,
-            explanation: "Rapid clicking most often means the battery doesn't have enough power to turn the starter motor, even though there's enough for the starter relay to click. This is the single most common cause of this exact sound.",
+            explanation: "Rapid clicking most often means the battery doesn't have enough power to turn the starter motor, even though there's enough for the starter relay to click. This is the single most common cause of this exact sound. The alternator is the least likely of the three — it's more relevant if the battery keeps dying repeatedly or dies while driving, rather than a one-time rapid-click.",
             action: .professionalInspection,
             questions: [
                 "Is the battery original, or has it been replaced recently?",
@@ -718,6 +887,91 @@ enum IncidentGuidanceKnowledge {
             repairSearchTerm: "auto electrical repair"
         ),
         // Same tier as phase1.warning.record-code/phase1.warning.engine-
+        // information above — reviewed general-guidance content, not a
+        // needsVerification placeholder, but with a real safety gate
+        // in front of it, unlike those two. An ABS or traction-control
+        // light on by itself is genuinely safe as ordinary Phase 1
+        // content: real guidance is clear that ABS-alone means the
+        // anti-lock function may not work correctly, but normal braking
+        // still works. It's a different, more serious situation if the
+        // regular brake warning light is on at the same time, or if the
+        // answer is unconfirmed — that combination is a real
+        // hydraulic-system possibility, not general content, so it
+        // escalates into the existing urgent .unsafeBrakesOrSteering path
+        // instead (see absTractionEscalation/escalateToUrgentSafety in
+        // SomethingHappenedView.swift) rather than ever computing an
+        // ordinary Phase 1 result — same mechanism as the odor and
+        // cooling/temperature fixes. This record's `required` only
+        // matches the safe branch (light == "ABS or traction control
+        // light" AND absBrakeCheck == "No, just this one"), so the
+        // dangerous branches never reach evaluate() at all.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanation and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (ABS-alone
+        // preserving normal braking while disabling anti-lock/traction
+        // control specifically; wheel speed sensors as the most common
+        // cause; low brake fluid as a checkable, inexpensive first step)
+        // are well-known, independently corroborated automotive
+        // knowledge, not proprietary to any one site.
+        record(
+            id: "phase1.warning.abs-traction-alone",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage],
+            required: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "ABS or traction control light"),
+                .warningAnswer(key: IncidentWarningAnswerKey.absBrakeCheck, value: "No, just this one")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "ABS or traction control light"),
+                .warningAnswer(key: IncidentWarningAnswerKey.absBrakeCheck, value: "No, just this one")
+            ],
+            contradict: [],
+            area: .brakesAndSteering,
+            explanation: "When the ABS or traction-control light is on by itself, with the regular brake warning light off and the pedal feeling normal, your regular brakes should still work — you're most likely missing the anti-lock or traction-control function specifically, not losing braking entirely. It's still worth having inspected soon, and it's worth being more cautious in rain or snow in the meantime since anti-lock may not be available.",
+            action: .professionalInspection,
+            questions: [
+                "Has this light been on continuously, or does it come and go?",
+                "Has the brake fluid level been checked recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-abs-traction-alone-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — ABS or Traction Control Light Alone\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "wheel-speed-sensor",
+                    name: "Wheel speed sensor",
+                    plainExplanation: "A dirty, damaged, or failed wheel speed sensor is the most common cause of an ABS or traction-control light on its own.",
+                    typicalCostRange: "Roughly $150–$300 per sensor"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "low-brake-fluid",
+                    name: "Low brake fluid",
+                    plainExplanation: "A low fluid level can trigger this light. Checking it is free; topping off is inexpensive, but a level that keeps dropping points to a leak worth inspecting.",
+                    typicalCostRange: "Roughly free to check, inexpensive to top off"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "abs-module-or-fuse",
+                    name: "ABS module or fuse",
+                    plainExplanation: "Less common than a sensor, but a failed ABS module or blown fuse can also trigger this light.",
+                    typicalCostRange: "Varies significantly — worth a professional scan before estimating"
+                )
+            ],
+            repairSearchTerm: "ABS diagnostic"
+        ),
+        // Same tier as phase1.warning.record-code/phase1.warning.engine-
         // information and the noise/brake records above — reviewed
         // general-guidance content, not needsVerification placeholders,
         // for the five color/odor-specific records below. Both
@@ -1200,6 +1454,141 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "suspension repair"
+        ),
+        // Same tier as phase1.suspension.bump-noise above — reviewed
+        // general-guidance content, not needsVerification placeholders.
+        // The noiseQuestions timing question already offers "Only at
+        // speed" and "While turning" alongside "Over bumps" and "While
+        // braking", but until now only the latter two had matching
+        // records — these fell through to the generic MONITOR/not-
+        // enough-information result. "Constant" is deliberately left
+        // unhandled in this pass — it's genuinely ambiguous (engine
+        // mounts, driveline, tires, or several at once) and deserves its
+        // own careful pass rather than a guess.
+        //
+        // sourceReferences below are attributed to OpenHood, not to the
+        // specific outlets consulted, for the same reason given above the
+        // suspension-noise record: a source being public doesn't make it
+        // citable on screen. The explanations and cost figures were
+        // cross-checked across multiple independent automotive-reference
+        // sources tonight, 2026-08-05 — the underlying facts (steering-
+        // wheel vs. seat/floor vibration distinguishing front vs. rear
+        // tire/wheel imbalance; CV joint/axle clicking or popping during
+        // turns, especially sharp turns or pulling away from a stop; wheel
+        // bearing symptoms changing with speed rather than only with
+        // turning) are well-known, independently corroborated automotive
+        // knowledge, not proprietary to any one site.
+        record(
+            id: "phase1.suspension.vibration-at-speed",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Only at speed")
+            ],
+            support: [
+                .observation(.sound),
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Only at speed"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Front"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Rear"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "All over")
+            ],
+            // No contradict signals: `required` above already pins timing
+            // to exactly "Only at speed" (single-choice), so any other
+            // timing value already excludes this record before scoring.
+            contradict: [],
+            area: .tiresWheelsAndPressure,
+            explanation: "A vibration that shows up mainly at highway speed and comes through the steering wheel or the seat most often points to a wheel or tire imbalance, or in some cases a wheel alignment issue. A useful clue: vibration through the steering wheel usually means a front tire, vibration through the seat or floor usually means a rear tire.",
+            action: .professionalInspection,
+            questions: [
+                "Does the vibration come through the steering wheel, the seat/floor, or both?",
+                "Has any tire been replaced, rotated, or repaired recently?",
+                "Has the vehicle hit a pothole or curb recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-vibration-at-speed-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Vibration at Highway Speed\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "wheel-or-tire-balance",
+                    name: "Wheel or tire balance",
+                    plainExplanation: "Small weights keep a wheel and tire spinning evenly. When they shift or fall off, the wheel can vibrate at certain speeds.",
+                    typicalCostRange: "Roughly $15–$25 per tire, often $60–$100 for all four"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "wheel-alignment",
+                    name: "Wheel alignment",
+                    plainExplanation: "Misaligned wheels can cause a vibration or pull, especially at highway speed.",
+                    typicalCostRange: "Roughly $80–$150"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "tire-condition",
+                    name: "Tire condition (uneven wear or damage)",
+                    plainExplanation: "Uneven wear, a bulge, or internal damage can cause a vibration that balancing alone won't fix.",
+                    typicalCostRange: "Varies — worth a visual check first, no fixed number"
+                )
+            ],
+            repairSearchTerm: "wheel balance and alignment"
+        ),
+        record(
+            id: "phase1.suspension.vibration-while-turning",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While turning")
+            ],
+            support: [
+                .observation(.sound),
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While turning"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Front"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Rear"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "All over")
+            ],
+            // No contradict signals: `required` above already pins timing
+            // to exactly "While turning" (single-choice), so any other
+            // timing value already excludes this record before scoring.
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "A vibration or shudder that gets worse specifically when turning, especially a sharp turn or pulling away from a stop, often points to a CV joint or axle issue. If it comes with a clicking or popping sound during the turn, that's a stronger signal for the same area.",
+            action: .professionalInspection,
+            questions: [
+                "Is there a clicking or popping sound during the turn?",
+                "Does it happen more on sharp turns, or during any turn?",
+                "Does the vibration change with speed, or only with turning?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-vibration-while-turning-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Vibration or Shudder While Turning\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "cv-joint-or-axle",
+                    name: "CV joint or axle",
+                    plainExplanation: "A worn CV joint often clicks or pops during turns, especially sharp ones or pulling away from a stop.",
+                    typicalCostRange: "Roughly $150–$400 per side"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "wheel-bearing",
+                    name: "Wheel bearing",
+                    plainExplanation: "More likely if the vibration or noise changes with speed rather than only with turning.",
+                    typicalCostRange: "Roughly $250–$550 per side"
+                )
+            ],
+            repairSearchTerm: "CV joint or wheel bearing inspection"
         ),
         // Same tier as phase1.suspension.bump-noise above — reviewed
         // general-guidance content, not a needsVerification placeholder.

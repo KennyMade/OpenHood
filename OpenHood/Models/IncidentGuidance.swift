@@ -295,6 +295,17 @@ enum IncidentWarningAnswerKey {
     /// .overheatingOrSteam path; it never contributes to an ordinary
     /// Phase 1 result.
     static let temperatureDetail = "warningTemperatureDetail"
+    /// Asked only as a follow-up when `light` is answered "ABS or
+    /// traction control light" — see SomethingHappenedView.warningQuestions
+    /// /absTractionEscalation. Unlike temperatureDetail, this one DOES have
+    /// a safe branch: "No, just this one" resolves to a real ordinary
+    /// Phase 1 record (phase1.warning.abs-traction-alone) since ABS-alone
+    /// means the anti-lock function may not work correctly while normal
+    /// braking still works. "Yes, both are on" and "I'm not sure" escalate
+    /// into the urgent .unsafeBrakesOrSteering path instead, since a
+    /// regular brake warning light on at the same time (or an unconfirmed
+    /// answer) is a real hydraulic-system possibility, not general content.
+    static let absBrakeCheck = "warningABSBrakeCheck"
 }
 
 /// Structured follow-up questions for the fluid-leak/unusual-odor record
@@ -310,17 +321,26 @@ enum IncidentFluidAnswerKey {
 }
 
 /// Structured follow-up questions for the starting-trouble record family
-/// (phase1.starting.electrical, phase1.starting.fuel-ignition) — same
-/// reasoning as IncidentNoiseAnswerKey/IncidentWarningAnswerKey/
-/// IncidentFluidAnswerKey above. Answers are stored in
-/// VehicleIncident.startingFollowUpAnswers and matched via
-/// IncidentGuidanceEvidenceSignal.startingAnswer. Two keys because a
-/// no-crank/clicking report (crankBehavior) and a cranks-but-won't-catch
-/// report (crankClues) are asked independently, same reasoning as
+/// (phase1.starting.electrical, phase1.starting.fuel-ignition,
+/// phase1.starting.engine-operation) — same reasoning as
+/// IncidentNoiseAnswerKey/IncidentWarningAnswerKey/IncidentFluidAnswerKey
+/// above. Answers are stored in VehicleIncident.startingFollowUpAnswers and
+/// matched via IncidentGuidanceEvidenceSignal.startingAnswer. Three keys
+/// because a no-crank/clicking report (crankBehavior), a cranks-but-won't-
+/// catch report (crankClues), and a post-start running-behavior report
+/// (whatsHappening) are asked independently, same reasoning as
 /// IncidentFluidAnswerKey.color/.odor.
 enum IncidentStartingAnswerKey {
     static let crankBehavior = "startingCrankBehavior"
     static let crankClues = "startingCrankClues"
+    /// phase1.starting.engine-operation split — see
+    /// SomethingHappenedView.startingQuestions/engineOperationEscalation
+    /// and IncidentGuidanceKnowledge. "The engine actually shuts off or
+    /// dies" never reaches a record keyed on this answer — it escalates
+    /// into IncidentSafetySelection.engineWillNotStayRunning before
+    /// Phase 1 evaluation ever runs, same mechanism as
+    /// dangerousOdorEscalation/temperatureObservationEscalation.
+    static let whatsHappening = "startingWhatsHappening"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {

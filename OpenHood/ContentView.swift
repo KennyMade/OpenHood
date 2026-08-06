@@ -148,22 +148,11 @@ struct AddVehicleView: View {
                         .fontWeight(.bold)
 
                     Text(
-                        "Scan your VIN for a faster setup, or choose your vehicle manually."
+                        "Choose your vehicle to get started."
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
                 }
-
-                NavigationLink {
-                    VINScannerPreparationView()
-                } label: {
-                    ChoiceCard(
-                        icon: "viewfinder",
-                        title: "Scan your VIN",
-                        subtitle: "Use your camera to identify your vehicle"
-                    )
-                }
-                .buttonStyle(.plain)
 
                 NavigationLink {
                     ManufacturerView()
@@ -175,26 +164,6 @@ struct AddVehicleView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(
-                        "Where can I find my VIN?",
-                        systemImage: "info.circle.fill"
-                    )
-                    .font(.headline)
-
-                    Text(
-                        "Look through the driver-side windshield or check the label inside the driver-side door jamb."
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                }
-                .padding(18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.thinMaterial)
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20)
-                )
             }
             .padding(24)
         }
