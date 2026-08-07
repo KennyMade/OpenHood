@@ -323,6 +323,7 @@ enum IncidentWarningAnswerKey {
 /// one) because a single incident can report a visible fluid, an unusual
 /// odor, and exhaust smoke color, each answered independently.
 enum IncidentFluidAnswerKey {
+    static let whatWasVisible = "fluidWhatWasVisible"
     static let color = "fluidColor"
     static let odor = "fluidOdor"
     /// phase1.exhaust-smoke.* split — see SomethingHappenedView.

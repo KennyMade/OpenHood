@@ -662,6 +662,12 @@ private struct IncidentIntakeView: View {
         var questions: [IncidentUrgentQuestion] = []
         if incident.observationTypes.contains(.visible) {
             questions.append(
+                question("What did you see?", key: IncidentFluidAnswerKey.whatWasVisible, choices: ["Fluid on the ground or under the vehicle", "Smoke", "A frayed or damaged belt", "A dashboard message, not a light", "Something else"])
+            )
+        }
+        if incident.observationTypes.contains(.visible),
+           incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Fluid on the ground or under the vehicle" {
+            questions.append(
                 question("What color was the fluid?", key: IncidentFluidAnswerKey.color, choices: ["Green, orange, pink, or yellow", "Brown or black", "Red or reddish", "Clear or light", "I’m not sure"])
             )
         }
@@ -670,7 +676,8 @@ private struct IncidentIntakeView: View {
                 question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "I’m not sure"])
             )
         }
-        if incident.observationTypes.contains(.visible) || incident.observationTypes.contains(.smell) {
+        if (incident.observationTypes.contains(.visible) && incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Smoke")
+            || incident.observationTypes.contains(.smell) {
             questions.append(
                 question("What color was the exhaust smoke?", key: IncidentFluidAnswerKey.exhaustSmokeColor, choices: ["White or light gray", "Blue or blue-gray", "Black", "I’m not sure"])
             )

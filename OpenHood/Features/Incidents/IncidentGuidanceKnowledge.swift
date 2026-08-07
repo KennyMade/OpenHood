@@ -1509,6 +1509,64 @@ enum IncidentGuidanceKnowledge {
                 )
             ]
         ),
+        // Same tier as the other reviewed general-guidance records in this
+        // file, not a needsVerification placeholder. Gated on the new
+        // "What did you see?" leading question (fluidQuestions in
+        // SomethingHappenedView) rather than color/odor, since a frayed
+        // belt is a visual finding, not a fluid. Reuses the serpentine-
+        // belt/belt-tensioner possible-area content and cost figures
+        // already audited for phase1.noise.squeal-not-braking above — same
+        // belt, just discovered visually instead of by sound, so no new
+        // cost research needed. Cross-checked tonight, 2026-08-07 —
+        // sourceReferences attributed to OpenHood for the same reason
+        // given above the other reviewed records in this file: a source
+        // being public doesn't make it citable on screen.
+        record(
+            id: "phase1.visible.frayed-belt",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible],
+            required: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "A frayed or damaged belt")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "A frayed or damaged belt")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "A visibly frayed, cracked, or damaged belt should be replaced before it fails completely — a broken serpentine belt can also take the power steering, alternator, and in some vehicles the water pump out with it.",
+            action: .professionalInspection,
+            questions: [
+                "Which belt does it look like — the serpentine (accessory) belt, or a timing belt under a cover?",
+                "Has any belt or accessory work been done recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-visible-frayed-belt-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Visibly Frayed or Damaged Belt\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "serpentine-belt",
+                    name: "Serpentine belt",
+                    plainExplanation: "The single belt that drives accessories like the alternator, power steering pump, and A/C compressor. Visible fraying or cracking means it's due for replacement.",
+                    typicalCostRange: "Roughly $70–$250"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "belt-tensioner",
+                    name: "Belt tensioner",
+                    plainExplanation: "Keeps the serpentine belt at the right tension. Worth checking alongside a damaged belt, since a weak tensioner can cause premature wear.",
+                    typicalCostRange: "Roughly $250–$300 alone, often less if replaced along with the belt"
+                )
+            ],
+            repairSearchTerm: "serpentine belt replacement"
+        ),
         record(
             id: "phase1.fluid-smell.unusual-odor",
             family: .fluidLeakOrUnusualSmell,
