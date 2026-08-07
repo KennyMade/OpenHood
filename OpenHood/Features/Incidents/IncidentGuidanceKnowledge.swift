@@ -1105,6 +1105,58 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "auto electrical repair"
         ),
+        record(
+            id: "phase1.warning.tire-pressure-light",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage],
+            required: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Tire pressure light")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Tire pressure light")
+            ],
+            contradict: [],
+            area: .tiresWheelsAndPressure,
+            explanation: "A tire pressure light most often means a tire is genuinely low — from a slow leak or just normal loss over time — or that a recent temperature drop lowered the pressure enough to trigger it. It's not usually an emergency, but driving on a significantly underinflated tire isn't safe, so check the actual pressure at a gas station or with a home gauge rather than guessing.",
+            action: .obtainCodeScan,
+            questions: [
+                "Does one tire look or feel visibly low?",
+                "Did the temperature drop recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-tire-pressure-light-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Tire Pressure Warning Light\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "low-tire-pressure",
+                    name: "Low tire pressure",
+                    plainExplanation: "The most common cause by far. Checking and correcting the pressure on all four tires, including the spare if the light doesn't clear, often resolves it.",
+                    typicalCostRange: "Usually free at a gas station air pump; a slow leak may need a patch, roughly $15–$30"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "temperature-related-pressure-drop",
+                    name: "Temperature-related pressure drop",
+                    plainExplanation: "Tire pressure drops as the temperature does. A cold morning can be enough to trigger the light even without a leak.",
+                    typicalCostRange: nil
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "tpms-sensor",
+                    name: "TPMS sensor",
+                    plainExplanation: "Less common, but a sensor or its battery can fail over time, triggering the light even when pressure is fine.",
+                    typicalCostRange: "Roughly $25–$300 per sensor — tire shops and budget retailers run cheapest, dealerships cost more"
+                )
+            ],
+            repairSearchTerm: "tire pressure check"
+        ),
         // Same tier as phase1.warning.record-code/phase1.warning.engine-
         // information above — reviewed general-guidance content, not a
         // needsVerification placeholder, but with a real safety gate

@@ -528,7 +528,7 @@ private struct IncidentIntakeView: View {
             return []
         }
         var questions = [
-            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "Temperature warning light", "ABS or traction control light", "I’m not sure which one"])
+            question("Which light or message came on?", key: IncidentWarningAnswerKey.light, choices: ["Check engine light (steady)", "Battery or charging symbol", "Temperature warning light", "ABS or traction control light", "Tire pressure light", "I’m not sure which one"])
         ]
         // OH-UIK gap fix (same tier as the odor-escalation and
         // oil-pressure severity fixes): a temperature warning light
