@@ -2004,6 +2004,81 @@ enum IncidentGuidanceKnowledge {
             repairSearchTerm: "exhaust heat shield repair"
         ),
         // Same tier as phase1.suspension.bump-noise above — reviewed
+        // general-guidance content, not a needsVerification placeholder.
+        // contradict below excludes "Over bumps" specifically so this
+        // record can't overlap phase1.suspension.bump-noise, which owns
+        // that timing value exclusively via its own required signal.
+        // Reuses the same audited possible-area content and cost figures
+        // as phase1.suspension.bump-noise above (CV joint, sway bar
+        // links/bushings, ball joints, control-arm bushings) rather than
+        // researching new numbers — the components are the same; only
+        // the timing that surfaces the symptom differs (while turning or
+        // accelerating, not tied to a bump). Cross-checked tonight,
+        // 2026-08-07 — sourceReferences attributed to OpenHood for the
+        // same reason given above the other reviewed records in this
+        // file: a source being public doesn't make it citable on screen.
+        record(
+            id: "phase1.noise.clunk-not-bumps",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound],
+            required: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Clunk")
+            ],
+            support: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Clunk")
+            ],
+            contradict: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Over bumps")
+            ],
+            area: .suspensionAndChassis,
+            explanation: "A clunk while turning or accelerating, not tied to bumps, most often points to a worn CV joint, sway bar link, ball joint, or control-arm bushing — components that knock against each other once they develop play.",
+            action: .professionalInspection,
+            questions: [
+                "Does the clunk happen while turning, while accelerating, or both?",
+                "Is there any looseness or visible play at the suspension corner where the noise happens?",
+                "Has any suspension, steering, or wheel work been done recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-clunk-not-bumps-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Clunk Not Over Bumps\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "cv-joint-or-axle",
+                    name: "CV joint or axle",
+                    plainExplanation: "The joint that lets the axle flex as the suspension moves and the wheels turn. When worn, it can develop play that knocks under load.",
+                    typicalCostRange: "Roughly $250–$700 per side"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "sway-bar-links-or-bushings",
+                    name: "Sway bar links or bushings",
+                    plainExplanation: "Small links and cushions that help keep the vehicle stable in turns. When worn, they can rattle or clunk.",
+                    typicalCostRange: "Roughly $75–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ball-joints",
+                    name: "Ball joints",
+                    plainExplanation: "Pivot joints that let the wheels turn and move with the suspension. When worn, they can cause a clunking noise or looseness.",
+                    typicalCostRange: "Roughly $200–$600 each — lower ball joints cost more than upper ones"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "control-arm-bushings",
+                    name: "Control-arm bushings",
+                    plainExplanation: "Rubber cushions that let the suspension move quietly. When worn, parts can knock together.",
+                    typicalCostRange: "Roughly $250–$450"
+                )
+            ],
+            repairSearchTerm: "suspension repair"
+        ),
+        // Same tier as phase1.suspension.bump-noise above — reviewed
         // general-guidance content, not needsVerification placeholders.
         // The noiseQuestions timing question already offers "Only at
         // speed" and "While turning" alongside "Over bumps" and "While
@@ -2289,6 +2364,72 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "serpentine belt replacement"
+        ),
+        // Same tier as phase1.brakes.squeal-while-braking above — reviewed
+        // general-guidance content, not a needsVerification placeholder.
+        // contradict below excludes both "Over bumps" (owned by
+        // phase1.suspension.bump-noise) and "While braking" — the latter
+        // is already routed to the urgent .unsafeBrakesOrSteering path via
+        // brakeGrindEscalation before Phase 1 evaluation ever runs (see
+        // the comment above phase1.brakes.squeal-while-braking), so this
+        // exclusion is a defensive belt-and-suspenders match against that
+        // routing rather than one this record would otherwise need to
+        // resolve on its own. Facts (CV joint noise worse at full-lock
+        // turns; wheel bearing noise constant and speed-dependent) are
+        // well-known, independently corroborated automotive knowledge
+        // cross-checked across multiple outlets tonight, 2026-08-07 —
+        // sourceReferences attributed to OpenHood for the same reason
+        // given above the other reviewed records in this file: a source
+        // being public doesn't make it citable on screen.
+        record(
+            id: "phase1.noise.grind-not-bumps-not-braking",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound],
+            required: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Grind")
+            ],
+            support: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Grind")
+            ],
+            contradict: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Over bumps"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking")
+            ],
+            area: .suspensionAndChassis,
+            explanation: "A grinding noise while turning, or one that's fairly constant, most often points to a CV joint — especially if it's worse at full-lock turns like parking — or a wheel bearing, which tends to stay present at all speeds and get louder as you go faster. A grind specifically while braking is a different, brake-related concern.",
+            action: .professionalInspection,
+            questions: [
+                "Does the grind get worse when turning the wheel all the way, like when parking?",
+                "Does the noise change with speed, and is it present even when driving straight?",
+                "Has any suspension, steering, or wheel work been done recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-grind-not-bumps-not-braking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Grind Not Over Bumps, Not While Braking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "cv-joint-or-axle",
+                    name: "CV joint or axle",
+                    plainExplanation: "The joint that lets the axle flex as the suspension moves and the wheels turn. Worn joints often grind or click most noticeably at full-lock turns.",
+                    typicalCostRange: "Roughly $250–$700 per side"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "wheel-bearing",
+                    name: "Wheel bearing",
+                    plainExplanation: "More likely if the grinding is fairly constant and changes with speed rather than only with turning.",
+                    typicalCostRange: "Roughly $250–$550 per side"
+                )
+            ],
+            repairSearchTerm: "CV joint or wheel bearing inspection"
         ),
         // phase1.driving-change.* — structured follow-up asked only when
         // the reported observation includes .drivingChange, gated on the
