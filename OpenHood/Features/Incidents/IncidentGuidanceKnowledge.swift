@@ -1950,6 +1950,60 @@ enum IncidentGuidanceKnowledge {
             repairSearchTerm: "suspension repair"
         ),
         // Same tier as phase1.suspension.bump-noise above — reviewed
+        // general-guidance content, not a needsVerification placeholder.
+        // contradict below excludes "Over bumps" specifically so this
+        // record can't overlap phase1.suspension.bump-noise, which owns
+        // that timing value exclusively via its own required signal.
+        // Facts (loose/corroded heat shields as a common source of
+        // metallic rattling, and the road-hazard risk if one fully
+        // detaches) are well-known, independently corroborated automotive
+        // knowledge cross-checked across multiple outlets tonight,
+        // 2026-08-07 — sourceReferences attributed to OpenHood for the
+        // same reason given above the other reviewed records in this
+        // file: a source being public doesn't make it citable on screen.
+        record(
+            id: "phase1.noise.rattle-not-bumps",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound],
+            required: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Rattle")
+            ],
+            support: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Rattle")
+            ],
+            contradict: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Over bumps")
+            ],
+            area: .exhaustAndVentilation,
+            explanation: "A metallic rattle at startup, while accelerating, or continuously — not specifically over bumps — most often points to a loose or corroded exhaust heat shield. It's usually not urgent, but if a shield fully detaches it can become a road hazard, so it's worth having secured.",
+            action: .professionalInspection,
+            questions: [
+                "Does the rattle change with engine speed (RPM), or stay about the same regardless of how fast the engine is running?",
+                "Can you see or reach a heat shield near the exhaust that looks loose, bent, or rusted through?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-rattle-not-bumps-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Rattle Not Over Bumps\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "exhaust-heat-shield",
+                    name: "Exhaust heat shield",
+                    plainExplanation: "A thin metal shield that keeps exhaust heat away from nearby components. When its mounting corrodes or loosens, it can rattle against the exhaust or the underbody.",
+                    typicalCostRange: "Roughly $100–$500, often on the lower end since these are simple parts"
+                )
+            ],
+            repairSearchTerm: "exhaust heat shield repair"
+        ),
+        // Same tier as phase1.suspension.bump-noise above — reviewed
         // general-guidance content, not needsVerification placeholders.
         // The noiseQuestions timing question already offers "Only at
         // speed" and "While turning" alongside "Over bumps" and "While
@@ -2175,6 +2229,66 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "brake repair"
+        ),
+        // Same tier as phase1.brakes.squeal-while-braking above — reviewed
+        // general-guidance content, not a needsVerification placeholder.
+        // contradict below excludes "While braking" specifically so this
+        // record can't overlap phase1.brakes.squeal-while-braking, which
+        // owns that timing value exclusively via its own required signal.
+        // Facts (worn/glazed/slipping serpentine belts as a common source
+        // of non-braking squeal) are well-known, independently
+        // corroborated automotive knowledge cross-checked across multiple
+        // outlets tonight, 2026-08-07 — sourceReferences attributed to
+        // OpenHood for the same reason given above the other reviewed
+        // records in this file: a source being public doesn't make it
+        // citable on screen.
+        record(
+            id: "phase1.noise.squeal-not-braking",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound],
+            required: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal")
+            ],
+            support: [
+                .observation(.sound),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal")
+            ],
+            contradict: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking")
+            ],
+            area: .engineAndCombustion,
+            explanation: "A squeal that happens at startup, while accelerating, or continuously — not specifically while braking — most often points to a worn, glazed, or slipping serpentine belt rather than brakes. A squeal specifically when braking is a different, brake-related concern.",
+            action: .professionalInspection,
+            questions: [
+                "Does the squeal happen at startup, while accelerating, or continuously — and does it change with engine RPM?",
+                "Has the serpentine belt or belt tensioner been inspected or replaced recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-squeal-not-braking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Squeal Not While Braking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "serpentine-belt",
+                    name: "Serpentine belt",
+                    plainExplanation: "The single belt that drives accessories like the alternator, power steering pump, and A/C compressor. When it's worn, glazed, or slipping, it can squeal.",
+                    typicalCostRange: "Roughly $70–$250"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "belt-tensioner",
+                    name: "Belt tensioner",
+                    plainExplanation: "Keeps the serpentine belt at the right tension. When it weakens or seizes, the belt can slip and squeal even if the belt itself is fine.",
+                    typicalCostRange: "Roughly $250–$300 alone, often less if replaced along with the belt"
+                )
+            ],
+            repairSearchTerm: "serpentine belt replacement"
         ),
         // phase1.driving-change.* — structured follow-up asked only when
         // the reported observation includes .drivingChange, gated on the
