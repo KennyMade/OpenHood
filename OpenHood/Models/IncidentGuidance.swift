@@ -538,6 +538,8 @@ enum IncidentUrgentAnswerKey {
     static let runningWarning = "runningWarning"
     static let runningEvidence = "runningEvidence"
     static let restartEffect = "restartEffect"
+    static let tireDamageObservation = "tireDamageObservation"
+    static let tireAirStatus = "tireAirStatus"
 }
 
 struct IncidentGuidanceSnapshotArea: Codable, Equatable {

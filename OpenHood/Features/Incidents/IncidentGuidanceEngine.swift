@@ -415,6 +415,14 @@ private extension IncidentGuidanceEngine {
             return .doNotRestart
         case .unsafeBrakesOrSteering:
             return unsafeBrakesOrSteeringDriveRecommendation(answers: answers, vehicle: vehicle)
+        case .visibleTireDamage:
+            // A damaged tire can fail suddenly regardless of how it
+            // answers any follow-up question, so this is an unconditional
+            // STOP DRIVING — same treatment as unsafeBrakesOrSteering's
+            // braking branch, not .doNotRestart (that's reserved for the
+            // engine-already-off, don't-restart cases like fire or
+            // overheating).
+            return .stopDriving
         case .flashingWarningLight:
             if answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
                 // OH-UIK-001: default gate is CHECK BEFORE DRIVING
@@ -523,6 +531,8 @@ private extension IncidentGuidanceEngine {
             return "This most strongly suggests a heat, electrical, or fluid-related smoke source that requires inspection."
         case .unsafeBrakesOrSteering:
             return brakesOrSteeringAssessment(answers: answers, vehicle: vehicle)
+        case .visibleTireDamage:
+            return "This most strongly suggests tire damage that can fail without warning while driving. OpenHood has not confirmed whether the tire can be repaired or must be replaced."
         case .engineWillNotStayRunning:
             if let recent = answers[IncidentUrgentAnswerKey.runningRecentWork],
                ["Service", "Battery work", "A repair"].contains(recent) {
@@ -933,6 +943,15 @@ private extension IncidentGuidanceEngine {
             )
         case .unsafeBrakesOrSteering:
             return brakesOrSteeringContributors(answers: answer)
+        case .visibleTireDamage:
+            return [
+                urgentContributor(
+                    id: "urgent.tire-damage",
+                    area: .tiresWheelsAndPressure,
+                    fact: "You reported \(answer[IncidentUrgentAnswerKey.tireDamageObservation] ?? "visible tire damage").",
+                    explanation: "Sidewall bulges and cracks cannot be safely repaired and require replacement. A puncture in the tread is sometimes repairable, but should be evaluated by a professional before continuing to drive on it."
+                )
+            ]
         case .engineWillNotStayRunning:
             return [
                 urgentContributor(
@@ -1218,6 +1237,12 @@ private extension IncidentGuidanceEngine {
                 IncidentEvidenceRequest("Confirm whether stopping ability changed and whether the incident is active now."),
                 IncidentEvidenceRequest("Photograph any warning message while parked, without driving to reproduce it."),
                 IncidentEvidenceRequest("Keep invoices for recent tire, brake, suspension, alignment, or steering work.")
+            ]
+        case .visibleTireDamage:
+            return [
+                IncidentEvidenceRequest("From a safe distance, photograph the damaged area of the tire."),
+                IncidentEvidenceRequest("Note which tire (position) is affected and what kind of damage was visible."),
+                IncidentEvidenceRequest("If a spare was installed, keep the damaged tire available for the shop to inspect.")
             ]
         case .engineWillNotStayRunning:
             return [

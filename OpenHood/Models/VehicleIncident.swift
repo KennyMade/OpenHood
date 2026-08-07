@@ -17,6 +17,7 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
     case overheatingOrSteam
     case flashingWarningLight
     case unsafeBrakesOrSteering
+    case visibleTireDamage
     case engineWillNotStayRunning
     case noneOfThese
     case unsure
@@ -30,6 +31,7 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
         case .overheatingOrSteam: "Overheating or steam"
         case .flashingWarningLight: "Flashing warning light"
         case .unsafeBrakesOrSteering: "Brakes or steering feel unsafe"
+        case .visibleTireDamage: "Visible tire damage"
         case .engineWillNotStayRunning: "The engine will not stay running"
         case .noneOfThese: "None of these"
         case .unsure: "I’m not sure"
@@ -43,6 +45,7 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
              .overheatingOrSteam,
              .flashingWarningLight,
              .unsafeBrakesOrSteering,
+             .visibleTireDamage,
              .engineWillNotStayRunning:
             .urgent
         case .unsure:

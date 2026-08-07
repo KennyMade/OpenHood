@@ -1051,6 +1051,11 @@ private struct IncidentIntakeView: View {
                 question("Was related work performed recently?", key: IncidentUrgentAnswerKey.controlRecentWork, choices: ["Tire or wheel work", "Brake work", "Suspension or alignment work", "Steering work", "No recent work", "I’m not sure"])
             ]
             return questions
+        case .visibleTireDamage:
+            return [
+                question("What did you see?", key: IncidentUrgentAnswerKey.tireDamageObservation, choices: ["A bulge or bubble on the sidewall", "A crack or cut in the sidewall", "An object stuck in the tread (nail, screw, etc.)", "The tire looks flat or very low", "I’m not sure"]),
+                question("Is the tire currently holding air, or losing it?", key: IncidentUrgentAnswerKey.tireAirStatus, choices: ["Holding air, just looks damaged", "Losing air quickly", "Already flat", "I’m not sure"])
+            ]
         case .engineWillNotStayRunning:
             return [
                 question("What happens when it runs?", key: IncidentUrgentAnswerKey.runningDetail, choices: ["Starts and immediately stops", "Idles roughly", "Shakes or misfires", "Stalls when placed in gear", "I’m not sure"]),
@@ -2343,6 +2348,8 @@ private extension IncidentSafetySelection {
             "Stop driving as soon as it is safe and switch off the vehicle. Do not drive to reproduce the warning. Arrange roadside assistance, and contact emergency services if there is an immediate hazard."
         case .unsafeBrakesOrSteering:
             "This can range from minor to serious, and there's no way to tell which without a closer look. Stop in the safest available place, use hazard lights when appropriate, and arrange roadside assistance. Contact emergency services if you cannot get out of immediate danger safely."
+        case .visibleTireDamage:
+            "A tire in this condition can fail suddenly and without warning, even if it looks fine right now. Do not continue driving on it. If you have a spare and know how to change it safely, do so; otherwise arrange a tow. Contact emergency services if you cannot get out of immediate danger safely."
         case .engineWillNotStayRunning:
             "Do not keep driving or repeatedly try to reproduce the problem. Move to a safe location if possible without driving farther, switch off the vehicle, and arrange roadside assistance."
         case .unsure:
