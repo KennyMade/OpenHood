@@ -6,6 +6,7 @@ enum IncidentWorkflowFamily: String, Codable, CaseIterable {
     case overheatingOrCooling
     case roughRunningStallingOrPostService
     case noiseVibrationOrSuspension
+    case drivingChange
 }
 
 enum IncidentSystemCategory: String, Codable, CaseIterable, Identifiable {
@@ -265,6 +266,11 @@ enum IncidentGuidanceEvidenceSignal: Codable, Equatable {
     /// phase1.starting.fuel-ignition) — IncidentStartingAnswerKey answers
     /// on VehicleIncident.startingFollowUpAnswers.
     case startingAnswer(key: String, value: String)
+    /// Same idea as noiseAnswer/warningAnswer/fluidAnswer/startingAnswer,
+    /// for the driving-change family (phase1.driving-change.*) —
+    /// IncidentDrivingChangeAnswerKey answers on
+    /// VehicleIncident.drivingChangeFollowUpAnswers.
+    case drivingChangeAnswer(key: String, value: String)
 }
 
 /// Structured follow-up questions for the noise/vibration/suspension
@@ -367,6 +373,26 @@ enum IncidentStartingAnswerKey {
     /// through to an ordinary Phase 1 result with no matching record —
     /// a known, called-out gap, not an oversight.
     static let transmissionBehavior = "startingTransmissionBehavior"
+}
+
+/// Structured follow-up questions for the driving-change record family
+/// (phase1.driving-change.pulls-to-one-side, phase1.driving-change.heavy-
+/// steering, phase1.driving-change.sluggish-acceleration) — same reasoning
+/// as IncidentStartingAnswerKey above. Answers are stored in
+/// VehicleIncident.drivingChangeFollowUpAnswers and matched via
+/// IncidentGuidanceEvidenceSignal.drivingChangeAnswer. pullingTiming and
+/// steeringOnset are each asked only as a conditional follow-up once
+/// whatChanged is answered "Pulls to one side" or "Steering feels heavier
+/// than normal" respectively — see
+/// SomethingHappenedView.drivingChangeQuestions/
+/// drivingChangeQuestionDestination. "Mainly when braking" and "Suddenly"
+/// both escalate into the urgent .unsafeBrakesOrSteering path rather than
+/// ever reaching Phase 1 evaluation, same mechanism brakeGrindEscalation
+/// already uses.
+enum IncidentDrivingChangeAnswerKey {
+    static let whatChanged = "drivingChangeWhatChanged"
+    static let pullingTiming = "drivingChangePullingTiming"
+    static let steeringOnset = "drivingChangeSteeringOnset"
 }
 
 struct IncidentGuidanceConfidenceRules: Codable, Equatable {

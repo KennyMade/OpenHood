@@ -188,6 +188,7 @@ private enum IncidentStep: Hashable {
     case warningQuestion(Int)
     case fluidQuestion(Int)
     case startingQuestion(Int)
+    case drivingChangeQuestion(Int)
     case description
     case recentWork
     case review
@@ -302,6 +303,8 @@ private struct IncidentIntakeView: View {
             fluidQuestionDestination(index: index)
         case .startingQuestion(let index):
             startingQuestionDestination(index: index)
+        case .drivingChangeQuestion(let index):
+            drivingChangeQuestionDestination(index: index)
         case .description:
             IncidentDescriptionView(
                 description: $incident.userDescription,
@@ -708,7 +711,10 @@ private struct IncidentIntakeView: View {
     /// questions for that category (e.g. "Is there an active flame?" for
     /// smoke/fire) still get asked normally — this does not skip urgent
     /// intake, it joins it already partway answered.
-    private func escalateToUrgentSafety(_ selection: IncidentSafetySelection) {
+    private func escalateToUrgentSafety(
+        _ selection: IncidentSafetySelection,
+        concernType: String? = nil
+    ) {
         incident.safetySelection = selection
         switch selection {
         case .smokeOrFire:
@@ -718,11 +724,16 @@ private struct IncidentIntakeView: View {
         case .overheatingOrSteam:
             setUrgentAnswer("Yes", key: IncidentUrgentAnswerKey.temperatureIndication)
         case .unsafeBrakesOrSteering:
-            // Only absTractionEscalation routes here today, and it's
-            // always specifically about the ABS/traction-control and
-            // regular brake lights — not steering — so the main-concern
-            // question is already answered by context.
-            setUrgentAnswer("Braking", key: IncidentUrgentAnswerKey.concernType)
+            // Defaults to "Braking" — brakeGrindEscalation and
+            // absTractionEscalation are always specifically about braking/
+            // ABS, not steering, so the main-concern question is already
+            // answered by context. drivingChangeQuestionDestination's
+            // sudden-heavy-steering escalation passes concernType:
+            // "Steering" explicitly instead, since defaulting to "Braking"
+            // there would be factually wrong and would also silently skip
+            // the "What is the main concern?" question rather than let the
+            // user confirm it themselves.
+            setUrgentAnswer(concernType ?? "Braking", key: IncidentUrgentAnswerKey.concernType)
         default:
             saveDraft()
         }
@@ -856,7 +867,7 @@ private struct IncidentIntakeView: View {
         if let index = nextUnansweredStartingQuestionIndex {
             appendIfNeeded(.startingQuestion(index))
         } else {
-            appendIfNeeded(.description)
+            advanceDrivingChangeIntake()
         }
     }
 
@@ -873,6 +884,100 @@ private struct IncidentIntakeView: View {
         var answers = incident.startingFollowUpAnswers ?? [:]
         answers[key] = answer
         incident.startingFollowUpAnswers = answers
+        saveDraft()
+    }
+
+    /// phase1.driving-change.pulls-to-one-side / phase1.driving-change.
+    /// heavy-steering / phase1.driving-change.sluggish-acceleration:
+    /// structured follow-up asked only when the reported observation
+    /// includes .drivingChange — see `drivingChangeQuestions`. Chained
+    /// after the starting questions (advanceStartingIntake falls through
+    /// to this once starting questions are answered or not applicable),
+    /// then falls through to .description itself, same pattern as noise/
+    /// warning/fluid/starting above.
+    ///
+    /// "Mainly when braking" (pullingTiming) and "Suddenly" (steeringOnset)
+    /// are deliberately excluded from the fall-through below — a pull that
+    /// only shows up while braking can mean a dragging caliper, and
+    /// steering that suddenly got heavy can mean a failed power steering
+    /// belt or pump, both real hydraulic/mechanical safety concerns, not
+    /// SERVICE-SOON-tier content. Both reuse the exact same
+    /// .unsafeBrakesOrSteering escalation brakeGrindEscalation already
+    /// wired, rather than a new pattern.
+    @ViewBuilder
+    private func drivingChangeQuestionDestination(index: Int) -> some View {
+        let questions = drivingChangeQuestions
+        if questions.indices.contains(index) {
+            let question = questions[index]
+            IncidentUrgentFollowUpView(
+                title: question.title,
+                message: question.message,
+                options: question.options
+            ) { answer in
+                guard path.last == .drivingChangeQuestion(index) else { return }
+                setDrivingChangeAnswer(answer, key: question.answerKey)
+                if question.answerKey == IncidentDrivingChangeAnswerKey.pullingTiming,
+                   answer == "Mainly when braking" {
+                    escalateToUrgentSafety(.unsafeBrakesOrSteering)
+                } else if question.answerKey == IncidentDrivingChangeAnswerKey.steeringOnset,
+                          answer == "Suddenly" {
+                    escalateToUrgentSafety(.unsafeBrakesOrSteering, concernType: "Steering")
+                } else {
+                    advanceDrivingChangeIntake()
+                }
+            }
+        } else {
+            IncidentIncompleteIntakeRecoveryView {
+                advanceDrivingChangeIntake()
+            }
+        }
+    }
+
+    private var drivingChangeQuestions: [IncidentUrgentQuestion] {
+        guard incident.observationTypes.contains(.drivingChange) else {
+            return []
+        }
+        var questions = [
+            question("What’s changed about how it drives?", key: IncidentDrivingChangeAnswerKey.whatChanged, choices: ["Pulls to one side", "Steering feels heavier than normal", "Feels sluggish or slow to accelerate", "I’m not sure"])
+        ]
+        // Asked only once "Pulls to one side" is selected above — mirrors
+        // the temperature/ABS conditional follow-ups in warningQuestions.
+        if incident.drivingChangeFollowUpAnswers?[IncidentDrivingChangeAnswerKey.whatChanged] == "Pulls to one side" {
+            questions.append(
+                question("Does the pulling happen mainly when braking, or all the time?", key: IncidentDrivingChangeAnswerKey.pullingTiming, choices: ["Mainly when braking", "All the time, not just braking", "I’m not sure"])
+            )
+        }
+        // Asked only once "Steering feels heavier than normal" is selected
+        // above — same conditional pattern as pullingTiming.
+        if incident.drivingChangeFollowUpAnswers?[IncidentDrivingChangeAnswerKey.whatChanged] == "Steering feels heavier than normal" {
+            questions.append(
+                question("Did the heavier steering happen suddenly, or has it been getting worse gradually?", key: IncidentDrivingChangeAnswerKey.steeringOnset, choices: ["Suddenly", "Gradually, over time", "I’m not sure"])
+            )
+        }
+        return questions
+    }
+
+    private func advanceDrivingChangeIntake() {
+        if let index = nextUnansweredDrivingChangeQuestionIndex {
+            appendIfNeeded(.drivingChangeQuestion(index))
+        } else {
+            appendIfNeeded(.description)
+        }
+    }
+
+    private var nextUnansweredDrivingChangeQuestionIndex: Int? {
+        drivingChangeQuestions.firstIndex { question in
+            guard let answer = incident.drivingChangeFollowUpAnswers?[question.answerKey] else {
+                return true
+            }
+            return !question.options.contains { $0.id == answer }
+        }
+    }
+
+    private func setDrivingChangeAnswer(_ answer: String, key: String) {
+        var answers = incident.drivingChangeFollowUpAnswers ?? [:]
+        answers[key] = answer
+        incident.drivingChangeFollowUpAnswers = answers
         saveDraft()
     }
 
@@ -2237,7 +2342,7 @@ private extension IncidentSafetySelection {
         case .flashingWarningLight:
             "Stop driving as soon as it is safe and switch off the vehicle. Do not drive to reproduce the warning. Arrange roadside assistance, and contact emergency services if there is an immediate hazard."
         case .unsafeBrakesOrSteering:
-            "Do not continue driving. Stop in the safest available place, use hazard lights when appropriate, and arrange roadside assistance. Contact emergency services if you cannot get out of immediate danger safely."
+            "This can range from minor to serious, and there's no way to tell which without a closer look. Stop in the safest available place, use hazard lights when appropriate, and arrange roadside assistance. Contact emergency services if you cannot get out of immediate danger safely."
         case .engineWillNotStayRunning:
             "Do not keep driving or repeatedly try to reproduce the problem. Move to a safe location if possible without driving farther, switch off the vehicle, and arrange roadside assistance."
         case .unsure:

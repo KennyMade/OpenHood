@@ -2175,6 +2175,188 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "brake repair"
+        ),
+        // phase1.driving-change.* — structured follow-up asked only when
+        // the reported observation includes .drivingChange, gated on the
+        // "What's changed about how it drives?" question (see
+        // SomethingHappenedView.drivingChangeQuestions). "Mainly when
+        // braking" (pulling) and "Suddenly" (steering) are deliberately
+        // excluded below — see drivingChangeQuestionDestination — since
+        // both escalate into the urgent .unsafeBrakesOrSteering path
+        // instead of ever reaching Phase 1 evaluation. Sources consulted:
+        // Firestone (pulling), Nelson's (caliper drag, heavy steering
+        // causes, sluggish acceleration causes, catalytic converter cost,
+        // power steering pump cost, serpentine belt cost) — same
+        // attribution reasoning as the rest of this file: a source being
+        // public doesn't make it citable on screen, so sourceReferences
+        // below are attributed to OpenHood.
+        record(
+            id: "phase1.driving-change.pulls-to-one-side",
+            family: .drivingChange,
+            observations: [.drivingChange],
+            required: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Pulls to one side")
+            ],
+            support: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Pulls to one side")
+            ],
+            contradict: [],
+            area: .tiresWheelsAndPressure,
+            explanation: "A car that drifts or pulls to one side most often points to wheel alignment or uneven tire pressure — even a 5 PSI difference side to side can cause a noticeable pull. If it happens specifically while braking, that can mean a dragging brake caliper, which is a safety concern worth having checked promptly.",
+            action: .professionalInspection,
+            questions: [
+                "Is the pull constant, or does it only show up at certain speeds?",
+                "When were the tires last rotated or the alignment last checked?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-driving-change-pulling-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Pulling to One Side\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "wheel-alignment",
+                    name: "Wheel alignment",
+                    plainExplanation: "Misaligned wheels are one of the most common causes of a steady pull to one side.",
+                    typicalCostRange: "Roughly $80–$200"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "uneven-tire-pressure",
+                    name: "Uneven tire pressure",
+                    plainExplanation: "Even a small pressure difference side to side, as little as 5 PSI, can cause a noticeable pull.",
+                    typicalCostRange: "Usually free to check and correct at a gas station air pump"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "tire-wear-or-tread-mismatch",
+                    name: "Tire wear or tread mismatch",
+                    plainExplanation: "Uneven wear or mismatched tread patterns side to side can pull the car even with correct pressure and alignment.",
+                    typicalCostRange: "Varies — worth a visual check first, no fixed number"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "suspension-components",
+                    name: "Suspension components (control arm, bushings, or shocks)",
+                    plainExplanation: "Worn suspension parts can let one side of the car sit or handle differently than the other, causing a pull.",
+                    typicalCostRange: "Roughly $250–$450"
+                )
+            ],
+            repairSearchTerm: "wheel alignment and tire inspection"
+        ),
+        record(
+            id: "phase1.driving-change.heavy-steering",
+            family: .drivingChange,
+            observations: [.drivingChange],
+            required: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Steering feels heavier than normal")
+            ],
+            support: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Steering feels heavier than normal")
+            ],
+            contradict: [],
+            area: .powerSteeringOrEPS,
+            explanation: "Steering that's gradually gotten heavier most often starts with low or old power steering fluid — the cheapest and most common cause, worth checking first — followed by a worn serpentine belt or a failing power steering pump.",
+            action: .professionalInspection,
+            questions: [
+                "Has the power steering fluid level been checked recently?",
+                "Is there any whining or squealing noise while turning?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-driving-change-heavy-steering-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Steering Feels Heavier Than Normal\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "power-steering-fluid",
+                    name: "Power steering fluid",
+                    plainExplanation: "Low or degraded power steering fluid is the cheapest and most common cause of heavier steering, worth checking first.",
+                    typicalCostRange: "Often free to check; topping off is usually under $20 if needed"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "serpentine-belt",
+                    name: "Serpentine belt",
+                    plainExplanation: "A worn or slipping serpentine belt can reduce power to the steering pump, making steering feel heavier.",
+                    typicalCostRange: "Roughly $70–$250"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "power-steering-pump",
+                    name: "Power steering pump",
+                    plainExplanation: "A failing pump can't build enough pressure to keep steering assist consistent.",
+                    typicalCostRange: "Roughly $400–$900"
+                )
+            ],
+            repairSearchTerm: "power steering diagnostic"
+        ),
+        record(
+            id: "phase1.driving-change.sluggish-acceleration",
+            family: .drivingChange,
+            observations: [.drivingChange],
+            required: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Feels sluggish or slow to accelerate")
+            ],
+            support: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "Feels sluggish or slow to accelerate")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "Sluggish acceleration usually traces back to something restricting airflow or fuel delivery, or a transmission not shifting cleanly — a clogged air filter, a dirty mass airflow sensor, a clogged catalytic converter, or low/degraded transmission fluid are the most common causes.",
+            action: .professionalInspection,
+            questions: [
+                "When was the engine air filter last replaced?",
+                "Does it feel worse from a stop, or more at highway speed?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-driving-change-sluggish-acceleration-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Sluggish Acceleration\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "engine-air-filter",
+                    name: "Engine air filter",
+                    plainExplanation: "A clogged air filter restricts airflow, making the engine work harder to breathe and reducing power.",
+                    typicalCostRange: "Roughly $20–$75"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "mass-airflow-sensor",
+                    name: "Mass airflow sensor",
+                    plainExplanation: "A dirty or failing sensor can misread incoming air, causing the engine to run poorly and feel underpowered.",
+                    typicalCostRange: "Roughly $150–$580"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "catalytic-converter",
+                    name: "Catalytic converter",
+                    plainExplanation: "A clogged converter restricts exhaust flow, which can make the engine feel noticeably underpowered.",
+                    typicalCostRange: "Roughly $900–$3,500 — one of the more expensive common repairs, worth a proper diagnosis before replacing"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "transmission-fluid-level-or-condition",
+                    name: "Transmission fluid level or condition",
+                    plainExplanation: "Low or degraded transmission fluid can prevent clean, timely shifts, which can feel like sluggish acceleration.",
+                    typicalCostRange: "Roughly $80–$250 for a standard service"
+                )
+            ],
+            repairSearchTerm: "acceleration performance diagnostic"
         )
     ]
 

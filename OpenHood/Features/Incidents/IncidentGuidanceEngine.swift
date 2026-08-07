@@ -211,6 +211,8 @@ private extension IncidentGuidanceEngine {
             incident.fluidFollowUpAnswers?[key] == value
         case .startingAnswer(let key, let value):
             incident.startingFollowUpAnswers?[key] == value
+        case .drivingChangeAnswer(let key, let value):
+            incident.drivingChangeFollowUpAnswers?[key] == value
         }
     }
 
@@ -354,7 +356,7 @@ private extension IncidentGuidanceEngine {
     ) -> String {
         switch action {
         case .moreInformation:
-            "Record the unanswered details below. The current answers do not support one of the four Phase 1 families strongly enough."
+            "OpenHood doesn't have a specific match for this yet. Record what you noticed below, and use Find a Shop if you'd rather have it looked at directly."
         case .safeObservation:
             "Collect only information that is visible or available without recreating the concern."
         case .obtainCodeScan:

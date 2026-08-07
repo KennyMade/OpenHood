@@ -68,11 +68,11 @@ enum IncidentObservationType: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .sound: "A sound"
-        case .vibrationOrMovement: "A vibration or movement"
-        case .smell: "A smell"
+        case .vibrationOrMovement: "Vibration or shaking"
+        case .smell: "An unusual smell"
         case .visible: "Something visible"
-        case .warningLightOrMessage: "A warning light or message"
-        case .drivingChange: "A change in how it drives"
+        case .warningLightOrMessage: "A warning light"
+        case .drivingChange: "It drives differently"
         case .startingOrRunningTrouble: "Trouble starting or staying running"
         case .somethingElse: "Something else"
         }
@@ -112,6 +112,7 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
     var warningFollowUpAnswers: [String: String]?
     var fluidFollowUpAnswers: [String: String]?
     var startingFollowUpAnswers: [String: String]?
+    var drivingChangeFollowUpAnswers: [String: String]?
 
     var urgency: IncidentUrgency? {
         safetySelection?.urgency
@@ -133,7 +134,8 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
         noiseFollowUpAnswers: [String: String]? = nil,
         warningFollowUpAnswers: [String: String]? = nil,
         fluidFollowUpAnswers: [String: String]? = nil,
-        startingFollowUpAnswers: [String: String]? = nil
+        startingFollowUpAnswers: [String: String]? = nil,
+        drivingChangeFollowUpAnswers: [String: String]? = nil
     ) {
         self.id = id
         self.vehicleID = vehicleID
@@ -151,5 +153,6 @@ struct VehicleIncident: Identifiable, Codable, Equatable {
         self.warningFollowUpAnswers = warningFollowUpAnswers
         self.fluidFollowUpAnswers = fluidFollowUpAnswers
         self.startingFollowUpAnswers = startingFollowUpAnswers
+        self.drivingChangeFollowUpAnswers = drivingChangeFollowUpAnswers
     }
 }
