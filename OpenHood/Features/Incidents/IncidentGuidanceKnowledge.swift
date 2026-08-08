@@ -3062,6 +3062,23 @@ enum IncidentGuidanceKnowledge {
                     name: "Exhaust heat shield",
                     plainExplanation: "A thin metal shield that keeps exhaust heat away from nearby components. When its mounting corrodes or loosens, it can rattle against the exhaust or the underbody.",
                     typicalCostRange: "Roughly $100–$500, often on the lower end since these are simple parts"
+                ),
+                // The heat shield is the most likely single answer, but it
+                // was the only one offered. A rattle that isn't the shield is
+                // usually the exhaust hanging loose, or trim — and both are
+                // worth naming so a person whose shield turns out to be fine
+                // isn't left with nowhere to go.
+                IncidentPossibleAreaTerm(
+                    id: "exhaust-hangers-or-mounts",
+                    name: "Exhaust hangers or mounts",
+                    plainExplanation: "Rubber hangers perish over time and let the exhaust knock against the underbody, which sounds much like a loose shield.",
+                    typicalCostRange: "Roughly $75–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "loose-trim-or-fasteners",
+                    name: "Loose trim, covers, or fasteners",
+                    plainExplanation: "Undertrays, splash shields, and interior trim clips work loose with age and rattle in a way that is easy to mistake for something mechanical.",
+                    typicalCostRange: "Roughly $50–$200, and sometimes just a refitted clip"
                 )
             ],
             repairSearchTerm: "exhaust heat shield repair"
@@ -3409,6 +3426,24 @@ enum IncidentGuidanceKnowledge {
                     name: "Brake rotors",
                     plainExplanation: "Warped or unevenly worn rotors create a pulsation felt in the pedal or steering wheel specifically when braking.",
                     typicalCostRange: "Roughly $300–$850 per axle to replace; resurfacing, when the rotor is thick enough, runs $40–$150 per axle and costs less"
+                ),
+                // Rotors alone was an incomplete answer. Pads are almost
+                // always replaced alongside rotors — quoting rotors without
+                // pads sets up a person to be surprised by the real bill —
+                // and a sticking caliper is the reason rotors warp unevenly
+                // in the first place, so replacing rotors without checking
+                // it means doing the job twice.
+                IncidentPossibleAreaTerm(
+                    id: "brake-pads",
+                    name: "Brake pads",
+                    plainExplanation: "Pads are normally replaced at the same time as rotors, so expect them in the same quote rather than as a separate job later.",
+                    typicalCostRange: "Roughly $150–$400 per axle"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "brake-caliper",
+                    name: "Brake caliper",
+                    plainExplanation: "A caliper that sticks keeps one pad pressed against the rotor, overheating it and warping it unevenly. Worth checking, because new rotors fitted without fixing this tend to warp again.",
+                    typicalCostRange: "Roughly $300–$800 per caliper"
                 )
             ],
             repairSearchTerm: "brake rotor replacement"
@@ -3805,7 +3840,46 @@ enum IncidentGuidanceKnowledge {
                     location: nil,
                     isPlaceholder: false
                 )
-            ]
+            ],
+            // The explanation already walked through the common categories
+            // in prose, but named nothing the user could actually look at or
+            // price. These mirror that prose exactly — one entry per category
+            // it describes — so the two can't drift apart. Ordered cheapest
+            // and easiest to check first, which is also the order a
+            // technician would work through them.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "tire-pressure-and-condition",
+                    name: "Tire pressure and condition",
+                    plainExplanation: "Uneven or low pressure changes how a car steers, rides, and rolls, and it is free to check. It explains a surprising share of \"it just feels different\" complaints.",
+                    typicalCostRange: "Free to check; roughly $20–$40 if a tire needs repair"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "wheel-alignment",
+                    name: "Wheel alignment",
+                    plainExplanation: "Alignment knocked out by a pothole or curb makes a car wander or pull, and left alone it wears tires unevenly on top of the handling change.",
+                    typicalCostRange: "Roughly $100–$200"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "brake-drag",
+                    name: "A dragging brake",
+                    plainExplanation: "A caliper that doesn't fully release pulls the car to one side and can make it feel sluggish, because the engine is working against the brake.",
+                    typicalCostRange: "Roughly $300–$800 per caliper"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "suspension-components",
+                    name: "Suspension components (struts, shocks, bushings)",
+                    plainExplanation: "Worn suspension parts make the ride feel looser or floatier long before anything breaks, which is why the change is often described as a feeling rather than a fault.",
+                    typicalCostRange: "Roughly $450–$1,100 per axle for struts or shocks"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "engine-air-and-fuel-delivery",
+                    name: "Air or fuel delivery",
+                    plainExplanation: "A clogged air filter, dirty airflow sensor, or weak fuel delivery shows up as the car feeling slower to respond rather than as a specific noise or light.",
+                    typicalCostRange: "Roughly $60–$400 depending on which item it turns out to be"
+                )
+            ],
+            repairSearchTerm: "vehicle handling diagnostic"
         )
     ]
 
