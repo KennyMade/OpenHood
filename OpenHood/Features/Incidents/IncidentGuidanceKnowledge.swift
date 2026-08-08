@@ -270,11 +270,21 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("cranks normally")],
             area: .startingAndElectrical,
-            explanation: "A no-crank or limited-response start attempt can involve electrical power or starting control, but direct testing is still needed.",
+            explanation: "Not knowing exactly what happened when you turned the key still narrows this down a little. If nothing at all happened — no crank, no dash lights, no sound — that usually points to the battery, a main fuse, or a poor connection. If the dash lights come on normally but the engine doesn't turn over, that leans more toward the starter, its relay, or the ignition switch. Next time, noticing whether the dash lights come on and whether you hear anything at all is the single most useful thing to check.",
             action: .professionalInspection,
             questions: [
                 "Does the engine crank, click, or produce no response?",
                 "What do the dash lights do during the start attempt?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-electrical-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — No-Crank Start Attempt, Response Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -508,11 +518,21 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no crank")],
             area: .fuelAndIgnition,
-            explanation: "Cranking without starting or misfire-like behavior can involve fuel delivery or ignition quality without pointing to one part.",
+            explanation: "Even without a specific clue, an OBD-II code scan — often free at an auto parts store — is the fastest way to narrow this down, since it can point toward fuel delivery, ignition, or a sensor without any guesswork. In the meantime, a fuel smell while cranking leans toward flooding or a fuel-delivery issue, while a recent check-engine light beforehand leans toward whatever it was already flagging.",
             action: .obtainCodeScan,
             questions: [
                 "Does the engine crank at its usual speed?",
                 "Is there a warning message or stored diagnostic code?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-fuel-ignition-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Cranks But Won't Start, Clue Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -1326,7 +1346,7 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no visible fluid")],
             area: .leaksSmokeAndOdors,
-            explanation: "Visible fluid or residue may involve a leak, spill, or normal drainage. Its location and appearance are worth documenting without touching it.",
+            explanation: "Without knowing the color, it's hard to narrow this down — but color is usually the fastest clue once you can see it again. Coolant is typically green, orange, pink, or yellow; oil is brown to black and often has a slick texture; a reddish tint often points to transmission or power steering fluid; and clear water that shows up only after using the air conditioning is usually just normal AC condensation, not a leak at all. A quick look next time, from a safe standing position, often points straight to the right system.",
             action: .professionalInspection,
             avoid: [
                 "Do not touch or taste an unknown fluid.",
@@ -1335,6 +1355,16 @@ enum IncidentGuidanceKnowledge {
             questions: [
                 "Where was the fluid visible from a safe standing position?",
                 "What color or consistency was visible without touching it?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-visible-fluid-color-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Visible Fluid, Color Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -1612,7 +1642,7 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no smell")],
             area: .leaksSmokeAndOdors,
-            explanation: "An unusual odor can involve fluid contacting a hot surface, electrical heat, exhaust, or another source. The odor description and location help separate those possibilities.",
+            explanation: "Without knowing the smell, it's hard to narrow this down — but the description itself is usually the fastest clue. A sweet smell often points to coolant reaching a hot surface; a burning smell often points to oil, a belt, or brake material; an electrical or plastic smell points toward wiring or a heat source; and a musty smell is usually just cabin-filter or AC moisture, not a mechanical concern at all. Next time it happens, noticing which of those it's closest to — and whether smoke or liquid was visible at the same time — often points straight to the right system.",
             action: .professionalInspection,
             avoid: [
                 "Do not restart or reproduce an odor when smoke, fuel, or electrical heat may be involved.",
@@ -1621,6 +1651,16 @@ enum IncidentGuidanceKnowledge {
             questions: [
                 "Which odor description is closest?",
                 "Where was it strongest, and was smoke or liquid visible?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-unusual-odor-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Unusual Odor, Description Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -2691,9 +2731,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.rattle-not-bumps",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Rattle")
             ],
             support: [
@@ -2747,9 +2786,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.clunk-not-bumps",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Clunk")
             ],
             support: [
@@ -3093,9 +3131,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.squeal-not-braking",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal")
             ],
             support: [
@@ -3157,9 +3194,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.grind-not-bumps-not-braking",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Grind")
             ],
             support: [
@@ -3203,6 +3239,57 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "CV joint or wheel bearing inspection"
+        ),
+        // Universal noise fallback — closes a real dead end: every record
+        // above requires either a specific timing value (bump-noise,
+        // vibration-at-speed, vibration-while-turning, squeal-while-
+        // braking, vibration-while-braking) or a specific sound value
+        // (rattle/clunk/squeal/grind "not bumps"/"not braking"). Someone
+        // who genuinely can't place when it happens or what it sounds
+        // like — a common, honest real-world answer, not an edge case —
+        // matched nothing and fell through to the generic "not enough
+        // information" result regardless of which specific location or
+        // observation type they'd picked. This only requires sound
+        // being "I'm not sure," independent of timing, so it also covers
+        // "I'm not sure" timing and "Constant" timing paired with an
+        // unidentified sound — the two dead-end combinations found in
+        // this pass. It does NOT fire when a specific sound value is
+        // given (Rattle/Clunk/Squeal/Grind), even with "Constant" or
+        // "I'm not sure" timing, since those already match one of the
+        // "not bumps"/"not braking" records above regardless of timing.
+        //
+        // Same tier as the rest of this file — reviewed general guidance,
+        // not a needsVerification placeholder — since "it could be one of
+        // several common systems, here's how to narrow it down" is itself
+        // real, honest, actionable content, not a non-answer.
+        record(
+            id: "phase1.noise.sound-unclear",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "I’m not sure")
+            ],
+            support: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "Without knowing what the sound is like, it's hard to point to one system — a rattle or clunk often traces back to suspension or exhaust hardware, a squeal to a belt or brake pads, and a grinding sound to brakes or a wheel bearing. Paying attention to a couple of extra details next time it happens can narrow this down significantly.",
+            action: .professionalInspection,
+            questions: [
+                "Does it happen more over bumps, at highway speed, while turning, or while braking — or is it fairly constant?",
+                "If you had to guess, does it sound closer to a rattle, a clunk, a squeal, or a grinding noise?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-noise-sound-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Noise Reported, Sound Not Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         ),
         // phase1.driving-change.* — structured follow-up asked only when
         // the reported observation includes .drivingChange, gated on the
