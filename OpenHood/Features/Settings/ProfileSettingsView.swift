@@ -102,7 +102,7 @@ struct LegalDisclaimerView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("Last updated: not yet finalized — pending legal review")
+                Text("This is general information, not legal advice. Consult an attorney for guidance specific to your situation.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
@@ -141,7 +141,7 @@ struct LegalDisclaimerView: View {
                     body: "To the maximum extent permitted by law, OpenHood and its developer are not liable for any damages, losses, or costs arising from your use of the app or reliance on its content, including but not limited to vehicle damage, personal injury, or repair costs."
                 )
 
-                Text("This document is a draft pending review by a licensed attorney and is subject to change.")
+                Text("These terms may be updated as OpenHood evolves. They are provided as general information and are not a substitute for advice from a licensed attorney.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
