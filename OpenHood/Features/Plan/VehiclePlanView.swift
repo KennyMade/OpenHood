@@ -345,6 +345,294 @@ enum PlanRecommendationLibrary {
             supportingWork: "Compatibility and supporting work remain conditional until the installed parts are identified.",
             verificationStatus: .prototype,
             sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-wheels-tires-verified",
+            vehicleApplicability: "General guidance; wheel offset and bolt pattern are vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: ["Wheels and tires"],
+            recommendedInspection: "Confirm the correct wheel size, offset, and bolt pattern for the saved vehicle before buying anything. An incorrect offset can rub the fender or suspension, and an incorrect bolt pattern won't fit at all. If tires are being replaced too, check that the load rating matches or exceeds the factory spec.",
+            conditionalNextStep: "If wheels are changing without new tires, confirm the existing tires' size is compatible with the new wheel diameter.",
+            reason: "Wheel fitment mistakes are one of the most common and expensive style-plan errors — the wrong offset or bolt pattern makes an otherwise good-looking wheel unusable.",
+            partsEstimateStatus: "A set of four aftermarket wheels typically runs roughly $1,000–$2,500, though basic sets can be found for around $300–$1,000 and premium forged wheels can run well past $4,000. A full set of four tires typically runs roughly $400–$1,800, with performance tires often landing in the $1,800–$3,000+ range.",
+            laborEstimateStatus: "Mounting and balancing a set of four tires is typically roughly $60–$180, plus roughly $80–$150 for an alignment afterward. TPMS sensor replacement, if needed, adds roughly $25–$60 per sensor plus a small programming fee.",
+            benefits: "Wheels and tires are one of the most visible style changes and, done right, can also improve ride and handling feel.",
+            tradeoffs: "Larger wheels with shorter sidewalls can make the ride firmer and are more vulnerable to pothole and curb damage; wider tires can slightly affect fuel economy.",
+            supportingWork: "An alignment is worth budgeting for anytime wheel size or offset changes, even if tires aren't replaced.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "One and Done Prep, \"Tire Installation Costs and Pricing Guide 2026\"",
+                "Get Your Wheels, 18-inch wheel set pricing"
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-stance-verified",
+            vehicleApplicability: "General guidance; not vehicle-specific",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: ["Stance"],
+            recommendedInspection: "Decide between lowering springs and coilovers first. Springs are the cheaper, simpler option and use the factory shocks/struts, while coilovers replace the whole assembly and add ride-height adjustability. Confirm the vehicle's shocks/struts are in good condition before installing springs, since worn factory dampers won't control a lowered spring well.",
+            conditionalNextStep: "If coilovers are chosen, confirm they carry a valid warranty and are rated for daily use if the vehicle will still be driven regularly.",
+            reason: "Springs and coilovers solve the same visual goal at very different price points, so the choice changes the entire budget.",
+            partsEstimateStatus: "Lowering springs typically run roughly $150–$350 for parts. Coilovers cost significantly more — entry to mid-range sets typically run roughly $800–$2,500, with premium adjustable sets exceeding $4,000.",
+            laborEstimateStatus: "Installed together with labor, lowering springs typically total roughly $300–$500. Coilover installation is more involved and typically adds several hundred dollars in labor on top of the parts cost.",
+            benefits: "A lowered stance is one of the most immediately visible style changes; coilovers add the option to fine-tune ride height and, on many sets, damping.",
+            tradeoffs: "Lowering reduces ground clearance and can affect ride comfort — going too low can cause rubbing, uneven tire wear, or scraping on driveways and speed bumps.",
+            supportingWork: "An alignment is recommended anytime ride height changes.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "CarXplorer, \"How Much To Lower a Car: 2026 Cost & Options Guide\"",
+                "TruHart, \"Coilovers vs. Lowering Springs\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-paint-wrap-verified",
+            vehicleApplicability: "General guidance; not vehicle-specific",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: ["Paint or wrap"],
+            recommendedInspection: "Check the condition of the existing paint first. A wrap works best over paint that's already in good condition, while paint with rust, peeling clear coat, or heavy damage usually needs repair before either option makes sense.",
+            conditionalNextStep: "If existing paint or bodywork needs repair first, budget and plan that separately before choosing paint or wrap.",
+            reason: "Wrap and paint solve the same goal at very different price points and durability, so existing paint condition should decide which one makes sense.",
+            partsEstimateStatus: "A full vinyl wrap typically runs roughly $2,000–$5,000 installed. A professional-quality full paint job typically runs roughly $5,000–$10,000, and can exceed $20,000 for show-quality work.",
+            laborEstimateStatus: "Labor is included in the installed ranges above for both options — these are typically quoted as a single installed price rather than separate parts and labor.",
+            benefits: "A wrap is reversible and less expensive, with more color and finish options. Paint lasts significantly longer — decades with care, versus roughly two to five years for a wrap — and is the better option if the existing paint needs repair anyway.",
+            tradeoffs: "A wrap can be damaged by improper washing or prolonged sun exposure and will need replacement sooner than paint. Paint is a larger, less reversible investment.",
+            supportingWork: "Any rust, dents, or damaged clear coat should be repaired before either a wrap or a new paint job — both will show the damage underneath.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "Metro Center Sign Works, \"Is It Cheaper to Wrap or Paint a Car? 2026 Cost Guide\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-bodywork-verified",
+            vehicleApplicability: "General guidance; kit fitment is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: ["Bodywork"],
+            recommendedInspection: "Confirm the body kit is designed for the specific make, model, and year before buying — fitment varies significantly between trims and model years, and a kit that doesn't fit can require costly modification to install. Decide whether a bolt-on kit or a wide-body kit, which typically requires fender cutting, fits the goal.",
+            conditionalNextStep: "If a wide-body kit is chosen, confirm the installer has experience with fender modification before starting.",
+            reason: "Body kit costs vary enormously by material and whether the vehicle needs cutting or modification, so confirming the exact scope first avoids a significant budget surprise.",
+            partsEstimateStatus: "A bolt-on body kit — front and rear bumpers plus side skirts — typically runs roughly $7,000–$16,000 for parts, though basic fiberglass or ABS plastic kits can be found for less and premium wide-body or carbon fiber kits can run well past $20,000.",
+            laborEstimateStatus: "Professional installation typically adds roughly $2,000–$8,000, with wide-body kits requiring fender cutting landing at the higher end. Paint-matching and clear coat typically add another roughly $3,000–$6,000 on top of installation.",
+            benefits: "Bodywork is one of the most dramatic and visible style changes available.",
+            tradeoffs: "It's also one of the most expensive and least reversible — a wide-body kit permanently alters the fenders, and lower-quality kits can have panel gaps or fitment issues that are difficult to fix afterward.",
+            supportingWork: "Paint-matching and clear coat protection are effectively required, not optional, for a finished look — budget for them from the start rather than as an afterthought.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "Hodoor, \"Cost of body kits\"",
+                "Survival Freedom, \"Body Kit Installation Cost\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-lighting-verified",
+            vehicleApplicability: "General guidance; DOT-compliant assembly availability is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: ["Lighting"],
+            recommendedInspection: "Confirm this legal distinction before buying anything: swapping an LED or HID bulb into a headlight housing designed for halogen bulbs is not legal for street use under federal safety standards, regardless of what the listing claims. The legal path is a complete aftermarket headlight assembly designed for LED from the start and carrying a genuine DOT marking.",
+            conditionalNextStep: "If a DOT-marked LED assembly isn't available for the saved vehicle, treat bulb-only conversion kits as off-road or show use only, not for a vehicle driven on public roads.",
+            reason: "This is a real legal and safety issue, not just a preference — mismatched bulb-and-housing combinations can throw uncontrolled glare at oncoming drivers, and enforcement of excessive-glare rules is active in several states.",
+            partsEstimateStatus: "Cost varies enormously depending on whether a DOT-compliant complete LED headlight assembly exists for the saved vehicle. Some popular vehicles have direct-fit options in the roughly $200–$600 per side range, while others may not have a compliant option at all. A bulb-only conversion kit is inexpensive, often under $50, but as noted above isn't legal for street use regardless of price.",
+            laborEstimateStatus: "Swapping a complete headlight assembly is typically a straightforward bolt-in job — ask for an installed quote once a specific compliant assembly is identified for the saved vehicle.",
+            benefits: "Updated lighting is a highly visible style change and, done correctly with a proper assembly, can also improve nighttime visibility over aging factory halogen bulbs.",
+            tradeoffs: "Bulb-only HID/LED conversions in halogen housings are the single most common lighting mistake — widely sold but not legal for road use, and can result in fix-it tickets or failed inspections in states that enforce this.",
+            supportingWork: "None beyond confirming DOT compliance for the specific vehicle before buying.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "LegalClarity, \"In What States Are LED Headlights Illegal?\"",
+                "HID Nation, \"Are LED Headlights Legal? What to Know in 2026\"",
+                "Bayoptiks, \"LED Headlight Laws: The State-by-State Guide\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-exterior-prototype",
+            vehicleApplicability: "Saved vehicle profile; specific part fitment not yet verified",
+            goal: .style,
+            focus: "Exterior",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming exact fitment — size, offset, bolt pattern, or panel compatibility — for the saved vehicle's specific make, model, and year before buying any exterior part.",
+            conditionalNextStep: "Once a specific part or category is chosen, its cost and fitment details can be confirmed against the manufacturer's listed compatibility.",
+            reason: "Exterior fitment varies significantly across trims and model years, so OpenHood needs the specific part identified before recommending cost or compatibility details.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Potential benefits depend on the specific change chosen.",
+            tradeoffs: "Fitment issues are common when a part isn't confirmed as compatible with the exact trim and model year before purchase.",
+            supportingWork: "Supporting work remains conditional until the specific part and its fitment are confirmed.",
+            verificationStatus: .prototype,
+            sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "style-interior-seats-verified",
+            vehicleApplicability: "General guidance; seatbelt and airbag sensor integration is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Interior",
+            triggeringAnswers: ["Seats"],
+            recommendedInspection: "Confirm whether the goal is a reclining sport seat, which bolts into the factory mounting points and keeps factory seatbelt and airbag compatibility, or a fixed racing bucket seat, which usually requires a harness bar and racing harness and generally isn't intended for daily street use with a stock seatbelt.",
+            conditionalNextStep: "If fixed racing buckets are chosen, confirm a mounting bracket exists for the specific vehicle and budget the harness bar and harness together with the seats, not separately.",
+            reason: "Reclining sport seats and fixed racing buckets serve very different purposes and price points, and mixing up which one fits the vehicle's actual use — daily driving versus dedicated track use — is a common costly mistake.",
+            partsEstimateStatus: "A single reclining sport seat typically runs roughly $300–$1,500 depending on brand and materials; a pair for both front seats roughly doubles that. Fixed racing bucket seats intended for competition use can run higher, up to roughly $3,000 per seat.",
+            laborEstimateStatus: "Installation complexity varies significantly by vehicle — older cars are often a straightforward bolt-in, while newer cars with seatbelt pretensioner and occupancy sensor wiring can add complexity. Get an installed quote for the saved vehicle rather than assuming a flat rate.",
+            benefits: "Aftermarket seats are one of the most noticeable interior changes and can meaningfully improve support during spirited driving.",
+            tradeoffs: "Fixed racing buckets without reclining or factory seatbelt integration are significantly less practical for daily driving and often require a harness, which most drivers won't want to put on for routine trips.",
+            supportingWork: "A harness bar and harness are a package deal with fixed racing buckets, not an optional add-on, if the factory seatbelt mounting point isn't retained.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "BRAUM Racing, \"Seats & Safety Harness Buying Guide\"",
+                "MotorBiscuit, \"Should You Install Racing Seats in a Street Car?\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-interior-steering-controls-verified",
+            vehicleApplicability: "General guidance; airbag and clock spring compatibility is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Interior",
+            triggeringAnswers: ["Steering and controls"],
+            recommendedInspection: "If the factory steering wheel has an airbag — true of virtually every vehicle made since the 1990s — confirm the replacement wheel is specifically designed to retain the airbag and is compatible with the factory clock spring and horn wiring for the saved vehicle. Federal safety rules require any replacement wheel to keep full airbag function; there's no legal airbag-delete option for a vehicle driven on public roads.",
+            conditionalNextStep: "If a genuinely airbag-compatible wheel isn't available for the saved vehicle, other steering and controls upgrades — shift knob, factory-equipped paddle shifters, pedal covers — don't carry the same safety consideration and remain reasonable options.",
+            reason: "This is a real safety and legal issue, not just preference — an incompatible aftermarket wheel can disable airbag deployment or drop the horn and cruise controls, and removing airbag function makes the vehicle unsafe and potentially non-compliant.",
+            partsEstimateStatus: "OEM-compatible airbag steering wheels typically run roughly $300–$800, with hand-stitched leather or carbon fiber options exceeding $1,200. A shift knob is a much smaller purchase, typically well under $100.",
+            laborEstimateStatus: "Professional installation, including proper airbag module transfer and an SRS system scan afterward to confirm no fault codes, typically runs roughly $300 or more given the diagnostic step involved.",
+            benefits: "A properly integrated steering wheel is one of the most noticeable interior touch points and can improve grip and feel.",
+            tradeoffs: "The pool of genuinely airbag-compatible aftermarket wheels for any specific vehicle is limited — availability, not just cost, may be the deciding factor.",
+            supportingWork: "An SRS/airbag system scan after installation is not optional — it's the only way to confirm the airbag will still deploy correctly.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "NHTSA, Interpretation ID: 0761 (FMVSS 208)",
+                "Automotive Gearz, \"Aftermarket Steering Wheel With Airbag: Is It Legal and Safe?\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-interior-trim-materials-verified",
+            vehicleApplicability: "General guidance; not vehicle-specific",
+            goal: .style,
+            focus: "Interior",
+            triggeringAnswers: ["Trim and materials"],
+            recommendedInspection: "Decide between a vinyl wrap over existing trim — cheapest, fully reversible — and genuine carbon fiber or wood trim panels, which cost more but still tend to be removable.",
+            conditionalNextStep: "If going with genuine panels, confirm they're a direct-fit replacement for the saved vehicle's trim pieces rather than a universal panel that needs trimming.",
+            reason: "Trim materials span an enormous price range for a similar visual result, so the choice mostly comes down to budget and how permanent the look should feel.",
+            partsEstimateStatus: "A basic DIY vinyl or carbon-look wrap for trim pieces typically runs roughly $30–$100 in material. Genuine carbon fiber trim panels typically run roughly $300–$3,000 depending on the piece and vehicle.",
+            laborEstimateStatus: "Vinyl wrapping trim is a common DIY job with no labor cost if done at home, or a modest professional installation fee if not. Genuine panel installation is typically straightforward trim removal and reinstallation, without major additional labor beyond the panel cost itself.",
+            benefits: "This is one of the least expensive ways to meaningfully change the interior's look, especially with vinyl wrap.",
+            tradeoffs: "Vinyl wrap can lift at the edges over time, especially around vents and buttons; genuine panels are more durable but far more expensive for the same visual effect.",
+            supportingWork: "None typically required beyond care during trim panel removal to avoid breaking factory clips.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "Supreem Carbon, \"Carbon Fiber Interior Trim: 2026 Guide\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-interior-audio-tech-verified",
+            vehicleApplicability: "General guidance; dash integration fitment is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Interior",
+            triggeringAnswers: ["Audio and technology"],
+            recommendedInspection: "Confirm whether the goal is a head unit swap, which adds a new screen and interface and often CarPlay/Android Auto to an older vehicle, a speaker upgrade, or both — they're priced and installed very differently, and a head unit swap on a newer vehicle may need a dash-integration kit to avoid a mismatched look.",
+            conditionalNextStep: "If a subwoofer or amplifier is being added, confirm the vehicle's electrical system and available trunk or cargo space before buying, since higher-power setups draw more current and take up real space.",
+            reason: "Audio and technology upgrades range from a simple speaker swap to a full system, so confirming scope first avoids either underbuying or overspending.",
+            partsEstimateStatus: "A basic head unit swap typically runs roughly $100–$400 for parts. Speaker replacement typically runs roughly $100–$500 depending on quality. A full system with head unit, speakers, amplifier, and subwoofer typically runs roughly $300–$1,500 or more.",
+            laborEstimateStatus: "Professional installation typically runs roughly $100–$150 for a head unit, and roughly $50 per speaker location; a full system install is usually quoted as a package rather than itemized separately.",
+            benefits: "This is one of the more affordable and lower-risk style categories, and a head unit swap can add genuinely useful features like CarPlay/Android Auto to an older vehicle.",
+            tradeoffs: "A head unit that doesn't match the factory dash opening or finish can look more like a downgrade than an upgrade without a proper integration kit.",
+            supportingWork: "A dash-integration/trim kit is worth budgeting for on any vehicle where the aftermarket unit doesn't match the factory opening size.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "ConsumerAffairs, \"Cost of Car Stereo Installation (2026)\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-interior-prototype",
+            vehicleApplicability: "Saved vehicle profile; specific part fitment not yet verified",
+            goal: .style,
+            focus: "Interior",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming exact fitment and compatibility — seat mounting points, airbag wiring, or trim piece dimensions — for the saved vehicle's specific make, model, and year before buying any interior part.",
+            conditionalNextStep: "Once a specific part or category is chosen, its cost and fitment details can be confirmed against the manufacturer's listed compatibility.",
+            reason: "Interior fitment and safety-system integration vary significantly across trims and model years, so OpenHood needs the specific part identified before recommending cost or compatibility details.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Potential benefits depend on the specific change chosen.",
+            tradeoffs: "Fitment and safety-system integration issues are common when a part isn't confirmed as compatible with the exact trim and model year before purchase.",
+            supportingWork: "Supporting work remains conditional until the specific part and its fitment are confirmed.",
+            verificationStatus: .prototype,
+            sourceReferences: []
+        ),
+        PlanRecommendationRecord(
+            id: "style-sound-exhaust-tone-verified",
+            vehicleApplicability: "General guidance; exhaust noise limits vary by state and locality and must be checked for where the vehicle is driven",
+            goal: .style,
+            focus: "Sound",
+            triggeringAnswers: ["Exhaust tone"],
+            recommendedInspection: "Check state and local exhaust noise laws before buying anything louder than stock. Most states prohibit modifying the exhaust to be louder than the factory system, and enforcement is active in several states, with fines that have risen sharply in recent years.",
+            conditionalNextStep: "If a cat-back system is chosen, confirm it retains the factory catalytic converter — a full test-pipe or catalytic-converter-delete setup carries its own separate emissions-law risk beyond noise.",
+            reason: "Cat-back exhaust systems change the exhaust note without touching the engine's power delivery in a major way, but the noise-law risk is real and state enforcement has been increasing.",
+            partsEstimateStatus: "A cat-back exhaust system typically runs roughly $300–$1,500 for parts, with entry-level systems around $300–$500 and high-performance systems reaching $1,000–$2,500 or more.",
+            laborEstimateStatus: "Installation is typically straightforward and quick — roughly an hour or so of shop time — with labor typically running roughly $100–$400.",
+            benefits: "A cat-back system is one of the more affordable ways to meaningfully change the exhaust note without major engine work.",
+            tradeoffs: "Louder isn't always better received — some states have fines up to $1,000 for exhaust noise violations, and enforcement varies significantly by state, so what's fine in one place may not be in another.",
+            supportingWork: "None required beyond the exhaust system itself for a standard cat-back swap.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "CostHack, \"Cat-Back Exhaust [Labor & Parts]\"",
+                "SEMA Action Network, \"Exhaust Noise Laws By State\"",
+                "World Population Review, \"Exhaust Laws by State 2026\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-sound-exhaust-appearance-verified",
+            vehicleApplicability: "General guidance; tip inlet diameter is vehicle-specific and must be confirmed for the saved vehicle's exhaust outlet",
+            goal: .style,
+            focus: "Sound",
+            triggeringAnswers: ["Exhaust appearance"],
+            recommendedInspection: "Confirm the tip's inlet diameter matches the vehicle's exhaust pipe outlet before buying — a mismatched tip either won't fit or will look proportionally wrong once installed.",
+            conditionalNextStep: "None beyond fitment confirmation — this is a purely cosmetic, low-risk change compared to other exhaust work.",
+            reason: "This is the lowest-cost, lowest-risk item in the Sound category since it doesn't change how the vehicle actually sounds or runs.",
+            partsEstimateStatus: "Exhaust tips typically run roughly $25–$150 per tip.",
+            laborEstimateStatus: "Installation typically takes under an hour, with labor typically running roughly $50–$100.",
+            benefits: "This is an inexpensive way to change the exhaust's visual finish without the noise-law considerations that come with a full cat-back system.",
+            tradeoffs: "A tip alone doesn't change the exhaust note — it's purely cosmetic, and pairing an aggressive-looking tip with a quiet factory exhaust note is a common visual mismatch.",
+            supportingWork: "None required.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "SPELAB, \"How Much Does a Custom Exhaust Cost? Parts, Labor & Pricing\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-sound-cabin-audio-verified",
+            vehicleApplicability: "General guidance; electrical capacity is vehicle-specific and must be confirmed for the saved vehicle",
+            goal: .style,
+            focus: "Sound",
+            triggeringAnswers: ["Cabin audio"],
+            recommendedInspection: "Confirm whether the goal is better sound quality, a speaker upgrade, or more bass output, a subwoofer and amplifier — they're different upgrades with very different costs and space requirements.",
+            conditionalNextStep: "If a subwoofer and amplifier are added, confirm available trunk or cargo space and battery/electrical capacity before buying, since higher-power setups draw meaningfully more current.",
+            reason: "A clearer, better-quality sound system and a louder, bass-heavy system are different goals that call for different equipment, so clarifying which one is actually wanted avoids buying the wrong gear.",
+            partsEstimateStatus: "A speaker upgrade alone typically runs roughly $100–$500. A more complete system adding an amplifier and subwoofer typically runs roughly $300–$1,500 or more depending on power and brand.",
+            laborEstimateStatus: "Speaker installation typically runs roughly $50 per location. A subwoofer and amplifier installation is usually quoted as a package given the wiring and enclosure work involved, rather than itemized separately.",
+            benefits: "This is a lower-risk, fully reversible category compared to most other style changes — nothing here affects the vehicle's structure, warranty, or road legality.",
+            tradeoffs: "A subwoofer and amplifier take up real trunk or cargo space and add meaningful electrical load, which matters more on an older vehicle or one with a smaller factory battery.",
+            supportingWork: "Confirm the vehicle's electrical system can support the added amperage draw before installing a high-power amplifier.",
+            verificationStatus: .verified,
+            sourceReferences: [
+                "ConsumerAffairs, \"Cost of Car Stereo Installation (2026)\""
+            ]
+        ),
+        PlanRecommendationRecord(
+            id: "style-sound-prototype",
+            vehicleApplicability: "Saved vehicle profile; specific part fitment not yet verified",
+            goal: .style,
+            focus: "Sound",
+            triggeringAnswers: [],
+            recommendedInspection: "Start by confirming what's actually wanted — exhaust note, exhaust appearance, or cabin audio — and check any applicable local noise laws before buying.",
+            conditionalNextStep: "Once a specific part or category is chosen, its cost and fitment details can be confirmed against the manufacturer's listed compatibility.",
+            reason: "Sound-related changes span exhaust hardware and audio equipment, which are unrelated systems with different costs and legal considerations, so OpenHood needs the specific choice identified before recommending further.",
+            partsEstimateStatus: "Pending verified data",
+            laborEstimateStatus: "Pending verified data",
+            benefits: "Potential benefits depend on the specific change chosen.",
+            tradeoffs: "Exhaust noise changes carry state and local legal considerations that audio equipment changes do not.",
+            supportingWork: "Supporting work remains conditional until the specific part is confirmed.",
+            verificationStatus: .prototype,
+            sourceReferences: []
         )
     ]
 
