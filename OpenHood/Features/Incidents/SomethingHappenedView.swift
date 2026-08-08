@@ -2033,6 +2033,7 @@ private struct IncidentGuidanceView: View {
                 .font(.headline)
         }
 
+        vehicleSpecificSection
         possibleAreasSection
         findShopButton
         costRangeSection
@@ -2232,6 +2233,25 @@ private struct IncidentGuidanceView: View {
 
     /// Item 2's last bullet: the deeper stuff, collapsed by default
     /// (expandedSection defaults to nil).
+    /// The one part of an ordinary result that is about the user's actual
+    /// car rather than cars in general — real figures OpenHood already
+    /// stores for that make and model (see
+    /// IncidentGuidanceEngine.vehicleSpecificNotes). Absent entirely for
+    /// vehicles with no fact sheet yet, and for concerns those figures
+    /// don't speak to, so it never pads the screen with filler.
+    @ViewBuilder
+    private var vehicleSpecificSection: some View {
+        if !result.vehicleSpecificNotes.isEmpty {
+            // Title stays generic on purpose: IncidentGuidanceView has no
+            // SavedVehicle of its own, and each note already names the
+            // vehicle inline, so threading the name through here would add
+            // plumbing for text the user is about to read anyway.
+            resultCard(title: "Specific to your vehicle") {
+                guidanceList(result.vehicleSpecificNotes)
+            }
+        }
+    }
+
     @ViewBuilder
     private var moreDetailsSection: some View {
         if !result.uncertaintyStatements.isEmpty

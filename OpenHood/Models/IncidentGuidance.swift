@@ -625,6 +625,10 @@ struct IncidentGuidanceSnapshot: Codable, Equatable {
     /// line (item 2) — nil for every incident that isn't backed by a
     /// record family with its own structured follow-up answers.
     let reportedContext: String?
+    /// Optional for the same decode-safety reason as every field above —
+    /// incidents saved before vehicle-specific figures existed decode this
+    /// as nil rather than failing.
+    let vehicleSpecificNotes: [String]?
 }
 
 struct IncidentGuidanceResult: Equatable {
@@ -662,6 +666,20 @@ struct IncidentGuidanceResult: Equatable {
     /// decode-safe counterpart. Only the ordinary (non-urgent) path sets
     /// this to a non-nil value today.
     let reportedContext: String?
+    /// Real, saved-vehicle-specific figures (tire pressure, oil, coolant)
+    /// pulled from VehicleFactSheet when the reported concern is one those
+    /// figures actually speak to — see IncidentGuidanceEngine's
+    /// vehicleSpecificNotes(incident:vehicle:).
+    ///
+    /// This is the first place the ordinary diagnostic path uses the
+    /// user's actual vehicle for anything. Everything else in this result
+    /// is universal guidance that would read identically for any car; the
+    /// matching engine's evidence signals have no make/model/year/mileage
+    /// case at all. Deliberately `var` with a default so the existing
+    /// construction sites (evaluate and urgentResult) keep compiling
+    /// unchanged, and so an empty list is the safe default whenever we
+    /// have no verified figures for that vehicle.
+    var vehicleSpecificNotes: [String] = []
 
     var snapshot: IncidentGuidanceSnapshot {
         IncidentGuidanceSnapshot(
@@ -700,7 +718,8 @@ struct IncidentGuidanceResult: Equatable {
             factClaimIDs: factClaimIDs,
             policyClaimIDs: policyClaimIDs,
             uncertaintyClaimIDs: uncertaintyClaimIDs,
-            reportedContext: reportedContext
+            reportedContext: reportedContext,
+            vehicleSpecificNotes: vehicleSpecificNotes
         )
     }
 }
@@ -766,7 +785,8 @@ extension IncidentGuidanceResult {
             factClaimIDs: snapshot.factClaimIDs ?? [],
             policyClaimIDs: snapshot.policyClaimIDs ?? [],
             uncertaintyClaimIDs: snapshot.uncertaintyClaimIDs ?? [],
-            reportedContext: snapshot.reportedContext
+            reportedContext: snapshot.reportedContext,
+            vehicleSpecificNotes: snapshot.vehicleSpecificNotes ?? []
         )
     }
 }

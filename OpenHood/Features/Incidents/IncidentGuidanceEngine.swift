@@ -23,6 +23,10 @@ struct IncidentGuidanceEngine {
         let ranked = rankedRecords(for: incident)
         let selected = selectDistinctAreas(from: ranked)
         let matchedRecords = selected.map(\.record)
+        let vehicleNotes = vehicleSpecificNotes(
+            incident: incident,
+            vehicle: vehicle
+        )
         let hasMatches = !matchedRecords.isEmpty
         let recentWorkChangesAction = incident.recentWorkResponse == .yes
             && matchedRecords.contains {
@@ -115,7 +119,8 @@ struct IncidentGuidanceEngine {
             factClaimIDs: claimBreakdown.fact,
             policyClaimIDs: claimBreakdown.policy,
             uncertaintyClaimIDs: [],
-            reportedContext: reportedContext(for: incident)
+            reportedContext: reportedContext(for: incident),
+            vehicleSpecificNotes: vehicleNotes
         )
     }
 }
@@ -188,6 +193,101 @@ private extension IncidentGuidanceEngine {
         }
 
         return selected
+    }
+
+    /// Surfaces the real, researched figures OpenHood already holds for
+    /// this exact vehicle (VehicleFactSheet — engine oil, coolant, tire
+    /// pressures) when the reported concern is one those figures actually
+    /// speak to.
+    ///
+    /// Why this exists: until now the ordinary diagnostic path never used
+    /// the saved vehicle for anything. Every evidence signal the matching
+    /// engine understands is about what the person observed — there is no
+    /// make, model, year, or mileage case in
+    /// IncidentGuidanceEvidenceSignal. So a person who told the app they
+    /// drive a 350Z got advice written to be true of every car ever built,
+    /// even though the app was separately storing that vehicle's actual
+    /// tire pressures a few files away in VehicleCatalog.
+    ///
+    /// Deliberately narrow. It only fires on concerns where a stored spec
+    /// is directly, unambiguously useful, and it never states a figure as
+    /// a diagnosis — a tire-pressure spec tells you what to inflate to, it
+    /// does not tell you why the light came on. Vehicles with no fact sheet
+    /// return an empty list and the result reads exactly as it does today,
+    /// which is why this can ship before fact-sheet coverage is complete.
+    /// Fact sheets that could not confirm a figure carry explicit
+    /// "Not independently confirmed" text; those are filtered out here
+    /// rather than shown, since a spec line that says nothing is worse
+    /// than no spec line.
+    func vehicleSpecificNotes(
+        incident: VehicleIncident,
+        vehicle: SavedVehicle
+    ) -> [String] {
+        guard let sheet = VehicleFactSheet.lookup(
+            make: vehicle.make,
+            model: vehicle.model
+        ) else {
+            return []
+        }
+
+        let vehicleName = [vehicle.year.map(String.init), vehicle.make, vehicle.model]
+            .compactMap { $0 }
+            .joined(separator: " ")
+        let warning = incident.warningFollowUpAnswers ?? [:]
+        let fluid = incident.fluidFollowUpAnswers ?? [:]
+        var notes: [String] = []
+
+        let mentionsTirePressure = warning[IncidentWarningAnswerKey.light] == "Tire pressure light"
+            || fluid[IncidentFluidAnswerKey.dashboardMessageText] == "Low tire pressure"
+        if mentionsTirePressure, isConfirmed(sheet.tirePressureFront) {
+            let pressures = sheet.tirePressureFront == sheet.tirePressureRear
+                ? "\(sheet.tirePressureFront) front and rear"
+                : "\(sheet.tirePressureFront) front, \(sheet.tirePressureRear) rear"
+            notes.append(
+                "Cold tire pressure for the \(vehicleName) is \(pressures). Confirm against the sticker inside your driver's door jamb, which is the authoritative figure for your exact trim and wheel size."
+            )
+        }
+
+        let mentionsOil = fluid[IncidentFluidAnswerKey.color] == "Brown or black"
+            || fluid[IncidentFluidAnswerKey.dashboardMessageText] == "Low oil level"
+        if mentionsOil {
+            notes.append(
+                "The \(vehicleName) takes \(sheet.engineOilType), about \(sheet.engineOilCapacity). This is the specification, not a statement about how much oil is in your engine right now."
+            )
+        }
+
+        let mentionsCoolant = fluid[IncidentFluidAnswerKey.color] == "Green, orange, pink, or yellow"
+            || fluid[IncidentFluidAnswerKey.odor] == "Sweet or coolant-like"
+        if mentionsCoolant, isConfirmed(sheet.coolantType) {
+            let capacity = sheet.coolantCapacity.map { ", about \($0)" } ?? ""
+            notes.append(
+                "The \(vehicleName) uses \(sheet.coolantType)\(capacity). Mixing coolant types can cause them to gel, so match what's already in the system. Never open a hot cooling system."
+            )
+        }
+
+        // Honesty guard, and a real limitation worth stating plainly rather
+        // than hiding: each fact sheet was researched against ONE model
+        // year, but VehicleFactSheet.lookup matches on make and model only
+        // — it has no year parameter. So a 2006 350Z is served figures
+        // researched for a 2009, and those two use different engines
+        // (VQ35DE vs VQ35HR) with different oil capacities. Tire pressure
+        // is comparatively stable across a model's run; fluid capacities
+        // are not. Until lookup is year-aware, the app must not imply
+        // these figures were confirmed for the user's specific year.
+        if !notes.isEmpty {
+            notes.append(
+                "These figures were researched for one model year of the \(vehicle.make) \(vehicle.model) and may differ for yours, since engines and capacities change during a model's run. Your owner's manual and door-jamb sticker are the final word for your exact vehicle."
+            )
+        }
+
+        return notes
+    }
+
+    /// Fact sheets intentionally record honest non-answers as text rather
+    /// than guessing (see VehicleFactSheet). Those must not reach the user
+    /// as though they were figures.
+    private func isConfirmed(_ value: String) -> Bool {
+        !value.localizedCaseInsensitiveContains("not independently confirmed")
     }
 
     func matches(
