@@ -75,7 +75,41 @@ enum IncidentGuidanceKnowledge {
                     location: nil,
                     isPlaceholder: false
                 )
-            ]
+            ],
+            // Same gap as phase1.starting.electrical's fallback: this record
+            // described uneven running in general terms and then named no
+            // parts. Rough or uneven running has a standard first list —
+            // spark plugs, ignition coils, fuel injectors, and unmetered air
+            // — and a person deserves that list even when their own answer
+            // was "I'm not sure". Named as the usual suspects, not as a
+            // finding.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn or fouled plugs are the most common cause of uneven running, and are usually the cheapest item on this list to rule out.",
+                    typicalCostRange: "Roughly $150–$400"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing coil stops one cylinder from firing reliably, which is felt as shaking or a stumble.",
+                    typicalCostRange: "Roughly $150–$400 per coil"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-injector",
+                    name: "Fuel injector",
+                    plainExplanation: "A clogged or leaking injector delivers the wrong amount of fuel to one cylinder, producing the same rough running as an ignition fault.",
+                    typicalCostRange: "Roughly $150–$600 per injector — direct-injection engines cost more than older port-injection engines"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "vacuum-leak",
+                    name: "Vacuum leak (hoses or gaskets)",
+                    plainExplanation: "Air entering the engine without being measured upsets the fuel mixture, which is often worst at idle.",
+                    typicalCostRange: "Roughly $100–$500"
+                )
+            ],
+            repairSearchTerm: "engine misfire diagnostic"
         ),
         record(
             id: "phase1.starting.engine-operation.rough-idle",
@@ -131,6 +165,16 @@ enum IncidentGuidanceKnowledge {
                     name: "Ignition coil",
                     plainExplanation: "A failing ignition coil can cause a misfire that feels like a rough idle.",
                     typicalCostRange: "Roughly $200–$300"
+                ),
+                // Completes the standard misfire trio. Plugs and coils were
+                // already here; the injector was not, even though a clogged
+                // or leaking injector produces an identical rough idle and
+                // is the third item checked in practice.
+                IncidentPossibleAreaTerm(
+                    id: "fuel-injector",
+                    name: "Fuel injector",
+                    plainExplanation: "A clogged or leaking injector sends the wrong amount of fuel to one cylinder, which feels the same from the driver's seat as an ignition problem.",
+                    typicalCostRange: "Roughly $150–$600 per injector — direct-injection engines cost more than older port-injection engines"
                 )
             ],
             repairSearchTerm: "rough idle diagnostic"
@@ -285,7 +329,44 @@ enum IncidentGuidanceKnowledge {
                     location: nil,
                     isPlaceholder: false
                 )
-            ]
+            ],
+            // This record had no possible areas at all, which made it the
+            // worst screen in the app: someone who honestly didn't know what
+            // their car did when they turned the key got an explanation and
+            // then nothing to actually look at or price. But "I'm not sure"
+            // does not mean "no idea" — a person standing next to a car that
+            // won't start is owed the same three parts any technician would
+            // name first. These are listed as the usual starting-system
+            // suspects, not as a claim about which one it is; the record's
+            // own explanation tells the user which of the three their next
+            // observation would point toward.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery",
+                    name: "Battery",
+                    plainExplanation: "The most common single cause of a no-start. A battery can read fine sitting still and still be too weak to turn an engine over.",
+                    typicalCostRange: "Roughly $150–$400"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-cables",
+                    name: "Battery terminals or cables",
+                    plainExplanation: "Corroded or loose connections can stop a perfectly good battery from delivering power, and are among the cheapest things to rule out.",
+                    typicalCostRange: "Roughly $20–$150"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "starter",
+                    name: "Starter",
+                    plainExplanation: "If the dash lights up normally but the engine never turns over, the starter, its relay, or the ignition switch moves up the list.",
+                    typicalCostRange: "Roughly $400–$800"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "alternator",
+                    name: "Alternator",
+                    plainExplanation: "Worth checking whenever a battery has gone flat more than once, since a failing alternator is usually why a battery keeps dying.",
+                    typicalCostRange: "Roughly $400–$900"
+                )
+            ],
+            repairSearchTerm: "no start diagnostic"
         ),
         record(
             id: "phase1.starting.electrical.rapid-clicking",
@@ -491,6 +572,20 @@ enum IncidentGuidanceKnowledge {
                     name: "Starter",
                     plainExplanation: "A worn starter motor can struggle to turn the engine even with adequate battery power.",
                     typicalCostRange: "Roughly $400–$800"
+                ),
+                // The battery, the starter, and the alternator are the three
+                // parts any technician names first for a slow crank, and this
+                // record was listing only two of them. A battery that is
+                // "charged but not enough" is very often a battery the
+                // alternator has stopped properly recharging, so leaving the
+                // alternator out pointed people at replacing a battery that
+                // would go flat again. phase1.starting.electrical.rapid-clicking
+                // already named all three; this record now matches it.
+                IncidentPossibleAreaTerm(
+                    id: "alternator",
+                    name: "Alternator",
+                    plainExplanation: "The alternator recharges the battery while the engine runs. If it has been failing, the battery may never reach a full charge, which shows up as a slow crank before it shows up as anything else.",
+                    typicalCostRange: "Roughly $400–$900"
                 )
             ],
             repairSearchTerm: "starter replacement"
@@ -533,7 +628,38 @@ enum IncidentGuidanceKnowledge {
                     location: nil,
                     isPlaceholder: false
                 )
-            ]
+            ],
+            // Named no parts. An engine that turns over but never catches is
+            // missing spark, fuel, or air, and that framing is the actual
+            // 101 answer — it tells someone what the three branches are even
+            // before anyone knows which one applies here.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs",
+                    name: "Spark plugs",
+                    plainExplanation: "If the engine is turning over but never fires, spark is one of the three things it needs, and plugs are the cheapest part of that to check.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil",
+                    name: "Ignition coil",
+                    plainExplanation: "Coils supply the voltage the plugs need. When they fail across the board, an engine cranks normally and never starts.",
+                    typicalCostRange: "Roughly $150–$400 per coil"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-pump",
+                    name: "Fuel pump or fuel delivery",
+                    plainExplanation: "Fuel is the second of the three. A failed pump or a blocked filter lets the engine crank normally while nothing reaches the cylinders.",
+                    typicalCostRange: "Roughly $400–$1,200"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "fuel-filter",
+                    name: "Fuel filter",
+                    plainExplanation: "A clogged filter starves the engine of fuel and is far cheaper to replace than the pump behind it, so it is usually checked first.",
+                    typicalCostRange: "Roughly $70–$200"
+                )
+            ],
+            repairSearchTerm: "cranks but will not start diagnostic"
         ),
         record(
             id: "phase1.starting.fuel-ignition.no-unusual-clue",
@@ -731,7 +857,36 @@ enum IncidentGuidanceKnowledge {
                     isPlaceholder: false
                 )
             ],
-            repairSearchTerm: "no start diagnostic"
+            // This record named no parts at all. A ticking from the engine
+            // itself while cranking is one of the few starting symptoms
+            // where the honest first move is checking oil level, because
+            // running an engine low on oil is how a cheap problem becomes an
+            // expensive one. Ranges are deliberately open-ended on the
+            // mechanical items: valvetrain and timing-component work varies
+            // far too much by engine to quote a figure that would mean
+            // anything, and inventing a tight range would be worse than
+            // saying so.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "engine-oil-level",
+                    name: "Engine oil level and condition",
+                    plainExplanation: "Low or badly degraded oil is the first thing to check when an engine ticks, and it is the one item on this list you can check yourself in a few minutes.",
+                    typicalCostRange: "Roughly $40–$120 for an oil and filter change"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "valvetrain-components",
+                    name: "Valvetrain components (lifters, lash adjusters)",
+                    plainExplanation: "A tick from the top of the engine often comes from valvetrain parts that are not getting enough oil pressure or have worn out of adjustment.",
+                    typicalCostRange: "Varies significantly by engine — worth a professional diagnosis before estimating"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "timing-components",
+                    name: "Timing chain or belt components",
+                    plainExplanation: "A tensioner or guide that has worn can tick, and on some engines this matters enough that it should be inspected before repeated starting attempts.",
+                    typicalCostRange: "Varies significantly by engine — worth a professional diagnosis before estimating"
+                )
+            ],
+            repairSearchTerm: "engine ticking noise diagnostic"
         ),
         record(
             id: "phase1.starting.fuel-ignition.check-engine-light",
@@ -894,7 +1049,31 @@ enum IncidentGuidanceKnowledge {
                     location: nil,
                     isPlaceholder: false
                 )
-            ]
+            ],
+            // Named no parts. Fluid level and condition is the honest first
+            // check on any transmission complaint and is the one item here a
+            // person can look at themselves on many vehicles, so it leads.
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "transmission-fluid",
+                    name: "Transmission fluid level or condition",
+                    plainExplanation: "Low, burnt, or long-overdue fluid is behind a large share of transmission complaints, and it is the cheapest thing to rule out before anything else is considered.",
+                    typicalCostRange: "Roughly $150–$400 for a fluid service"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "shift-solenoid",
+                    name: "Shift solenoid",
+                    plainExplanation: "Solenoids control which gear the transmission selects. When one fails, shifts can be late, harsh, or missed entirely.",
+                    typicalCostRange: "Roughly $200–$600"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "transmission-diagnostic-scan",
+                    name: "Transmission control codes",
+                    plainExplanation: "Modern transmissions store their own fault codes. Reading them is usually the fastest way to tell a cheap repair from an expensive one before committing to either.",
+                    typicalCostRange: "Roughly $75–$200 for a diagnostic scan"
+                )
+            ],
+            repairSearchTerm: "transmission diagnostic"
         ),
         // OH-UIK gap fix (same tier as the odor-escalation and
         // oil-pressure severity fixes): phase1.cooling.temperature-control
