@@ -684,7 +684,7 @@ private struct IncidentIntakeView: View {
         }
         if incident.observationTypes.contains(.smell) {
             questions.append(
-                question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "I’m not sure"])
+                question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "Rotten egg or sulfur", "I’m not sure"])
             )
         }
         if (incident.observationTypes.contains(.visible) && incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Smoke")

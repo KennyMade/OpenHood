@@ -1700,6 +1700,56 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "cabin air filter replacement"
         ),
+        // Same tier as the odor records above — reviewed general-guidance
+        // content, not a needsVerification placeholder. Closes a real gap:
+        // "Rotten egg or sulfur" wasn't previously an option on the smell
+        // question at all, so this smell had nowhere to route.
+        record(
+            id: "phase1.fluid-smell.rotten-egg",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.smell],
+            required: [
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.odor, value: "Rotten egg or sulfur")
+            ],
+            support: [
+                .observation(.smell),
+                .fluidAnswer(key: IncidentFluidAnswerKey.odor, value: "Rotten egg or sulfur")
+            ],
+            contradict: [],
+            area: .exhaustAndVentilation,
+            explanation: "A rotten-egg or sulfur smell almost always points to the catalytic converter — it's normally responsible for neutralizing that smell, so its presence means the converter is failing or the engine is running richer than it should, overwhelming it. A brief version of this smell right after hard acceleration usually isn't a concern; a smell that lingers is worth having checked.",
+            action: .professionalInspection,
+            questions: [
+                "Does the smell happen briefly after hard acceleration, or does it linger?",
+                "Has the vehicle been running rough, hesitating, or using more fuel than usual?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-rotten-egg-odor-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Rotten Egg or Sulfur Odor\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "catalytic-converter",
+                    name: "Catalytic converter",
+                    plainExplanation: "The catalytic converter normally neutralizes sulfur compounds in exhaust. A failing converter can let that rotten-egg smell pass through.",
+                    typicalCostRange: "Roughly $900–$3,500 — one of the more expensive common repairs, worth a proper diagnosis before replacing"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "engine-running-rich",
+                    name: "Engine running rich",
+                    plainExplanation: "An engine burning more fuel than it should can overwhelm even a healthy catalytic converter, producing the same smell.",
+                    typicalCostRange: "Varies significantly — worth a professional diagnosis before estimating"
+                )
+            ],
+            repairSearchTerm: "catalytic converter inspection"
+        ),
         // Same tier as the fluid-color/odor records above — reviewed
         // general-guidance content, not needsVerification placeholders,
         // gated on a structured answer (IncidentFluidAnswerKey.
@@ -2362,6 +2412,52 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "brake repair"
+        ),
+        // Same tier as phase1.brakes.squeal-while-braking above — reviewed
+        // general-guidance content, not a needsVerification placeholder.
+        // Closes a real gap: "While braking" was already a timing answer
+        // and .vibrationOrMovement was already a selectable observation,
+        // but nothing connected the two — a vibration or pedal pulsation
+        // specific to braking fell through to the generic result.
+        record(
+            id: "phase1.suspension.vibration-while-braking",
+            family: .noiseVibrationOrSuspension,
+            observations: [.vibrationOrMovement],
+            required: [
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking")
+            ],
+            support: [
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking")
+            ],
+            contradict: [],
+            area: .brakesAndSteering,
+            explanation: "A pulsation in the brake pedal or a shake in the steering wheel specifically when braking — not at other times — almost always means the brake rotors are warped or worn unevenly. This is different from a vibration that's present all the time or only at highway speed, which points elsewhere.",
+            action: .professionalInspection,
+            questions: [
+                "Does the vibration happen only while braking, or at other times too?",
+                "Does it come through the pedal, the steering wheel, or both?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-vibration-while-braking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Vibration While Braking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "brake-rotors",
+                    name: "Brake rotors",
+                    plainExplanation: "Warped or unevenly worn rotors create a pulsation felt in the pedal or steering wheel specifically when braking.",
+                    typicalCostRange: "Roughly $300–$850 per axle to replace; resurfacing, when the rotor is thick enough, runs $40–$150 per axle and costs less"
+                )
+            ],
+            repairSearchTerm: "brake rotor replacement"
         ),
         // Same tier as phase1.brakes.squeal-while-braking above — reviewed
         // general-guidance content, not a needsVerification placeholder.
