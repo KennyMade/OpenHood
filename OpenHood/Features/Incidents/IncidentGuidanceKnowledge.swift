@@ -2032,6 +2032,369 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "black exhaust smoke diagnostic"
         ),
+        record(
+            id: "phase1.dashboard-message.check-engine-text",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Check engine soon")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Check engine soon")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "A \"check engine soon\" or \"service engine soon\" text message is the text-display equivalent of a steady check engine light, and points to the same kinds of causes — most often something like a loose or damaged gas cap, a worn oxygen sensor, or aging spark plugs. It does not mean stop driving, but it should be scanned for the exact code soon so the cause can be narrowed down.",
+            action: .obtainCodeScan,
+            questions: [
+                "Has the gas cap been checked or tightened recently?",
+                "Is a diagnostic code available from a scan?",
+                "Has fuel economy or engine performance changed?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-check-engine-text-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Check Engine Soon Text Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "gas-cap-text",
+                    name: "Gas cap",
+                    plainExplanation: "A loose, cracked, or missing gas cap can let fuel vapor escape and is one of the most common, cheapest causes of this message.",
+                    typicalCostRange: "Usually free to fix — tighten or replace the cap, roughly $10–$20 if it needs replacing"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "oxygen-sensor-text",
+                    name: "Oxygen sensor",
+                    plainExplanation: "A sensor that measures exhaust to keep the engine running efficiently. When it wears out, the engine can run less efficiently and trigger this message.",
+                    typicalCostRange: "Roughly $150–$580 — luxury vehicles run higher"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs-text",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn spark plugs can cause misfiring or rough running, which can trigger this message.",
+                    typicalCostRange: "Roughly $100–$300 for a full set including labor"
+                )
+            ],
+            repairSearchTerm: "check engine diagnostic"
+        ),
+        record(
+            id: "phase1.dashboard-message.low-oil-level",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low oil level")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low oil level")
+            ],
+            contradict: [],
+            area: .lubricationAndOilPressure,
+            explanation: "A \"low oil level\" message means the vehicle's oil level sensor detected the level itself is low — this is different from an oil PRESSURE warning, which is a separate, more urgent alert about circulation rather than quantity. A low level usually means oil has been slowly consumed over time or is leaking, and needs to be topped up. Check the level with the dipstick if your vehicle has one, add the correct oil type, and if the level drops again soon after, have the source of the loss looked at.",
+            action: .professionalInspection,
+            questions: [
+                "Does the oil level look normal on the dipstick, or genuinely low?",
+                "Have you noticed any oil spots under the vehicle, or blue-tinted exhaust smoke?",
+                "When was the oil last changed?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-low-oil-level-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Low Oil Level Text Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "oil-top-off",
+                    name: "Oil top-off",
+                    plainExplanation: "The simplest and safest first step — many low-oil messages resolve with a top-up between changes.",
+                    typicalCostRange: "Usually free if you have the right oil on hand, or roughly $10–$20 for a quart at a parts store"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "oil-leak",
+                    name: "Oil leak",
+                    plainExplanation: "A worn gasket or seal can let oil drop gradually between changes without a dramatic puddle.",
+                    typicalCostRange: "Varies significantly depending on the source — worth a visual inspection first, no fixed number"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "oil-consumption",
+                    name: "Oil consumption (burning oil)",
+                    plainExplanation: "Some engines burn oil internally over time, especially at higher mileage, without any visible leak at all.",
+                    typicalCostRange: "Varies — often monitored with regular checks rather than repaired outright unless consumption becomes severe"
+                )
+            ],
+            repairSearchTerm: "oil leak diagnostic"
+        ),
+        record(
+            id: "phase1.dashboard-message.low-tire-pressure-text",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low tire pressure")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low tire pressure")
+            ],
+            contradict: [],
+            area: .tiresWheelsAndPressure,
+            explanation: "A \"low tire pressure\" text message is the text-display equivalent of the tire pressure warning light, and points to the same causes. It most often means a tire is genuinely low — from a slow leak or just normal loss over time — or that a recent temperature drop lowered the pressure enough to trigger it. It's not usually an emergency, but driving on a significantly underinflated tire isn't safe, so check the actual pressure at a gas station or with a home gauge rather than guessing.",
+            action: .obtainCodeScan,
+            questions: [
+                "Does one tire look or feel visibly low?",
+                "Did the temperature drop recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-low-tire-pressure-text-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Low Tire Pressure Text Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "low-tire-pressure-text",
+                    name: "Low tire pressure",
+                    plainExplanation: "The most common cause by far. Checking and correcting the pressure on all four tires, including the spare if the message doesn't clear, often resolves it.",
+                    typicalCostRange: "Usually free at a gas station air pump; a slow leak may need a patch, roughly $15–$30"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "temperature-related-pressure-drop-text",
+                    name: "Temperature-related pressure drop",
+                    plainExplanation: "Tire pressure drops as the temperature does. A cold morning can be enough to trigger this message even without a leak.",
+                    typicalCostRange: nil
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "tpms-sensor-text",
+                    name: "TPMS sensor",
+                    plainExplanation: "Less common, but a sensor or its battery can fail over time, triggering this message even when pressure is fine.",
+                    typicalCostRange: "Roughly $25–$300 per sensor — tire shops and budget retailers run cheapest, dealerships cost more"
+                )
+            ],
+            repairSearchTerm: "tire pressure check"
+        ),
+        record(
+            id: "phase1.dashboard-message.maintenance-due",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Maintenance or service due")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Maintenance or service due")
+            ],
+            contradict: [],
+            area: .routineReminderOrConsumable,
+            explanation: "A \"maintenance required\" or \"service due\" message is usually a mileage or time-based reminder built into the vehicle's computer, most commonly tied to an oil change interval, rather than a live sensor detecting an actual problem. It does not usually mean something is wrong — it typically means it's time for the next scheduled service. Check your owner's manual or maintenance history to see what's due.",
+            action: .professionalInspection,
+            questions: [
+                "When was the last oil change or scheduled service?",
+                "Does your owner's manual show a mileage or time interval for this message?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-maintenance-due-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Maintenance or Service Due Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "routine-scheduled-maintenance",
+                    name: "Routine scheduled maintenance",
+                    plainExplanation: "Most often an oil change, but can include other interval-based services like a tire rotation or filter change depending on mileage.",
+                    typicalCostRange: "Varies by service type — typically $40–$120 for an oil change, more for larger service intervals"
+                )
+            ],
+            repairSearchTerm: "scheduled maintenance service"
+        ),
+        record(
+            id: "phase1.dashboard-message.low-washer-fluid",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low washer fluid")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Low washer fluid")
+            ],
+            contradict: [],
+            area: .routineReminderOrConsumable,
+            explanation: "A \"low washer fluid\" message is not a mechanical concern — it simply means the windshield washer reservoir is low and needs a refill. It has no effect on how the vehicle drives or runs.",
+            action: .safeObservation,
+            questions: [
+                "Do you have washer fluid on hand, or need to pick some up?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-low-washer-fluid-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Low Washer Fluid Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "washer-fluid-refill",
+                    name: "Washer fluid refill",
+                    plainExplanation: "Top off the reservoir under the hood — most washer fluid caps are labeled with a windshield icon.",
+                    typicalCostRange: "Roughly $3–$8 for a jug at most auto parts or grocery stores"
+                )
+            ],
+            repairSearchTerm: "windshield washer fluid"
+        ),
+        record(
+            id: "phase1.dashboard-message.key-fob-battery",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Key fob or remote battery low")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Key fob or remote battery low")
+            ],
+            contradict: [],
+            area: .routineReminderOrConsumable,
+            explanation: "A \"key fob\" or \"remote battery low\" message is not a mechanical concern — it means the small battery inside your key fob is running low, not anything to do with the vehicle itself. Most vehicles will still start normally for a while after this message appears, but it's worth replacing the battery soon so you're not caught with a dead fob.",
+            action: .safeObservation,
+            questions: [
+                "Does your owner's manual show which battery type and how to open the fob?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-key-fob-battery-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Key Fob or Remote Battery Low Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "key-fob-battery-replacement",
+                    name: "Key fob battery replacement",
+                    plainExplanation: "A small coin-cell battery, usually replaceable at home with a screwdriver — your owner's manual will show the exact type and steps.",
+                    typicalCostRange: "Roughly $2–$8 for the battery itself if done at home; a few dollars more if a store replaces it for you"
+                )
+            ],
+            repairSearchTerm: "key fob battery replacement"
+        ),
+        record(
+            id: "phase1.dashboard-message.traction-control-off-text",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Traction control off"),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardBrakeLightCheck, value: "No, just this one")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Traction control off"),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardBrakeLightCheck, value: "No, just this one")
+            ],
+            contradict: [],
+            area: .brakesAndSteering,
+            explanation: "A \"traction control off\" message by itself, without the ABS light or regular brake warning light also on, most often means a wheel speed sensor issue or a low brake fluid level — your regular brakes should still work, but the extra stability help from traction control may not be available. It's still worth having inspected soon, and it's worth being more cautious in rain or snow in the meantime.",
+            action: .professionalInspection,
+            questions: [
+                "Has this message been on continuously, or does it come and go?",
+                "Has the brake fluid level been checked recently?",
+                "Are the ABS light or regular brake warning light also on?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-traction-control-off-text-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Traction Control Off Text Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "wheel-speed-sensor-text",
+                    name: "Wheel speed sensor",
+                    plainExplanation: "A dirty, damaged, or failed wheel speed sensor is the most common cause of a traction-control message on its own.",
+                    typicalCostRange: "Roughly $150–$500 per sensor"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "low-brake-fluid-text",
+                    name: "Low brake fluid",
+                    plainExplanation: "A low fluid level can trigger this message. Checking it is free; topping off is inexpensive, but a level that keeps dropping points to a leak worth inspecting.",
+                    typicalCostRange: "Roughly free to check, inexpensive to top off"
+                )
+            ],
+            repairSearchTerm: "traction control diagnostic"
+        ),
+        record(
+            id: "phase1.dashboard-message.airbag-srs",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Airbag or SRS system")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "Airbag or SRS system")
+            ],
+            contradict: [],
+            area: .restraintSystemWarning,
+            explanation: "An airbag or SRS (supplemental restraint system) message means the system has detected a fault with itself — most often a sensor, a wiring connection, or a component under a seat. It does not affect how the vehicle drives, and does not mean stop driving. But it does mean the airbags may not deploy correctly, or could deploy unexpectedly, in the event of a crash, so it's worth having inspected reasonably soon rather than left indefinitely.",
+            action: .professionalInspection,
+            questions: [
+                "Has any seat, seatbelt, or interior work been done recently?",
+                "Has the vehicle been in a prior collision, even a minor one?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-airbag-srs-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Airbag or SRS System Message\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "airbag-sensor-or-wiring",
+                    name: "Airbag sensor or wiring connection",
+                    plainExplanation: "A loose connector or a sensor under a seat is a common, relatively inexpensive cause.",
+                    typicalCostRange: "Varies — diagnosis is often $75–$150, repair cost depends on what's found"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "clockspring-or-seatbelt-sensor",
+                    name: "Clockspring or seatbelt sensor",
+                    plainExplanation: "Components that can wear out over time or after prior work near the steering column or seats.",
+                    typicalCostRange: "Roughly $150–$400 depending on the part"
+                )
+            ],
+            repairSearchTerm: "airbag SRS diagnostic"
+        ),
         // Unlike the 8 records above, this one is not a needsVerification
         // placeholder — it's backed by professionally-supported
         // general-guidance content that was actually checked against

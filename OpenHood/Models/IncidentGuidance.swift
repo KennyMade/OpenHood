@@ -29,6 +29,19 @@ enum IncidentSystemCategory: String, Codable, CaseIterable, Identifiable {
     case powerSteeringOrEPS = "Power-steering or EPS system"
     case steeringControlConcern = "Steering-control concern"
     case suspensionAndChassis = "Suspension or chassis"
+    /// Added for the dashboard-message text-only follow-up pass: covers
+    /// low-stakes reminders that aren't a mechanical fault at all (a
+    /// mileage-based service reminder, low washer fluid, a low key-fob
+    /// battery) — none of the existing categories describe these
+    /// honestly, and mislabeling them under an unrelated category (e.g.
+    /// "leaks, smoke, and odors" for washer fluid) would look wrong on
+    /// screen, since possibleArea.rawValue is shown directly to the user.
+    case routineReminderOrConsumable = "Routine reminder or consumable item"
+    /// Added for the same pass: an airbag/SRS message doesn't fit any
+    /// existing category either — it's not braking, not electrical
+    /// wiring/heat-source in the sense that category was written for
+    /// (burning-smell precursors), and not a leak.
+    case restraintSystemWarning = "Airbag or restraint system"
 
     var id: String { rawValue }
 }
@@ -335,6 +348,22 @@ enum IncidentFluidAnswerKey {
     /// four answers are safe, ordinary Phase 1 content — no escalation,
     /// unlike odor's "Electrical or burning plastic"/"Exhaust".
     static let exhaustSmokeColor = "fluidExhaustSmokeColor"
+    /// phase1.dashboard-message.* — see SomethingHappenedView.
+    /// fluidQuestions. Asked only when whatWasVisible is answered "A
+    /// dashboard message, not a light"; captures which specific text
+    /// message appeared using the same fixed-choice pattern as every
+    /// other structured follow-up, rather than guessing at free-text
+    /// wording.
+    static let dashboardMessageText = "fluidDashboardMessageText"
+    /// Asked only as a follow-up when dashboardMessageText is answered
+    /// "Traction control off" — mirrors IncidentWarningAnswerKey.
+    /// absBrakeCheck exactly, for the text-message version of the same
+    /// question. "No, just this one" resolves to a real ordinary Phase 1
+    /// record (phase1.dashboard-message.traction-control-off-text). "Yes,
+    /// both are on" and "I'm not sure" escalate into the urgent
+    /// .unsafeBrakesOrSteering path instead — see SomethingHappenedView.
+    /// dashboardBrakeLightEscalation.
+    static let dashboardBrakeLightCheck = "fluidDashboardBrakeLightCheck"
 }
 
 /// Structured follow-up questions for the starting-trouble record family

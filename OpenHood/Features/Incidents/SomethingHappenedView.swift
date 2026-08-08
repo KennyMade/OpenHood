@@ -647,6 +647,12 @@ private struct IncidentIntakeView: View {
                 if question.answerKey == IncidentFluidAnswerKey.odor,
                    let escalation = dangerousOdorEscalation(for: answer) {
                     escalateToUrgentSafety(escalation)
+                } else if question.answerKey == IncidentFluidAnswerKey.dashboardMessageText,
+                          let escalation = dashboardMessageEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
+                } else if question.answerKey == IncidentFluidAnswerKey.dashboardBrakeLightCheck,
+                          let escalation = dashboardBrakeLightEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
                 } else {
                     advanceFluidIntake()
                 }
@@ -680,6 +686,45 @@ private struct IncidentIntakeView: View {
                         .init(id: "I’m not sure", title: "I’m not sure")
                     ]
                 )
+            )
+        }
+        // OH-UIK dashboard-message pass, 2026-08-07: "A dashboard message,
+        // not a light" previously had no follow-up at all — it fell
+        // straight through to the generic result no matter what the
+        // message actually said. This asks what it said, using the same
+        // fixed-choice pattern as every other structured follow-up in this
+        // file (no free-text guessing at mechanic terms). "Traction
+        // control off" gets a second, gating follow-up below — see the
+        // dashboardBrakeLightCheck block — mirroring the existing
+        // ABS-light-alone safety gate exactly, since the same real danger
+        // (a hydraulic brake-system issue riding along with it) applies
+        // whether the vehicle shows that as a light or as text.
+        if incident.observationTypes.contains(.visible),
+           incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "A dashboard message, not a light" {
+            questions.append(
+                question("What did the message say?", key: IncidentFluidAnswerKey.dashboardMessageText, choices: [
+                    "Check engine soon",
+                    "Low oil level",
+                    "Low tire pressure",
+                    "Maintenance or service due",
+                    "Low washer fluid",
+                    "Key fob or remote battery low",
+                    "Traction control off",
+                    "Service brake system",
+                    "Airbag or SRS system",
+                    "I’m not sure / didn’t catch it"
+                ])
+            )
+        }
+        // Same reasoning as absBrakeCheck above (see warningQuestions): a
+        // "traction control off" message alone is safe, ordinary content,
+        // but combined with the regular brake warning light it's a real
+        // hydraulic-system possibility that must escalate instead — see
+        // dashboardBrakeLightEscalation. Only asked once "Traction control
+        // off" is selected above.
+        if incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.dashboardMessageText] == "Traction control off" {
+            questions.append(
+                question("Is the regular brake warning light also on?", key: IncidentFluidAnswerKey.dashboardBrakeLightCheck, choices: ["No, just this one", "Yes, both are on", "I’m not sure"])
             )
         }
         if incident.observationTypes.contains(.smell) {
@@ -717,6 +762,36 @@ private struct IncidentIntakeView: View {
         switch answer {
         case "Electrical or burning plastic": .smokeOrFire
         case "Exhaust": .strongFuelSmell
+        default: nil
+        }
+    }
+
+    /// OH-UIK gap fix (dashboard-message pass, 2026-08-07): "Service brake
+    /// system" is the text-only equivalent of an active brake-system
+    /// fault — the same real danger the brake-grind and ABS+brake-light
+    /// escalations already route to urgent safety. Phase 1's
+    /// ordinaryDriveRecommendation has no STOP DRIVING path, so this must
+    /// never resolve to an ordinary Phase 1 record just because the person
+    /// answered the general "what did you see" dashboard-message
+    /// follow-up instead of picking "Brakes or steering feel unsafe" from
+    /// the main safety menu up front.
+    private func dashboardMessageEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "Service brake system": .unsafeBrakesOrSteering
+        default: nil
+        }
+    }
+
+    /// Mirrors absTractionEscalation exactly, for the text-message version
+    /// of the same question: "traction control off" alone is safe,
+    /// ordinary content (see phase1.dashboard-message.traction-control-
+    /// off-text), but combined with the regular brake warning light — or
+    /// an unconfirmed answer — it's a real hydraulic-system possibility,
+    /// not general content, so it escalates into the same urgent
+    /// .unsafeBrakesOrSteering path instead.
+    private func dashboardBrakeLightEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "Yes, both are on", "I’m not sure": .unsafeBrakesOrSteering
         default: nil
         }
     }
