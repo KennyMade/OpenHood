@@ -1,112 +1,231 @@
-# OpenHood — Master Handoff
+# OpenHood — Handoff Brief
 
-Last updated: 2026-08-05 (mid-day), by Claude (Cowork "Master Advisor" session), for Kenneth Acosta.
-Purpose: let a fresh chat (Codex, ChatGPT, or otherwise) pick up this project accurately without re-deriving context or redoing work that's already done and verified. This replaces the earlier version from this morning — several things below were "in progress" there and are now done and committed.
+> **This is the current, authoritative handoff document.** It lives in the
+> repo, so it travels with the code and is always in sync with whatever
+> commit you have checked out — no need to be sent a copy.
+>
+> Companion document: `INTAKE_REDESIGN_SPEC.md` (same folder) — the build
+> spec for the diagnostic intake rework, steps 1–3 of which are done.
+>
+> **Ignore these older files, they are stale and predate this work:**
+> `CLAUDE_HANDOFF.md` (Aug 3) and the previous contents of this file (Aug 5).
+
+Prepared August 8, 2026, ~4:30 PM. Supersedes all earlier versions of this
+file. Written to be self-contained: whoever reads this does not need any
+prior conversation.
+
+**This file does not update itself.** If it was AirDropped or copied
+somewhere, that copy is frozen at the moment it was sent. Re-send it after
+any further work.
 
 ---
 
-## 1. Who you're working with
+## What OpenHood is
 
-Kenneth describes himself as non-technical. Work this way:
-- Plain English, no unexplained jargon.
-- One step at a time for anything involving Xcode/Terminal/Finder navigation.
-- Never say something is done, tested, or verified unless it actually is. This project runs on a strict "verify, don't assume" discipline — check the real code and real build/run output before claiming anything.
-- Nothing destructive, irreversible, or public-facing without his explicit go-ahead.
-- He also uses Claude Code (in Terminal) for implementation and a Cowork "Master Advisor" Claude session for planning/review/research/legal-risk checking. Keep work compatible with theirs — read Section 4 before touching git.
-- He gets overwhelmed by long technical explanations under pressure, and he's often working close to a usage limit on whichever AI tool he's in. If he says he's near a limit or overwhelmed, prioritize getting a safety checkpoint committed over anything else, then summarize in 3 points or fewer.
+A solo-founder iOS app (SwiftUI) that helps a car owner understand a vehicle
+concern in plain language, without pretending to replace a mechanic. Four
+tabs: Home, Garage, Help (the "Something Happened" diagnostic flow), and
+Learn. The owner is Kenneth Acosta — not a developer. He needs plain
+language, exact copy-paste commands, and no assumed familiarity with git,
+Xcode, or terminal conventions.
 
-## 2. What OpenHood is
+---
 
-An iOS app (SwiftUI/Xcode) — a vehicle-care companion app. Core loop: someone notices something wrong with their car, taps "Something Happened," answers a few questions, and gets a real, honest answer — a possible cause, not a diagnosis, with a "don't quote me, get it checked" framing throughout. No accounts, no backend, no server — everything runs on-device, deterministic, zero marginal cost per use. This is a deliberate, load-bearing architecture decision — do not introduce an LLM call or a paid external API without an explicit conversation with Kenneth first.
+## Repo, build, and how to run it
 
-Core product thesis, grounded in Kenneth's own experience buying a 2014 4Runner and a 2006 350Z with unclear history: a trustworthy, on-demand second opinion for triaging car issues, not an oracle.
+- Local path: `~/Desktop/OpenHood/OpenHood` (open `OpenHood.xcodeproj`)
+- GitHub: `KennyMade/OpenHood`
+- Active branch: `claude-work`, at **`f2fba7b`**
+- `main` was last synced at `18973dd` via PR #2. **Four commits are ahead of
+  `main`:** `942736d`, `ebc4c17`, `8de22c1`, `f2fba7b`. Open a PR from
+  `claude-work` into `main` when convenient.
+- Last confirmed clean build: `8de22c1`. **`f2fba7b` is committed but has
+  NOT been build-checked.** Do that first.
 
-Real, current app areas:
-- **Onboarding** — fast 3-step flow (welcome → vehicle → confirm), genuinely usable by anyone now (Section 5).
-- **Garage** — saved vehicles (`GarageView`, `GarageStore`, `SavedVehicle`).
-- **Something Happened** — the incident-guidance flow, two genuinely different subsystems (Section 6). Main focus of all work so far, and where nearly all recent progress is.
-- **Learn** — placeholder only. Tiles route to `LearnTopicPlaceholderView`. Looks finished, isn't.
-- **Plan** ("Plan your build" — Reliability/Performance/Style/Custom) — real, substantial code (~1,274 lines), but whether it belongs in this app's mission is still undecided. Don't expand it without asking Kenneth.
-- Profile/Settings — data erase, works.
+### Critical: building is not installing
 
-## 3. Where everything is
+`xcodebuild build` compiles but does **not** put the app on the simulator.
+Kenneth lost real time testing a stale binary because of this. To actually
+see changes, either press Run (▶) in Xcode, or:
 
-| Folder | What it is |
+```
+xcodebuild -scheme OpenHood -configuration Debug -sdk iphonesimulator build
+xcrun simctl install booted <path-to-OpenHood.app>
+xcrun simctl launch booted <bundle-id>
+```
+
+When something "didn't change," **check the install before checking the
+code.**
+
+### Project-file quirk
+
+Traditional Xcode file list, not Xcode 16+ synchronized folders (confirmed:
+`grep -l "PBXFileSystemSynchronizedRootGroup" *.pbxproj` returns nothing). A
+new `.swift` file created outside Xcode will not join the build target and
+will silently not compile in. Add new code to an existing tracked file, or
+create the file through Xcode itself.
+
+---
+
+## Current state, by the numbers
+
+| Thing | Count |
 |---|---|
-| `/Users/kenny.acost/Desktop/OpenHood/OpenHood` | **Live, active project.** Contains `OpenHood.xcodeproj`. |
-| `/Users/kenny.acost/Desktop/OpenHood/OpenHood - OLD BACKUP (July 29)` / `(July 31)` | Old snapshots. Reference only, do not edit. |
+| Diagnostic knowledge records | 64 |
+| Named parts/areas across those records | 166 |
+| Vehicle fact sheets (oil, coolant, tire pressure) | 32 |
+| Maintenance how-to guides | 13 |
+| Plan tab recommendations | 39 |
+| Records marked unverified or placeholder | **0** |
 
-Key files, all paths verified directly:
-- `OpenHood/OpenHood/Features/Incidents/IncidentGuidanceKnowledge.swift` — Phase 1 general-knowledge records (the bulk of recent work).
-- `OpenHood/OpenHood/Features/Incidents/IncidentGuidanceEngine.swift` — routing/matching/severity logic for both subsystems.
-- `OpenHood/OpenHood/Features/Incidents/IncidentEvidenceGatedKnowledge.swift` — the emergency-safety claim ledger (urgent path), now includes `CLM-OIL-001`.
-- `OpenHood/OpenHood/Features/Incidents/SomethingHappenedView.swift` — intake UI, including all structured questions (noise, warning-light, fluid/odor).
-- `OpenHood/OpenHood/Models/IncidentGuidance.swift` — result/snapshot models, `IncidentDriveRecommendation`, `IncidentClaimVehicleScope`.
-- `OpenHood/OpenHood/Models/VehicleIncident.swift` — `IncidentSafetySelection` (the fixed 7-category urgent menu).
-- `OpenHood/OpenHood/VehicleCatalog.swift` — vehicle make/model/year data (narrower than it looks, see Section 5).
-- `OpenHood/OpenHood/ContentView.swift` — onboarding screens, including `ManualVehicleEntryView`.
-- `OpenHood/PRIVACY_POLICY.md` — drafted, needs a real contact email and an SDK audit before publishing.
+That last row is the most valuable property in the codebase. Every record is
+`verificationState: .reviewedGeneralPrinciple` with real source references.
+**Do not add content that breaks this.** If a figure can't be confirmed, the
+established pattern is to say so explicitly (`nil` fields, "Not
+independently confirmed" text) rather than estimate.
 
-## 4. Git status — read before touching anything
+---
 
-- Checked out on branch **`claude-work`**.
-- Last confirmed commit: **`289342f`** — "Safety checkpoint: brake squeal, warning lights, oil-pressure severity fix, fluid-leak/odor content." This was committed as a protective checkpoint while Kenneth was near a usage limit, **not** after full live-Simulator verification — the code was checked for structural integrity (balanced braces, no truncation across every modified file) but the actual on-screen behavior of the newest pieces (fluid-leak/odor content, the odor-escalation routing) has not yet been confirmed by a live test the way brake-squeal and the manual-vehicle-entry fix were.
-- Run `git status` and `git log --oneline -10` yourself before assuming anything beyond what's in this file — don't trust this document over the real repo state.
-- Do not merge, rebase, or touch any other branch without asking Kenneth first.
+## Architecture
 
-## 5. What's done — verified vs. needs a live check
+**Diagnostic flow** — `OpenHood/Features/Incidents/`
 
-**Verified by live on-device Simulator testing (highest confidence):**
-- Onboarding rebuilt: fast 3-step flow, catalog auto-fill, and a manual-entry fallback (`ManualVehicleEntryView`) for any vehicle not in the catalog — the catalog only ever had 3 fully-supported vehicles (Nissan 350Z, Toyota 4Runner, Honda Civic); this fallback is why the app works for anyone now. Live-tested with a 2015 Ford F-150.
-- Incident-result screen redesign: severity ladder, tap-to-explain possible areas, cost ranges with an honest "not a quote" caveat, a "Find a shop" button (Apple Maps handoff, no paid API), and JD Power/1A Auto names removed from anywhere on screen (kept as internal-only research notes).
-- Suspension/bump-noise content (`phase1.suspension.bump-noise`) — real, sourced, no vehicle scope required.
-- Brake-squeal content (`phase1.brakes.squeal-while-braking`) — real, sourced, four possible areas with cost ranges.
+- `SomethingHappenedView.swift` — the question flow, a `NavigationStack` over
+  the `IncidentStep` enum
+- `IncidentGuidanceKnowledge.swift` — the 64 records
+- `IncidentGuidanceEngine.swift` — matching and scoring, plus the new
+  `IncidentDescriptionRouter`
+- `Models/VehicleIncident.swift` — `IncidentSafetySelection` (8 dangerous
+  cases + `.noneOfThese`/`.unsure`), `IncidentObservationType` (8 cases,
+  stored as an **Array**, not a Set)
 
-**Committed and code-verified for structural integrity, but not yet confirmed live on screen — check before treating as final:**
-- Steady check-engine + battery/charging light content (`phase1.warning.record-code`, `phase1.warning.engine-information`), with a structured "which light" question.
-- Oil-pressure severity fix: `urgentDriveRecommendation` now has an explicit `"Oil pressure"` branch returning `.stopDriving`, backed by a new claim `CLM-OIL-001` in the evidence ledger, following the same pattern as the existing AAA-sourced `CLM-BRK-003`.
-- Fluid-leak content: a structured "what color" question with real content for coolant (green/orange/pink/yellow), engine oil (brown/black), transmission-or-power-steering (red), and normal AC condensation (clear).
-- Odor content: a structured "which smell" question with real content for sweet/coolant-like and musty/moldy smells.
-- Odor-escalation fix: "Electrical or burning plastic" and "Exhaust" were deliberately excluded from the safe odor content above (both are genuinely serious — electrical smell is a fire-risk precursor, exhaust smell inside the cabin is a carbon-monoxide risk). Instead of building them as capped-severity Phase 1 content, they were routed through the existing urgent categories: selecting "Electrical or burning plastic" routes through the same logic as `.smokeOrFire`, and "Exhaust" routes through `.strongFuelSmell` — reusing the one place in the codebase that already handles these correctly rather than creating a second, parallel severity decision.
+Matching: a record's `required` evidence must ALL match, then score =
+`observationMatches + (supportingMatches * 2) - (contradictingMatches * 3)`,
+gated by `minimumScore` (default 3). **Ties break alphabetically by record
+id** — this caused a real bug where `phase1.exhaust-smoke` beat
+`phase1.fluid-smell.unusual-odor.musty` at equal score.
 
-**Next step for whoever picks this up:** build and run in the Simulator, walk through each of the items in the second list above at least once, and confirm the on-screen result matches what's described. None of it should be assumed broken, but none of it should be assumed perfect either.
+**Safety architecture — read this before touching the intake.** Every urgent
+escalation fires from a question's *answer handler* (`brakeGrindEscalation`,
+`dangerousOdorEscalation`, `engineOperationEscalation`,
+`transmissionBehaviorEscalation`, `absTractionEscalation`,
+`temperatureObservationEscalation`, `dashboardMessageEscalation`,
+`dashboardBrakeLightEscalation`). **If any code pre-fills one of those
+answers, the question is skipped and the escalation never runs** — a
+burning-plastic smell would silently get ordinary maintenance guidance
+instead of STOP DRIVING. `IncidentDescriptionRouter.forbiddenAnswers` exists
+to enforce this and must not be weakened.
 
-**Known, unfixed:**
-- VIN scanner is not real — offered as a primary onboarding option, leads to "Camera scanning is coming next." Either build it or stop presenting it as working.
-- Two visual polish items, not yet fixed: a description field on the "Review incident" screen visually truncates instead of wrapping (code has no explicit line limit, so the cause needs to be found — likely a container/row-style issue, not the Text view itself); the severity ladder's four segments should be equal height but "Check before driving" visibly runs taller than the others, most likely because it's the longest label and wraps to two lines while the others don't.
-- Worth a deliberate look: multiple flows now end with a free-text "Description" step immediately after a structured question already captured the same information (e.g., "which color" then also "describe it in your own words"), which reads as repetitive. The old free-text `questions` arrays on each content record are unused metadata, not a duplicate-screen source — the repetition is more likely the structured-question-plus-Description pattern repeating across every flow. Worth deciding whether Description should become skippable once a structured answer already has enough signal, given the goal of this app feeling as fast as a calculator.
+Adding a new dangerous answer requires updating six exhaustive switches over
+`IncidentSafetySelection`: `urgentDriveRecommendation`, `urgentAssessment`,
+`urgentContributors`, `urgentEvidenceRequests` (engine), plus
+`urgentQuestions` and `safetyGuidance` (view).
 
-## 6. Architecture — two genuinely different subsystems, don't conflate them
+**Plan tab** — `Features/Plan/VehiclePlanView.swift`. `.reliable`,
+`.performance`, `.style` have real content; `.custom` is intentionally empty.
+`PlanRecommendationLibrary.reliabilityPrototype` is a stale name — it holds
+all goals.
 
-1. **Urgent safety path.** Fixed menu of 7 categories (`IncidentSafetySelection`) → structured follow-ups → `urgentDriveRecommendation`, which can return the full severity range including STOP DRIVING and DO NOT RESTART, backed by the evidence-gated claim ledger. Flashing check-engine and oil-pressure are both now correctly handled here (Section 5).
-2. **Phase 1 general engine.** Reached through free-form description or structured questions for sound/vibration, warning-light, and fluid/odor reports. `ordinaryDriveRecommendation` can only ever return SERVICE SOON, CHECK BEFORE DRIVING, or MONITOR — **never STOP DRIVING.** Do not build genuinely dangerous content here; route it through the urgent path instead, the way oil-pressure and the odor-escalation fix both do.
+**Learn tab** — `ContentView.swift` + `VehicleCatalog.swift`. "How does my car
+work" and "Ask a question" are still placeholders and need a design
+conversation, not a content pass.
 
-Both subsystems are fully on-device and deterministic — see Section 2 on why that matters.
+**Vehicle catalog** — `VehicleCatalog.swift`. 17 makes. `VehicleModel`
+`availability` **defaults to `.hidden`** — omitting it silently makes a model
+unselectable. This was a real bug (Corolla, Camry, Tacoma). Always set it
+explicitly.
 
-## 7. Good next content candidates, not yet researched or built
+---
 
-- A live cross-vehicle check: re-run the suspension-noise and brake-squeal flows on a second real vehicle (4Runner or Civic), not just the Ford F-150 test, to visually confirm no vehicle-scope requirement ever leaks in by accident.
-- Beyond what's built, common remaining gaps in Phase 1 content: rough-running/stalling-after-service, and the two original starting/electrical placeholder records — all still marked `.needsVerification` placeholder.
-- The Learn tab (Section 2) is a bigger, separate project — real content behind it hasn't been scoped at all yet. Don't start this without asking Kenneth; it's a different shape of work than the Something Happened content records.
+## The intake redesign (in progress — read `OpenHood_Intake_Redesign_Spec.md`)
 
-## 8. Deferred — business/product questions, not code work
+The full spec is in that companion file. Steps 1, 2, and 3 are **done**:
 
-Not decided, don't invent answers: precise target-user positioning beyond "recent used-car buyer with unclear history," first distribution channel, 90-day success metrics, explicit kill criteria, monetization mechanism and timing (leaning: keep core guidance free, paid tier for extras like Plan/deeper cost detail — direction only, not approved as a build task), whether the Plan tab belongs in the app at all. Flag these back to Kenneth if they come up — they're his calls.
+1. **`IncidentDescriptionRouter`** (`ebc4c17`) — turns typed prose into the
+   same structured answers the menus produce. ~60 keyword rules. Verified
+   against 11 sentences.
+2. **Safety gate** (`f2fba7b`) — the intake opened with all ten dangerous
+   options; now one question ("Is anything dangerous happening right now?")
+   with those ten behind "yes."
+3. **Description first** (`8de22c1`) — the observation checklist used to come
+   before the text box; now the text box is first and the checklist is only
+   the fallback when the router matches nothing.
 
-## 9. Operating rules — hold the line on these
+Result: slow-crank goes from ~13 screens to about 3.
 
-- **Verify, don't assume.** Check the actual code/git state before claiming something works or exists.
-- **Evidence, not vibes.** Cite file and line for findings.
-- **No sycophancy.** Say plainly if something's wrong or a premise is off.
-- **Say what you actually did**, not what you predicted would happen.
-- **Decide vs. ask**: reversible/low-stakes → make the call, state the assumption. Irreversible/ambiguous/anything touching git branches or another tool's in-progress work → ask first.
-- **Check licensing/legal exposure before naming a source on screen.** Keep researched facts, never display a company's brand name or reproduce someone's exact written words without confirming it's allowed. This has already been caught and corrected once (JD Power/1A Auto) — the standard now, not a one-time fix.
-- **Severity honesty over speed.** Before adding any new symptom content, check whether it's genuinely dangerous (fire, carbon monoxide, engine-damage-risk, brake failure). If so, it must route through the urgent path, which can express STOP DRIVING — never build it as Phase 1 content, which structurally cannot. This exact mistake was caught and fixed twice already (oil-pressure, then the odor-escalation) — check for it every time before writing new content, not after.
-- **Commit checkpoints proactively**, especially when Kenneth mentions being close to a usage limit — don't wait to be asked, and verify structural integrity (balanced braces, no truncated statements) before committing if there's any chance work was interrupted mid-write.
+**Still to do (steps 4–5):** a confirmation line on the first remaining
+question ("From what you wrote, I've got: engine turns over slowly…"), and
+formally retiring the checklist as a normal screen.
 
-## 10. Suggested first steps for whoever picks this up
+---
 
-1. Run `git status` and `git log --oneline -10` — confirm the real current state against Section 4.
-2. Build and run in the Simulator. Walk through each item in Section 5's "needs a live check" list once, confirm it behaves as described.
-3. Fix the two small visual issues in Section 5 if nothing bigger is queued.
-4. Ask Kenneth what he wants prioritized next before starting anything not listed here — especially before touching the Learn tab or Plan tab, both bigger, undecided pieces of work.
+## Open items, in the order I'd do them
+
+1. **Build-check `f2fba7b`.** Not yet verified.
+2. **THE DARK THEME PASS — Kenneth's most-repeated unmet request.** He has
+   asked at least four times for the app's white backgrounds to become the
+   dark teal from the app icon, with cards on the same scale and readable
+   text. What was actually done was only `AccentColor` (which tints buttons
+   and links — that's why buttons went teal but pages stayed white). The
+   real work is per-view background colors across roughly a dozen files in
+   `ContentView.swift`, `GarageView.swift`, `VehiclePlanView.swift`,
+   `SomethingHappenedView.swift`. **Verified brand colors, sampled from the
+   actual icon pixels:**
+   - Deep teal `#0E4152` (dominant background)
+   - Accent cyan `#4CECFD` (the sparkle mark)
+   - White `#FEFEFE`
+   `AccentColor.colorset` is already set to teal for light mode and cyan for
+   dark. The backgrounds are the remaining job. **Start here.** It is the
+   thing he most wants to see and the thing that has most repeatedly not
+   happened.
+3. **Model year coverage.** 350Z and 4Runner have full year lists; Tacoma and
+   many others don't. Per-model research.
+4. **Make `VehicleFactSheet.lookup` year-aware.** It matches make+model only,
+   so a 2006 350Z is served figures researched for a 2009 with a different
+   engine. Currently mitigated with an honest on-screen caveat, which is a
+   patch, not a fix.
+5. **Privacy Policy needs a public URL.** The in-app screen is real and
+   accurate, but App Store Connect requires a hosted page. Smallest concrete
+   blocker to TestFlight.
+6. **Intake steps 4–5** from the spec.
+7. **Settings screen** — Kenneth finds it long; wants collapsible sections.
+8. **Home screen cards** — wants them on the brand color scale, not black.
+
+---
+
+## Things that went wrong today — so they don't repeat
+
+- **"Nothing changed" was usually a stale install, not a code failure.** See
+  the build-vs-install note above. Verify the binary before debugging code.
+- **The wrong screen got fixed repeatedly.** Kenneth said "it goes to the
+  choices again" several times meaning the *safety check*; it was read as the
+  *observation checklist*. When a user describes a screen, confirm which one
+  before changing code.
+- **The color request was answered with the wrong fix three times.** Accent
+  color ≠ background theme. He asked for backgrounds; accent was delivered.
+- **A safety hole was nearly shipped in the router spec** — it routed
+  "burning plastic" straight into the odor answer, which would have bypassed
+  a fire-risk escalation. Caught before implementation. This is the class of
+  mistake to watch for whenever anything pre-fills an answer.
+
+---
+
+## Working norms this project uses
+
+- Never claim a build succeeded, a file saved, or content verified without
+  checking. Kenneth is non-technical and relies on being told the truth.
+- Every cost figure and legal claim is researched and cited, not invented.
+- Verification discipline before each commit: programmatic brace/paren/
+  bracket balance, duplicate-id scans, `git status --short`.
+- Kenneth pushes to GitHub himself from Terminal. Hand him exact `cd` and
+  `git push` commands as separate lines.
+- He wants large complete batches with one check-in at the end, not
+  incremental pieces with frequent interruptions.
+
+---
+
+## Next action
+
+1. Build-check and push `f2fba7b`, then open a PR from `claude-work` into
+   `main` (four commits ahead).
+2. Then do the dark theme pass. Colors above. Backgrounds, not accents.
