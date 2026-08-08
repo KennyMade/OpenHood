@@ -55,7 +55,7 @@ struct ProfileSettingsView: View {
 
             Section("Legal and Support") {
                 UnavailableSettingsRow(title: "Privacy Policy")
-                UnavailableSettingsRow(title: "Terms")
+                NavigationLink("Terms") { LegalDisclaimerView() }
                 UnavailableSettingsRow(title: "Support")
             }
 
@@ -91,5 +91,75 @@ private struct UnavailableSettingsRow: View {
 
     var body: some View {
         LabeledContent(title, value: "Not configured yet")
+    }
+}
+
+struct LegalDisclaimerView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Terms and Disclaimer")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                Text("Last updated: not yet finalized — pending legal review")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                disclaimerSection(
+                    title: "Educational information only",
+                    body: "OpenHood provides general automotive information intended to help you understand possible causes of a vehicle concern and prepare for a conversation with a qualified mechanic. It is not automotive, safety, legal, or financial advice, and it is not a diagnosis of your vehicle."
+                )
+
+                disclaimerSection(
+                    title: "Not a substitute for professional inspection",
+                    body: "OpenHood has not physically inspected your vehicle. Only a qualified mechanic, using direct inspection and testing, can confirm the actual cause of a vehicle concern. Always have your vehicle inspected by a qualified professional before making repair decisions."
+                )
+
+                disclaimerSection(
+                    title: "Emergencies",
+                    body: "If you are in immediate danger, experiencing a vehicle emergency, or unsure whether it is safe to continue driving, stop in a safe location and contact emergency services or roadside assistance. Do not rely on OpenHood in an emergency."
+                )
+
+                disclaimerSection(
+                    title: "No guarantee of accuracy",
+                    body: "OpenHood's content is reviewed against general automotive information, but vehicles, conditions, and situations vary. OpenHood does not guarantee that any information provided is complete, current, or accurate for your specific vehicle."
+                )
+
+                disclaimerSection(
+                    title: "Your responsibility",
+                    body: "Decisions about vehicle repair, maintenance, and safety are your responsibility. You should independently verify any information before acting on it, and you assume all risk associated with your use of OpenHood."
+                )
+
+                disclaimerSection(
+                    title: "No professional relationship",
+                    body: "Using OpenHood does not create a mechanic-client relationship, an inspection, or any professional relationship between you and OpenHood."
+                )
+
+                disclaimerSection(
+                    title: "Limitation of liability",
+                    body: "To the maximum extent permitted by law, OpenHood and its developer are not liable for any damages, losses, or costs arising from your use of the app or reliance on its content, including but not limited to vehicle damage, personal injury, or repair costs."
+                )
+
+                Text("This document is a draft pending review by a licensed attorney and is subject to change.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
+            .padding(24)
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("Terms")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func disclaimerSection(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            Text(body)
+                .foregroundStyle(.secondary)
+        }
     }
 }

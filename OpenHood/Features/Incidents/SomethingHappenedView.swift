@@ -293,7 +293,7 @@ private struct IncidentIntakeView: View {
                 selections: $incident.observationTypes,
                 onChange: saveDraft
             ) {
-                advanceNoiseIntake()
+                appendIfNeeded(.description)
             }
         case .noiseQuestion(let index):
             noiseQuestionDestination(index: index)
@@ -310,7 +310,7 @@ private struct IncidentIntakeView: View {
                 description: $incident.userDescription,
                 onChange: saveDraft
             ) {
-                path.append(.recentWork)
+                advanceNoiseIntake()
             }
         case .recentWork:
             IncidentRecentWorkView(
@@ -979,7 +979,7 @@ private struct IncidentIntakeView: View {
         if let index = nextUnansweredDrivingChangeQuestionIndex {
             appendIfNeeded(.drivingChangeQuestion(index))
         } else {
-            appendIfNeeded(.description)
+            appendIfNeeded(.recentWork)
         }
     }
 
