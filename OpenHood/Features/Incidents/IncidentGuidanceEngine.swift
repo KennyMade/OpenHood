@@ -94,7 +94,7 @@ struct IncidentGuidanceEngine {
             confidenceLabel: hasMatches
                 ? "Limited confidence — consistent with your observations"
                 : "Not enough information yet",
-            knowledgeStatus: "Universal guidance · Knowledge version \(knowledgeVersion) · Source review pending",
+            knowledgeStatus: "Universal guidance · Knowledge version \(knowledgeVersion)",
             driveRecommendation: ordinaryDriveRecommendation(
                 incident: incident,
                 hasMatches: hasMatches
@@ -827,7 +827,7 @@ private extension IncidentGuidanceEngine {
             confidenceLabel: contributors.isEmpty
                 ? "Not enough information yet"
                 : "Limited confidence — based on what you reported",
-            knowledgeStatus: "Universal guidance · Knowledge version \(knowledgeVersion) · Source review pending",
+            knowledgeStatus: "Universal guidance · Knowledge version \(knowledgeVersion)",
             driveRecommendation: urgentDriveRecommendation(
                 incident: incident,
                 vehicle: vehicle,

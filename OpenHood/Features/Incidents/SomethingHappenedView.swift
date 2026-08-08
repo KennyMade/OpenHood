@@ -668,7 +668,18 @@ private struct IncidentIntakeView: View {
         if incident.observationTypes.contains(.visible),
            incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Fluid on the ground or under the vehicle" {
             questions.append(
-                question("What color was the fluid?", key: IncidentFluidAnswerKey.color, choices: ["Green, orange, pink, or yellow", "Brown or black", "Red or reddish", "Clear or light", "I’m not sure"])
+                IncidentUrgentQuestion(
+                    title: "What color was the fluid?",
+                    message: nil,
+                    answerKey: IncidentFluidAnswerKey.color,
+                    options: [
+                        .init(id: "Green, orange, pink, or yellow", title: "Green, orange, pink, or yellow", subtitle: "Most often coolant"),
+                        .init(id: "Brown or black", title: "Brown or black", subtitle: "Most often oil"),
+                        .init(id: "Red or reddish", title: "Red or reddish", subtitle: "Most often transmission or power steering fluid"),
+                        .init(id: "Clear or light", title: "Clear or light", subtitle: "Often water, AC condensate, or washer fluid"),
+                        .init(id: "I’m not sure", title: "I’m not sure")
+                    ]
+                )
             )
         }
         if incident.observationTypes.contains(.smell) {
@@ -1061,7 +1072,7 @@ private struct IncidentIntakeView: View {
         case .visibleTireDamage:
             return [
                 question("What did you see?", key: IncidentUrgentAnswerKey.tireDamageObservation, choices: ["A bulge or bubble on the sidewall", "A crack or cut in the sidewall", "An object stuck in the tread (nail, screw, etc.)", "The tire looks flat or very low", "I’m not sure"]),
-                question("Is the tire currently holding air, or losing it?", key: IncidentUrgentAnswerKey.tireAirStatus, choices: ["Holding air, just looks damaged", "Losing air quickly", "Already flat", "I’m not sure"])
+                question("How is the tire doing right now?", key: IncidentUrgentAnswerKey.tireAirStatus, choices: ["Still holding air", "Losing air quickly", "Already flat", "I’m not sure"])
             ]
         case .engineWillNotStayRunning:
             return [
@@ -1281,6 +1292,7 @@ private struct IncidentShopOrDiagnoseChoiceView: View {
 private struct IncidentUrgentFollowUpOption: Identifiable {
     let id: String
     let title: String
+    var subtitle: String?
 }
 
 private struct IncidentUrgentQuestion {
@@ -1321,7 +1333,7 @@ private struct IncidentUrgentFollowUpView: View {
                 Button {
                     onSelect(option.id)
                 } label: {
-                    IncidentChoiceCard(title: option.title)
+                    IncidentChoiceCard(title: option.title, subtitle: option.subtitle)
                 }
                 .buttonStyle(.plain)
             }
@@ -1688,7 +1700,7 @@ private struct IncidentGuidanceView: View {
             .background(driveStatusColor.opacity(0.10))
             .clipShape(RoundedRectangle(cornerRadius: 18))
 
-        resultCard(title: "What this most strongly suggests") {
+        resultCard(title: "What this points to") {
             Text(result.plainLanguageAssessment)
                 .font(.headline)
             Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
@@ -1801,7 +1813,7 @@ private struct IncidentGuidanceView: View {
                 .foregroundStyle(.green)
         }
 
-        resultCard(title: "What this most strongly suggests") {
+        resultCard(title: "What this points to") {
             Text(result.plainLanguageAssessment)
                 .font(.headline)
             Text("OpenHood has not physically inspected the vehicle or confirmed the cause.")
@@ -2079,10 +2091,6 @@ private struct IncidentGuidanceView: View {
                 .font(.headline)
             Text(result.knowledgeStatus)
                 .foregroundStyle(.secondary)
-            Text("Knowledge record IDs: \(result.matchedRecordIDs.joined(separator: ", "))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
         }
     }
 

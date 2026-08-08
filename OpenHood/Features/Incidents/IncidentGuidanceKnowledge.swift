@@ -1538,7 +1538,7 @@ enum IncidentGuidanceKnowledge {
             explanation: "A visibly frayed, cracked, or damaged belt should be replaced before it fails completely — a broken serpentine belt can also take the power steering, alternator, and in some vehicles the water pump out with it.",
             action: .professionalInspection,
             questions: [
-                "Which belt does it look like — the serpentine (accessory) belt, or a timing belt under a cover?",
+                "Is there a squealing or chirping noise along with the visible damage?",
                 "Has any belt or accessory work been done recently?"
             ],
             verificationState: .reviewedGeneralPrinciple,
