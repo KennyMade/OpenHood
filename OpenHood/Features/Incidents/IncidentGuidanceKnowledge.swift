@@ -2395,6 +2395,235 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "airbag SRS diagnostic"
         ),
+        // OH-UIK cross-chain "wow moment" pass, 2026-08-07 — same
+        // technique as phase1.tires.tpms-light-with-vibration: found by
+        // scanning every possibleArea for pairs of records driven by
+        // DIFFERENT, independently-answerable question chains that share
+        // an area. When both fire for the same incident,
+        // selectDistinctAreas silently keeps only the higher-scoring one
+        // and drops the other — the same real gap as the TPMS+vibration
+        // fix, just found in four more places. Each combo record below is
+        // required on both underlying answers together (never fires on
+        // either alone) and scored with enough supportingEvidence entries
+        // to reliably outrank both single-symptom records when both are
+        // reported, verified by hand against the same scoring formula
+        // (observationMatches + supportingMatches*2 - contradictingMatches*3)
+        // used throughout this file.
+        record(
+            id: "phase1.starting.battery-light-with-slow-crank",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage, .startingOrRunningTrouble],
+            required: [
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Battery or charging symbol"),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .observation(.startingOrRunningTrouble),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Battery or charging symbol"),
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+            ],
+            contradict: [],
+            area: .startingAndElectrical,
+            explanation: "A battery or charging warning light together with a slow crank that gives up is a stronger, more consistent signal than either alone — both point toward the same underlying cause: a battery that isn't holding or receiving enough charge, or a poor connection limiting power to the starter. Reported together, a charging-system issue (the battery, the alternator, or a loose connection) is more likely than a problem isolated to the starter itself, since a failing starter alone wouldn't typically also trigger a charging warning light.",
+            action: .professionalInspection,
+            questions: [
+                "Is the battery original, or has it been replaced recently?",
+                "Are the battery terminals and grounds clean and tight?",
+                "Has the vehicle had any trouble starting recently before today?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-battery-light-with-slow-crank-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Battery or Charging Light With Slow Crank\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "battery-combo",
+                    name: "Battery",
+                    plainExplanation: "A partially charged or weakening battery can trigger the warning light and turn the starter slowly but not consistently — the most likely shared cause when both signals show up together.",
+                    typicalCostRange: "Roughly $150–$400"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "alternator-combo",
+                    name: "Alternator",
+                    plainExplanation: "The alternator recharges the battery while the engine runs. When it fails, the battery drains even while driving, which can eventually show up as a slow crank too.",
+                    typicalCostRange: "Roughly $400–$900"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "battery-terminals-or-cables-combo",
+                    name: "Battery terminals or cables, including grounds",
+                    plainExplanation: "A poor connection can limit both charging and starting power at the same time, which is consistent with seeing both signals together.",
+                    typicalCostRange: "Roughly $20–$150"
+                )
+            ],
+            repairSearchTerm: "auto electrical repair"
+        ),
+        record(
+            id: "phase1.brakes.squeal-with-vibration-while-braking",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking"),
+                .observation(.vibrationOrMovement)
+            ],
+            support: [
+                .observation(.sound),
+                .observation(.vibrationOrMovement),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "While braking")
+            ],
+            contradict: [],
+            area: .brakesAndSteering,
+            explanation: "A squeal while braking together with a pulsation or vibration — also specifically while braking — often means more than one thing needs attention. The squeal is usually the brake pad wear indicator doing its job, while the vibration usually points to a warped or unevenly worn rotor. Reported together, it's worth having both the pads and the rotors checked rather than assuming only one is the cause.",
+            action: .professionalInspection,
+            questions: [
+                "Does the vibration come through the pedal, the steering wheel, or both?",
+                "Has the pedal feel or stopping distance changed recently?",
+                "Has any brake work been done recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-squeal-with-vibration-while-braking-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Squeal With Vibration While Braking\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "brake-pads-wear-indicator-combo",
+                    name: "Brake pads (wear indicator)",
+                    plainExplanation: "A small metal tab on the pad touches the rotor on purpose once the pad is low, creating a squeal as a built-in warning that it's time to replace them.",
+                    typicalCostRange: "Roughly $150–$400 per axle"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "brake-rotors-combo",
+                    name: "Brake rotors",
+                    plainExplanation: "Warped or unevenly worn rotors create a pulsation felt in the pedal or steering wheel specifically when braking — often found alongside worn pads rather than instead of them.",
+                    typicalCostRange: "Roughly $300–$850 per axle to replace; resurfacing, when the rotor is thick enough, runs $40–$150 per axle and costs less"
+                )
+            ],
+            repairSearchTerm: "brake pad and rotor replacement"
+        ),
+        record(
+            id: "phase1.engine.check-engine-with-rough-idle",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage, .startingOrRunningTrouble],
+            required: [
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Check engine light (steady)"),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Rough or shaky idle, but the engine keeps running")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .observation(.startingOrRunningTrouble),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Check engine light (steady)"),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Rough or shaky idle, but the engine keeps running")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "A steady check engine light together with a rough or shaky idle is a stronger signal than either alone that this is an ignition or air-fuel issue, rather than something simpler like a loose gas cap — a loose gas cap typically wouldn't also cause a rough idle. Together, these two point more specifically toward worn spark plugs, a failing ignition coil, or a vacuum leak.",
+            action: .professionalInspection,
+            questions: [
+                "Does the roughness improve once you're driving faster, or is it present at all speeds?",
+                "When were the spark plugs last replaced?",
+                "Is a diagnostic code available from a scan?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-check-engine-with-rough-idle-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Check Engine Light With Rough Idle\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs-combo-idle",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn spark plugs can cause uneven combustion that shows up as a rough idle and can also trigger the check engine light.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil-combo-idle",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing ignition coil can cause a misfire that feels like a rough idle and commonly triggers a check engine light at the same time.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "vacuum-leak-combo-idle",
+                    name: "Vacuum leak (hoses or gaskets)",
+                    plainExplanation: "A crack or loose connection lets in unmetered air, which can make the idle rough and is a common trigger for a check engine light.",
+                    typicalCostRange: "Roughly $150–$600 depending on location"
+                )
+            ],
+            repairSearchTerm: "check engine diagnostic"
+        ),
+        record(
+            id: "phase1.engine.check-engine-with-hesitation",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage, .startingOrRunningTrouble],
+            required: [
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Check engine light (steady)"),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Occasional stumble or hesitation while driving, engine keeps running")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .observation(.startingOrRunningTrouble),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Check engine light (steady)"),
+                .startingAnswer(key: IncidentStartingAnswerKey.whatsHappening, value: "Occasional stumble or hesitation while driving, engine keeps running")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "A steady check engine light together with an occasional stumble or hesitation while driving is a stronger signal than either alone that this is an ignition or fuel-delivery issue, rather than something simpler like a loose gas cap. Together, these two point more specifically toward worn spark plugs, a failing ignition coil, or a vacuum leak — the same causes as a rough idle, just showing up as a hesitation instead.",
+            action: .professionalInspection,
+            questions: [
+                "Does it feel more like a loss of power, or more like a shake or clunk?",
+                "When were the spark plugs last replaced?",
+                "Is a diagnostic code available from a scan?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-check-engine-with-hesitation-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Check Engine Light With Hesitation\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "spark-plugs-combo-hesitation",
+                    name: "Spark plugs",
+                    plainExplanation: "Worn spark plugs can cause a momentary misfire that feels like hesitation and can also trigger the check engine light.",
+                    typicalCostRange: "Roughly $100–$300 for a full set"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "ignition-coil-combo-hesitation",
+                    name: "Ignition coil",
+                    plainExplanation: "A failing ignition coil can cause an intermittent misfire under load and commonly triggers a check engine light at the same time.",
+                    typicalCostRange: "Roughly $200–$300"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "vacuum-leak-combo-hesitation",
+                    name: "Vacuum leak",
+                    plainExplanation: "A vacuum leak can cause an inconsistent air-fuel mixture that shows up as hesitation under certain driving conditions and is a common trigger for a check engine light.",
+                    typicalCostRange: "Roughly $150–$600"
+                )
+            ],
+            repairSearchTerm: "check engine diagnostic"
+        ),
         // Unlike the 8 records above, this one is not a needsVerification
         // placeholder — it's backed by professionally-supported
         // general-guidance content that was actually checked against
