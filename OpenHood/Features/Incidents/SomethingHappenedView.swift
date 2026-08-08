@@ -864,16 +864,18 @@ private struct IncidentIntakeView: View {
     /// the fluid questions (advanceFluidIntake falls through to this once
     /// fluid questions are answered or not applicable), then falls
     /// through to .description itself, same pattern as noise/warning/fluid
-    /// above. All four questions below are asked back-to-back regardless
-    /// of which answer is given to the others — the no-crank/clicking
-    /// record (phase1.starting.electrical) keys off crankBehavior, the
-    /// cranks-but-won't-catch record (phase1.starting.fuel-ignition) keys
-    /// off crankClues, the post-start running-behavior record
-    /// (phase1.starting.engine-operation) keys off whatsHappening, and the
-    /// transmission-behavior record (phase1.transmission) keys off
-    /// transmissionBehavior, so a person only needs to answer whichever
-    /// one meaningfully matches what actually happened; the others can be
-    /// left at "I’m not sure" without affecting the result.
+    /// above. Each question keys a different record family: the
+    /// no-crank/clicking record (phase1.starting.electrical) keys off
+    /// crankBehavior, the cranks-but-won't-catch record
+    /// (phase1.starting.fuel-ignition) keys off crankClues, the post-start
+    /// running-behavior record (phase1.starting.engine-operation) keys off
+    /// whatsHappening, and the transmission-behavior record
+    /// (phase1.transmission) keys off transmissionBehavior.
+    ///
+    /// These questions are NOT all asked back-to-back any more. They used
+    /// to be, on the theory that irrelevant ones could just be answered
+    /// "I’m not sure" — see startingQuestionIsRelevant for why real use
+    /// proved that reasoning wrong, and for the current gating rules.
     ///
     /// "The engine actually shuts off or dies" is deliberately excluded
     /// from the fall-through below — see engineOperationEscalation.
@@ -927,12 +929,18 @@ private struct IncidentIntakeView: View {
         }
     }
 
+    /// The array below is deliberately kept at a fixed length with fixed
+    /// ordering — `path` stores `.startingQuestion(index)`, so indices must
+    /// stay stable no matter what the user answers. Relevance is handled by
+    /// `startingQuestionIsRelevant(index:)` (which governs navigation)
+    /// rather than by filtering this array, precisely so an index pushed
+    /// onto the path can never come to mean a different question later.
     private var startingQuestions: [IncidentUrgentQuestion] {
         guard incident.observationTypes.contains(.startingOrRunningTrouble) else {
             return []
         }
         return [
-            question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
+            question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "It cranks and turns over, but never actually starts", "It starts up fine — my concern is how it runs afterward", "I’m not sure"]),
             question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "Cranks slower or takes longer to start in cold weather", "I’m not sure"]),
             question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"]),
             // "Slipping" and "burning smell" are known-dangerous and now
@@ -980,8 +988,69 @@ private struct IncidentIntakeView: View {
         }
     }
 
+    /// Real-user bug fix. Previously all four starting questions were asked
+    /// back-to-back regardless of the answers to the others, on the theory
+    /// that a person could simply answer "I'm not sure" to the ones that
+    /// didn't apply. Actually using the app showed why that reasoning was
+    /// wrong: someone reporting a slow crank (a classic weak-battery
+    /// symptom) was asked, two screens later, what was happening with their
+    /// transmission. That is not merely slow — it is actively misleading,
+    /// because it implies the app sees a connection between a slow crank
+    /// and the transmission when none was found. Worse, two of that
+    /// question's four answers escalate straight to STOP DRIVING, so a
+    /// confused answer to an irrelevant question could hand a person an
+    /// urgent safety verdict for what is most likely a dying battery.
+    ///
+    /// So relevance is now gated on what the engine is actually doing,
+    /// which is established by the first question:
+    /// - Q0 (crankBehavior) is always asked; it's the branch point.
+    /// - Q1 (crankClues) asks "any other clues when it cranks but doesn't
+    ///   start?" — only meaningful when the engine is genuinely cranking
+    ///   and failing to catch. Rapid clicking, a single click, and no sound
+    ///   at all all mean the engine isn't cranking, so the question's own
+    ///   premise is false for them and it's skipped; those answers already
+    ///   have specific records of their own (phase1.starting.electrical.*).
+    /// - Q2 (whatsHappening) is entirely about a *running* engine — rough
+    ///   idle, hesitation, stalling. Meaningless for a car that won't start.
+    /// - Q3 (transmission) likewise requires a running car; slipping and a
+    ///   burning smell cannot present on a vehicle that never starts.
+    ///
+    /// "I'm not sure" deliberately keeps every question relevant — when we
+    /// don't know what the engine is doing, we shouldn't be pruning
+    /// questions, and the "I'm not sure" fallback records
+    /// (phase1.starting.electrical, phase1.starting.fuel-ignition,
+    /// phase1.transmission) all still resolve exactly as before.
+    private func startingQuestionIsRelevant(index: Int) -> Bool {
+        guard index != 0 else { return true }
+        guard let crankBehavior = incident.startingFollowUpAnswers?[IncidentStartingAnswerKey.crankBehavior] else {
+            // Not yet answered — nothing to prune on, and Q0 is next anyway.
+            return true
+        }
+        switch crankBehavior {
+        case "I’m not sure":
+            return true
+        case "Cranks slowly then stops", "It cranks and turns over, but never actually starts":
+            // Engine is turning over but not catching: the clue question is
+            // the one that matters (cold-weather cranking and fuel smell
+            // both live there). Running-behavior and transmission are not
+            // applicable to a car that isn't running.
+            return index == 1
+        case "Rapid clicking", "One single click", "No sound at all":
+            // Engine isn't cranking at all. Nothing past Q0 applies.
+            return false
+        case "It starts up fine — my concern is how it runs afterward":
+            // Car runs, so running behavior and transmission are the
+            // relevant questions; the crank-clue question is not.
+            return index == 2 || index == 3
+        default:
+            return true
+        }
+    }
+
     private var nextUnansweredStartingQuestionIndex: Int? {
-        startingQuestions.firstIndex { question in
+        startingQuestions.indices.first { index in
+            guard startingQuestionIsRelevant(index: index) else { return false }
+            let question = startingQuestions[index]
             guard let answer = incident.startingFollowUpAnswers?[question.answerKey] else {
                 return true
             }
@@ -989,10 +1058,23 @@ private struct IncidentIntakeView: View {
         }
     }
 
+    /// Answering the branch question can make a previously-asked question
+    /// irrelevant (a person who backs up and changes their answer). A stale
+    /// answer left behind in the dictionary would keep matching its record
+    /// in the engine, which reads these answers directly and has no idea
+    /// the question stopped applying — so clear anything no longer relevant
+    /// rather than leaving a contradictory answer in the incident.
     private func setStartingAnswer(_ answer: String, key: String) {
         var answers = incident.startingFollowUpAnswers ?? [:]
         answers[key] = answer
         incident.startingFollowUpAnswers = answers
+        if key == IncidentStartingAnswerKey.crankBehavior {
+            let questions = startingQuestions
+            for index in questions.indices where !startingQuestionIsRelevant(index: index) {
+                answers.removeValue(forKey: questions[index].answerKey)
+            }
+            incident.startingFollowUpAnswers = answers
+        }
         saveDraft()
     }
 
