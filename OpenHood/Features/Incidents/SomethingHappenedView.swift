@@ -877,12 +877,13 @@ private struct IncidentIntakeView: View {
     ///
     /// "The engine actually shuts off or dies" is deliberately excluded
     /// from the fall-through below — see engineOperationEscalation.
-    /// "Slipping" and "burning smell" on the transmission question are
-    /// ALSO known-dangerous but are NOT excluded/escalated — see the doc
-    /// comment on IncidentStartingAnswerKey.transmissionBehavior for why:
-    /// none of the app's 7 existing urgent categories fit without a
-    /// misleading follow-up question. This is a deliberate, called-out gap
-    /// pending a product decision, not an oversight.
+    /// "Slipping" and "burning smell" on the transmission question are now
+    /// ALSO excluded/escalated, via transmissionBehaviorEscalation — this
+    /// used to be a deliberate, called-out gap (no existing urgent category
+    /// fit either answer honestly), resolved by adding a dedicated 8th
+    /// category, IncidentSafetySelection.transmissionSlippingOrBurningSmell,
+    /// rather than forcing a misleading fit. See the doc comment on that
+    /// case for why.
     @ViewBuilder
     private func startingQuestionDestination(index: Int) -> some View {
         let questions = startingQuestions
@@ -898,6 +899,9 @@ private struct IncidentIntakeView: View {
                 if question.answerKey == IncidentStartingAnswerKey.whatsHappening,
                    let escalation = engineOperationEscalation(for: answer) {
                     escalateToUrgentSafety(escalation)
+                } else if question.answerKey == IncidentStartingAnswerKey.transmissionBehavior,
+                          let escalation = transmissionBehaviorEscalation(for: answer) {
+                    escalateToUrgentSafety(escalation)
                 } else {
                     advanceStartingIntake()
                 }
@@ -909,6 +913,20 @@ private struct IncidentIntakeView: View {
         }
     }
 
+    /// Mirrors engineOperationEscalation exactly. "Shifting feels harsh or
+    /// delayed" and "I'm not sure" are genuinely not an immediate driving
+    /// hazard by themselves, so they resolve normally as real Phase 1
+    /// records — see phase1.transmission.harsh-shifting and phase1.
+    /// transmission in IncidentGuidanceKnowledge.
+    private func transmissionBehaviorEscalation(for answer: String) -> IncidentSafetySelection? {
+        switch answer {
+        case "The engine revs up but the car doesn’t speed up the way it should (slipping)",
+             "A burning smell, especially after stop-and-go driving or towing":
+            .transmissionSlippingOrBurningSmell
+        default: nil
+        }
+    }
+
     private var startingQuestions: [IncidentUrgentQuestion] {
         guard incident.observationTypes.contains(.startingOrRunningTrouble) else {
             return []
@@ -917,12 +935,10 @@ private struct IncidentIntakeView: View {
             question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "I’m not sure"]),
             question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "Cranks slower or takes longer to start in cold weather", "I’m not sure"]),
             question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"]),
-            // "Slipping" and "burning smell" are known-dangerous but
-            // deliberately not escalated — see the doc comment on
-            // IncidentStartingAnswerKey.transmissionBehavior for why none
-            // of the app's 7 existing urgent categories fit cleanly.
-            // Unlike whatsHappening above, this question has no
-            // corresponding escalation branch in startingQuestionDestination.
+            // "Slipping" and "burning smell" are known-dangerous and now
+            // escalate via transmissionBehaviorEscalation, called from
+            // startingQuestionDestination — see that function's doc
+            // comment and IncidentSafetySelection.transmissionSlippingOrBurningSmell.
             question("What’s happening with the transmission?", key: IncidentStartingAnswerKey.transmissionBehavior, choices: ["Shifting feels harsh or delayed, but the car drives normally otherwise", "The engine revs up but the car doesn’t speed up the way it should (slipping)", "A burning smell, especially after stop-and-go driving or towing", "I’m not sure"])
         ]
     }
@@ -1156,6 +1172,14 @@ private struct IncidentIntakeView: View {
                 question("What are the warning lights doing?", key: IncidentUrgentAnswerKey.runningWarning, choices: ["Flashing", "Steady", "None", "I’m not sure"]),
                 question("What else did you notice?", key: IncidentUrgentAnswerKey.runningEvidence, choices: ["Fuel smell", "Smoke", "Unusual noise", "Visible disconnected component", "Nothing else", "I’m not sure"]),
                 question("Did restarting change anything?", key: IncidentUrgentAnswerKey.restartEffect, choices: ["Yes", "No", "I did not restart it", "I’m not sure"], message: "Do not restart it now to reproduce the concern.")
+            ]
+        case .transmissionSlippingOrBurningSmell:
+            return [
+                question("Which are you noticing?", key: IncidentUrgentAnswerKey.transmissionConcernType, choices: ["The engine revs but the car doesn’t speed up (slipping)", "A burning smell", "Both", "I’m not sure"]),
+                question("Is it continuous, or does it come and go?", key: IncidentUrgentAnswerKey.transmissionPattern, choices: ["Continuous", "Comes and goes", "Only under load — hills, towing, merging", "I’m not sure"]),
+                question("Did this begin after towing, a heavy load, or extended stop-and-go traffic?", key: IncidentUrgentAnswerKey.transmissionTrigger, choices: ["Yes, after towing or a heavy load", "Yes, after stop-and-go traffic", "No specific trigger", "I’m not sure"]),
+                question("Is a warning light on?", key: IncidentUrgentAnswerKey.transmissionWarning, choices: yesNoUnsure()),
+                question("Was transmission service or fluid work done recently?", key: IncidentUrgentAnswerKey.transmissionRecentWork, choices: ["Yes, recently serviced", "No recent work", "I’m not sure"])
             ]
         case .noneOfThese, .unsure, nil:
             return []
@@ -2442,6 +2466,8 @@ private extension IncidentSafetySelection {
             "A tire in this condition can fail suddenly and without warning, even if it looks fine right now. Do not continue driving on it. If you have a spare and know how to change it safely, do so; otherwise arrange a tow. Contact emergency services if you cannot get out of immediate danger safely."
         case .engineWillNotStayRunning:
             "Do not keep driving or repeatedly try to reproduce the problem. Move to a safe location if possible without driving farther, switch off the vehicle, and arrange roadside assistance."
+        case .transmissionSlippingOrBurningSmell:
+            "Slipping or a burning smell can mean the transmission is losing its ability to transfer power reliably, or that the fluid is overheating enough to risk permanent damage or a sudden loss of power. Stop driving as soon as it's safely possible — pull over, switch off the vehicle, and arrange a tow rather than continuing to a shop under the vehicle's own power. Contact emergency services if you cannot reach a safe location without continuing to drive under load."
         case .unsure:
             "If the vehicle feels unsafe, do not continue driving. Stop in a safe place and arrange roadside assistance. You may continue describing only what you already observed."
         case .noneOfThese:

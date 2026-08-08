@@ -766,77 +766,27 @@ enum IncidentGuidanceKnowledge {
         // SomethingHappenedView.startingQuestions) rather than free-text
         // description matching.
         //
-        // Severity note, read carefully before touching this section:
-        // only "Shifting feels harsh or delayed..." and "I'm not sure"
-        // have records below. "The engine revs up but the car doesn't
-        // speed up... (slipping)" and "A burning smell..." are DELIBERATELY
-        // UNHANDLED — real guidance is consistent that both mean stop
-        // driving as soon as it's safely possible (loss of reliable power
-        // delivery; already-degraded fluid risking complete failure), not
-        // a SERVICE-SOON-tier Phase 1 result, the same severity tier this
-        // Phase 1 engine already can't represent (ordinaryDriveRecommendation
-        // only ever returns SERVICE SOON, CHECK BEFORE DRIVING, or
-        // MONITOR — no path to STOP DRIVING).
-        //
-        // Every prior severity fix this session (cooling, oil-pressure,
-        // odor, temperature warning light, ABS/brakes) closed this same
-        // kind of gap by escalating into one of the app's existing 7
-        // IncidentSafetySelection categories via escalateToUrgentSafety.
-        // This one is different: none of the 7 fit without asking a
-        // misleading follow-up question. Checked each category's actual
-        // urgentQuestions wording (not just its name), specifically
-        // against "engine revs fine but the car won't accelerate" (no
-        // smell, no fire, no coolant/temperature sign, no brake/steering
-        // symptom, engine keeps running normally) and "burning smell
-        // after stop-and-go/towing":
-        //   - .smokeOrFire: first question assumes an active flame right
-        //     now ("Is there an active flame? Answer only from a safe
-        //     distance.") — wrong premise for a smell with no fire, and
-        //     entirely wrong for slipping (no smoke/smell at all).
-        //   - .strongFuelSmell: first question forces a fuel-oriented
-        //     description (Gasoline/Burning oil/Sweet or coolant-like/
-        //     Electrical or plastic/Exhaust) under a "strong fuel smell"
-        //     framing — mischaracterizes a transmission-fluid smell as a
-        //     fuel leak, and doesn't apply at all to slipping (no smell).
-        //   - .overheatingOrSteam: first question asks whether "the gauge
-        //     or warning indicate[d] overheating" — most vehicles have no
-        //     transmission-temperature gauge, so this forces a coolant/
-        //     engine-temperature framing that doesn't fit either symptom.
-        //   - .flashingWarningLight: first question assumes a specific
-        //     dashboard light flashed (Check engine/Oil pressure/
-        //     Temperature/Brake/Charging/Tire pressure) — many transmission
-        //     slips or burning smells present with no dashboard light at
-        //     all, so this forces a false premise.
-        //   - .unsafeBrakesOrSteering: the closest guess by theme (loss of
-        //     reliable vehicle control), but its first question forces
-        //     "What is the main concern? Braking / Steering / Both / I'm
-        //     not sure" — slipping is neither a braking nor a steering
-        //     symptom (the brakes and steering both work normally; the
-        //     problem is the engine not transferring power to the wheels),
-        //     so answering this question honestly means picking "I'm not
-        //     sure" for a question that does apply to the person's car,
-        //     just not to their problem — a misleading fit, not a clean
-        //     one, despite the surface-level "loss of control" similarity.
-        //   - .engineWillNotStayRunning: first question ("What happens
-        //     when it runs? Starts and immediately stops/Idles roughly/
-        //     Shakes or misfires/Stalls when placed in gear") is about the
-        //     ENGINE stalling or misfiring — but transmission slipping is
-        //     specifically the engine running fine while the car doesn't
-        //     accelerate, the opposite premise.
-        //   - .noneOfThese: not an urgent category at all (routine path),
-        //     so it can't produce the required stop-driving-tier result
-        //     regardless of fit.
-        // Conclusion: no existing category fits both dangerous answers
-        // without a misleading premise. Per instruction, this is left
-        // unwired rather than forced — selecting either answer currently
-        // falls through to an ordinary Phase 1 result (typically SERVICE
-        // SOON, forced by the .startingOrRunningTrouble observation floor
-        // in ordinaryDriveRecommendation, generally with no record
-        // actually matching that specific answer) instead of the correct
-        // stop-driving treatment. This is a known, called-out gap — not
-        // an oversight — pending a product decision on whether a new
-        // IncidentSafetySelection category is needed for "transmission
-        // failing under load" specifically.
+        // Severity note: only "Shifting feels harsh or delayed..." and
+        // "I'm not sure" have Phase 1 records below. "The engine revs up
+        // but the car doesn't speed up... (slipping)" and "A burning
+        // smell..." are handled OUTSIDE this Phase 1 system entirely — an
+        // audit against the app's 7 existing IncidentSafetySelection
+        // categories found that none of them fit either answer without a
+        // misleading follow-up question (smoke/fire assumes an active
+        // flame; strong-fuel-smell forces a fuel-leak framing; overheating
+        // assumes a temperature gauge most transmissions don't have;
+        // flashing-warning-light assumes a dashboard light that isn't
+        // always present; unsafe-brakes-or-steering forces "braking or
+        // steering" when the actual problem is neither; engine-will-not-
+        // stay-running assumes the engine itself is stalling, the opposite
+        // of slipping's premise). Rather than force a misleading fit, the
+        // app now has an 8th category built specifically for this:
+        // IncidentSafetySelection.transmissionSlippingOrBurningSmell (see
+        // its doc comment in VehicleIncident.swift), wired via
+        // transmissionBehaviorEscalation in SomethingHappenedView. Both
+        // dangerous answers route straight into that category's own STOP
+        // DRIVING treatment before Phase 1 evaluation ever runs — they
+        // never reach the records below.
         //
         // sourceReferences below are attributed to OpenHood, not to the
         // specific outlets consulted, for the same reason given above the

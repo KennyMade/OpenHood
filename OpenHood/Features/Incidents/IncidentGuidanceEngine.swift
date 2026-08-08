@@ -423,6 +423,17 @@ private extension IncidentGuidanceEngine {
             // engine-already-off, don't-restart cases like fire or
             // overheating).
             return .stopDriving
+        case .transmissionSlippingOrBurningSmell:
+            // Same reasoning as visibleTireDamage: whether the cause turns
+            // out to be low fluid, a failing solenoid, or a torque
+            // converter/clutch pack problem can't be told apart from these
+            // answers, and every one of those causes carries real risk of
+            // getting stranded or, in more advanced cases, a sudden loss of
+            // power. Unconditional STOP DRIVING rather than .doNotRestart —
+            // the vehicle is still running and driveable when this is
+            // reported, so the instruction is to stop driving as soon as
+            // it's safely possible, not "don't restart."
+            return .stopDriving
         case .flashingWarningLight:
             if answers[IncidentUrgentAnswerKey.warningSymbol] == "Check engine" {
                 // OH-UIK-001: default gate is CHECK BEFORE DRIVING
@@ -533,6 +544,12 @@ private extension IncidentGuidanceEngine {
             return brakesOrSteeringAssessment(answers: answers, vehicle: vehicle)
         case .visibleTireDamage:
             return "This most strongly suggests tire damage that can fail without warning while driving. OpenHood has not confirmed whether the tire can be repaired or must be replaced."
+        case .transmissionSlippingOrBurningSmell:
+            let concern = answers[IncidentUrgentAnswerKey.transmissionConcernType]
+            if concern == "A burning smell" {
+                return "A burning smell from the transmission most strongly suggests the fluid is overheating, which risks permanent internal damage the longer driving continues. OpenHood has not confirmed the exact cause."
+            }
+            return "This most strongly suggests the transmission isn't reliably transferring engine power to the wheels — low or worn fluid, a failing solenoid, or a torque converter/clutch pack problem are all possible. OpenHood has not confirmed the exact cause."
         case .engineWillNotStayRunning:
             if let recent = answers[IncidentUrgentAnswerKey.runningRecentWork],
                ["Service", "Battery work", "A repair"].contains(recent) {
@@ -952,6 +969,17 @@ private extension IncidentGuidanceEngine {
                     explanation: "Sidewall bulges and cracks cannot be safely repaired and require replacement. A puncture in the tread is sometimes repairable, but should be evaluated by a professional before continuing to drive on it."
                 )
             ]
+        case .transmissionSlippingOrBurningSmell:
+            var areas = [urgentContributor(
+                id: "urgent.transmission-power-delivery",
+                area: .mechanicalOrCompression,
+                fact: "You reported \(answer[IncidentUrgentAnswerKey.transmissionConcernType]?.lowercased() ?? "a transmission concern").",
+                explanation: "Low or worn transmission fluid, a failing shift solenoid, or a torque converter/clutch pack problem can all produce this pattern. Direct inspection is needed to tell them apart."
+            )]
+            if answer[IncidentUrgentAnswerKey.transmissionTrigger] == "Yes, after towing or a heavy load" {
+                areas.append(urgentContributor(id: "urgent.transmission-heat-load", area: .mechanicalOrCompression, fact: "This began after towing or a heavy load.", explanation: "Towing or heavy loads raise transmission fluid temperature significantly, which can push already-marginal fluid or a solenoid past the point of reliable operation."))
+            }
+            return areas
         case .engineWillNotStayRunning:
             return [
                 urgentContributor(
@@ -1243,6 +1271,13 @@ private extension IncidentGuidanceEngine {
                 IncidentEvidenceRequest("From a safe distance, photograph the damaged area of the tire."),
                 IncidentEvidenceRequest("Note which tire (position) is affected and what kind of damage was visible."),
                 IncidentEvidenceRequest("If a spare was installed, keep the damaged tire available for the shop to inspect.")
+            ]
+        case .transmissionSlippingOrBurningSmell:
+            return [
+                IncidentEvidenceRequest("Record whether it's slipping, a burning smell, or both, and whether it's continuous or comes and goes."),
+                IncidentEvidenceRequest("Note the mileage and when the transmission fluid was last checked or changed, if known."),
+                IncidentEvidenceRequest("Record whether this began after towing, a heavy load, or extended stop-and-go traffic."),
+                IncidentEvidenceRequest("Confirm the vehicle's exact make, model, and transmission type (automatic, CVT, or manual) before applying vehicle-specific guidance.")
             ]
         case .engineWillNotStayRunning:
             return [
