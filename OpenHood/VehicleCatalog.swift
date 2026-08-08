@@ -1037,6 +1037,135 @@ extension MaintenanceGuide {
                 "If it doesn't start after a couple of tries, the battery or another component may need a mechanic's attention rather than another jump."
             ],
             safetyNote: "Car batteries contain acid and can produce explosive gas. Keep sparks and flames away, don't lean over the battery while connecting cables, and stop if you smell burning or see smoke."
+        ),
+        MaintenanceGuide(
+            title: "Check your coolant level",
+            icon: "thermometer.medium",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Only check coolant when the engine is completely cold — ideally before driving, or several hours after the vehicle was last run.",
+                "Open the hood and find the coolant reservoir — a translucent plastic tank, usually white or off-white, marked with \"MIN\"/\"LOW\" and \"MAX\"/\"FULL\" lines on the side. This is different from the metal radiator itself.",
+                "With the engine cold, the coolant level should sit between those two lines. If it's below the low mark, that's the only part you should open.",
+                "Add the coolant type your vehicle's manual specifies (or a pre-mixed 50/50 coolant if you're not sure of the concentrate ratio) directly into the reservoir until it reaches the full line.",
+                "Replace the reservoir cap securely and close the hood."
+            ],
+            safetyNote: "Never open the radiator cap itself — only the translucent reservoir tank — and never open either one while the engine is warm or hot. A pressurized, hot cooling system can spray scalding coolant and steam."
+        ),
+        MaintenanceGuide(
+            title: "Top off windshield washer fluid",
+            icon: "sparkles",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Open the hood and find the washer fluid reservoir — usually a plastic tank with a cap marked with a windshield/spray icon.",
+                "Check the fluid level; many reservoirs are translucent enough to see the level without opening the cap.",
+                "Remove the cap and pour in washer fluid until it nears the top — a funnel helps avoid spills.",
+                "Replace the cap and run the washers briefly to confirm fluid reaches the nozzles."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Replace wiper blades",
+            icon: "cloud.rain.fill",
+            estimatedTime: "10 minutes",
+            steps: [
+                "Lift the wiper arm away from the windshield until it locks in the raised position.",
+                "Find the small release tab or clip where the blade attaches to the arm — the exact mechanism varies by vehicle, so check the new blade's packaging or a vehicle-specific guide if it's not obvious.",
+                "Press the tab and slide the old blade out along the arm.",
+                "Slide the new blade on until it clicks or locks into place, and gently tug it to confirm it's secure.",
+                "Repeat for the other wiper, then carefully lower both arms back onto the windshield — don't let them snap down on their own, which can crack the glass."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Visually check brake pad wear",
+            icon: "eye.fill",
+            estimatedTime: "5–10 minutes",
+            steps: [
+                "Park on level ground, engage the parking brake, and locate a wheel where you can see the brake caliper through the spokes — if not, this check may require removing the wheel instead.",
+                "Look for the brake pad pressed against the metal rotor inside the caliper — it's the material sandwiched between the caliper and the rotor.",
+                "Estimate the pad's thickness. Roughly a quarter inch (about 6mm) or more is generally healthy; below about an eighth inch (3mm) means it's time to have them inspected and likely replaced soon.",
+                "Check for a rotor surface that looks deeply grooved, scored, or uneven — these are also signs it's time for a closer look.",
+                "Repeat for each wheel you can see clearly — wear often differs side to side."
+            ],
+            safetyNote: "This is a visual estimate, not a substitute for a professional inspection. Pad wear can be uneven or hidden depending on the wheel design, and only a shop can measure it precisely."
+        ),
+        MaintenanceGuide(
+            title: "Replace the engine air filter",
+            icon: "wind",
+            estimatedTime: "10–15 minutes",
+            steps: [
+                "Locate the air filter housing — usually a black plastic box near the front of the engine bay, connected to a wide intake tube.",
+                "Unclip or unscrew the housing's cover — most use spring clips or a few screws, no special tools needed.",
+                "Lift out the old filter, noting which way it was facing (many have an airflow direction arrow printed on the frame).",
+                "Wipe out any loose debris from inside the housing with a rag.",
+                "Insert the new filter in the same orientation as the old one, then close and re-secure the housing cover."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Check power steering fluid",
+            icon: "steeringwheel",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Confirm your vehicle actually has this system first — many newer vehicles use electric power steering (EPS) with no fluid reservoir at all. If you don't see a reservoir labeled for power steering in the engine bay, your vehicle likely doesn't use this fluid.",
+                "If present, locate the power steering reservoir — usually a small tank, sometimes with a steering-wheel icon on the cap.",
+                "With the engine off, check the fluid level against the MIN/MAX markings on the tank or dipstick built into the cap.",
+                "If low, add the specific power steering fluid type your owner's manual specifies — this varies by manufacturer more than most other fluids, so the wrong type is a real risk here.",
+                "A level that keeps dropping points to a leak worth having inspected, rather than just topped off repeatedly."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Check and clean battery terminals",
+            icon: "battery.100",
+            estimatedTime: "10–15 minutes",
+            steps: [
+                "With the engine off, open the hood and locate the battery.",
+                "Look for white, blue, or greenish crusty buildup around the terminals — this is corrosion and can weaken the electrical connection.",
+                "If present, disconnect the negative (black, marked \"–\") terminal first, then the positive (red, marked \"+\").",
+                "Clean the terminals and cable ends with a wire brush or a baking-soda-and-water mixture on an old toothbrush, then rinse with plain water and dry thoroughly.",
+                "Reconnect the positive terminal first, then the negative — the reverse order of removal — and tighten securely."
+            ],
+            safetyNote: "Battery terminals carry live current and batteries can produce explosive gas. Remove jewelry, avoid letting a metal tool touch both terminals at once, and keep sparks and flames away."
+        ),
+        MaintenanceGuide(
+            title: "Check serpentine belt condition",
+            icon: "arrow.triangle.2.circlepath",
+            estimatedTime: "5 minutes",
+            steps: [
+                "With the engine off and cool, open the hood and locate the serpentine belt — the single continuous belt winding around several pulleys at the front of the engine.",
+                "Visually inspect its full visible length for cracks, fraying, glazing (a shiny, hardened look), or missing chunks in the ribbed side.",
+                "Check that the belt sits properly in each pulley groove rather than looking misaligned or loose.",
+                "If your vehicle has an automatic tensioner, note whether it looks like it's holding steady tension rather than sitting slack.",
+                "Minor surface cracking across the ribs is common with age; deep cracks, fraying, or a visibly loose belt are worth having inspected soon."
+            ],
+            safetyNote: "Never inspect the belt while the engine is running — moving belts and pulleys can catch hair, clothing, and fingers instantly."
+        ),
+        MaintenanceGuide(
+            title: "Replace a headlight bulb",
+            icon: "lightbulb.fill",
+            estimatedTime: "15–20 minutes",
+            steps: [
+                "Confirm the bulb type and part number for your specific vehicle before buying a replacement — this varies significantly by make, model, and year, and by whether it's a standard halogen bulb versus an HID or LED assembly that may not be a simple bulb swap at all.",
+                "With the engine off, open the hood and locate the back of the headlight housing — access varies a lot by vehicle, and some require removing panels or reaching from underneath.",
+                "Twist and remove the bulb's plastic access cover, if there is one, then disconnect the electrical connector from the back of the bulb.",
+                "Release the bulb's retaining clip or twist-lock and remove the old bulb without touching the new bulb's glass with bare fingers — skin oil can cause it to fail prematurely.",
+                "Insert the new bulb, secure the retaining clip, reconnect the electrical connector, and replace the access cover.",
+                "Turn on the headlights to confirm the new bulb works before closing the hood."
+            ],
+            safetyNote: "If your vehicle has HID or LED headlights rather than simple halogen bulbs, this isn't a basic bulb swap and often requires replacing the whole assembly or professional service — confirm which type your vehicle has before starting."
+        ),
+        MaintenanceGuide(
+            title: "Check transmission fluid",
+            icon: "gearshape.2.fill",
+            estimatedTime: "10 minutes",
+            steps: [
+                "Confirm your vehicle actually has a transmission dipstick first — many modern automatic transmissions are sealed, with no dipstick at all, and are checked by a shop through a fill/check plug instead. If you don't see a second dipstick (separate from the engine oil dipstick) under the hood, your vehicle likely uses the sealed design, and this fluid should be checked by a professional.",
+                "If a dipstick is present, follow your owner's manual exactly — some vehicles want the engine running and warm in Park or Neutral for this check, which is different from the engine-off oil check.",
+                "Pull the transmission dipstick, wipe it clean, reinsert it fully, then pull it out again to read the level against its markings.",
+                "Also note the fluid's color and smell — healthy fluid is typically reddish and doesn't smell burnt; dark or burnt-smelling fluid is worth mentioning to a mechanic even if the level itself is fine."
+            ],
+            safetyNote: "If your vehicle calls for checking this with the engine running, keep hands, hair, and clothing away from any moving parts under the hood."
         )
     ]
 }
