@@ -1157,6 +1157,83 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "tire pressure check"
         ),
+        // OH-UIK "wow moment" pass, 2026-08-07 — same tier as the rotten-
+        // egg-smell and vibration-while-braking records added earlier
+        // tonight: reviewed general-guidance content, not a
+        // needsVerification placeholder. Closes a real gap:
+        // phase1.warning.tire-pressure-light (above) and
+        // phase1.suspension.vibration-at-speed (below) both already
+        // existed as separate records sharing the same possibleArea
+        // (.tiresWheelsAndPressure) — so when both were reported
+        // together, selectDistinctAreas would only ever surface one of
+        // them, silently, with no acknowledgment that the two symptoms
+        // reinforce each other. This record requires both signals
+        // together and is scored (more supporting matches) to outrank
+        // either one alone, so a user who reports both gets a single,
+        // stronger, explicitly-connected result instead of one symptom's
+        // content picked arbitrarily over the other's.
+        //
+        // The underlying fact — that a TPMS light plus a speed-dependent
+        // vibration together points more specifically at one problem tire
+        // (a leak, sidewall damage, or internal separation) rather than a
+        // routine seasonal pressure drop or a simple wheel imbalance — is
+        // well-known, independently corroborated automotive knowledge.
+        // sourceReferences attributed to OpenHood, not to specific
+        // outlets, for the same reason given throughout this file: a
+        // source being public doesn't make it citable on screen.
+        record(
+            id: "phase1.tires.tpms-light-with-vibration",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage, .sound, .vibrationOrMovement],
+            required: [
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Tire pressure light"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Only at speed")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .observation(.sound),
+                .observation(.vibrationOrMovement),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Tire pressure light"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.timing, value: "Only at speed"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Front"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "Rear"),
+                .noiseAnswer(key: IncidentNoiseAnswerKey.location, value: "All over")
+            ],
+            contradict: [],
+            area: .tiresWheelsAndPressure,
+            explanation: "A tire pressure warning light together with a vibration that shows up mainly at highway speed is a stronger signal than either one alone. On its own, the tire pressure light is often just a seasonal pressure drop, and a highway-speed vibration alone is often just a wheel or tire balance issue — but the two together point more specifically at one tire having a real problem, such as a leak, sidewall damage, or internal separation. This combination is worth checking sooner rather than later.",
+            action: .professionalInspection,
+            questions: [
+                "Does one specific tire look or feel visibly low, bulging, or damaged?",
+                "Does the vibration come through the steering wheel, the seat/floor, or both?",
+                "Has the vehicle hit a pothole or curb, or had a tire repaired recently?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-tpms-with-vibration-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Tire Pressure Light With Speed-Related Vibration\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ],
+            possibleAreaTerms: [
+                IncidentPossibleAreaTerm(
+                    id: "tire-damage-or-leak",
+                    name: "Tire damage or leak",
+                    plainExplanation: "A puncture, sidewall bulge, or internal belt separation can cause both a pressure warning and an out-of-round feel at speed. Worth a visual and pressure check on all four tires now, not just a top-off.",
+                    typicalCostRange: "Varies — a repairable puncture is roughly $15–$30; a tire needing replacement is roughly $100–$300 or more depending on size"
+                ),
+                IncidentPossibleAreaTerm(
+                    id: "wheel-or-tire-balance-combo",
+                    name: "Wheel or tire balance",
+                    plainExplanation: "Less likely than a tire problem when both signals are present together, but still possible if the tire itself checks out fine.",
+                    typicalCostRange: "Roughly $15–$25 per tire, often $60–$100 for all four"
+                )
+            ],
+            repairSearchTerm: "tire inspection and balance"
+        ),
         // Same tier as phase1.warning.record-code/phase1.warning.engine-
         // information above — reviewed general-guidance content, not a
         // needsVerification placeholder, but with a real safety gate
