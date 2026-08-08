@@ -2031,29 +2031,23 @@ struct VehicleHomeView: View {
                         .buttonStyle(.plain)
 
                         NavigationLink {
-                            PlaceholderDestinationView(
-                                title: "Show Me How",
-                                message: "Visual maintenance guides will be added here."
-                            )
+                            ShowMeHowView()
                         } label: {
                             LearnRowCard(
                                 icon: "wrench.and.screwdriver.fill",
                                 title: "Show me how",
-                                subtitle: "Simple visual maintenance guides"
+                                subtitle: "Simple step-by-step maintenance guides"
                             )
                         }
                         .buttonStyle(.plain)
 
                         NavigationLink {
-                            PlaceholderDestinationView(
-                                title: "Find a Fact",
-                                message: "Vehicle specifications, fluids, manuals, and diagrams will be added here."
-                            )
+                            FindAFactView()
                         } label: {
                             LearnRowCard(
                                 icon: "magnifyingglass",
                                 title: "Find a fact",
-                                subtitle: "Fluids, specifications, manuals, and diagrams"
+                                subtitle: "Fluids, capacities, and tire pressure"
                             )
                         }
                         .buttonStyle(.plain)
@@ -2079,6 +2073,198 @@ struct VehicleHomeView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Learn My Car")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    // MARK: - Find a Fact
+
+    /// Looks up VehicleFactSheet (VehicleCatalog.swift) by the active
+    /// vehicle's make/model. `vehicle` here is kept in sync with
+    /// GarageStore.activeVehicle by ActiveVehicleBridgeView (see
+    /// AppRootView.swift), so this always reflects whichever vehicle is
+    /// actually active, not stale onboarding state.
+    struct FindAFactView: View {
+        @EnvironmentObject private var vehicle: VehicleOnboardingData
+
+        private var factSheet: VehicleFactSheet? {
+            VehicleFactSheet.lookup(make: vehicle.manufacturer, model: vehicle.model)
+        }
+
+        var body: some View {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Find a Fact")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+
+                        Text("Fluids, capacities, and tire pressure for your \(vehicle.manufacturer) \(vehicle.model).")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let factSheet {
+                        factCard(
+                            title: "Engine oil",
+                            primary: factSheet.engineOilType,
+                            secondary: factSheet.engineOilCapacity
+                        )
+
+                        factCard(
+                            title: "Coolant",
+                            primary: factSheet.coolantType,
+                            secondary: factSheet.coolantCapacity ?? "Capacity not yet confirmed — check your owner's manual."
+                        )
+
+                        factCard(
+                            title: "Tire pressure",
+                            primary: "Front: \(factSheet.tirePressureFront)",
+                            secondary: "Rear: \(factSheet.tirePressureRear)"
+                        )
+
+                        Text(factSheet.notes)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+                    } else {
+                        VStack(spacing: 18) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .font(.system(size: 44))
+
+                            Text("Facts coming soon for this vehicle")
+                                .font(.title2)
+                                .fontWeight(.bold)
+
+                            Text("OpenHood doesn't have verified fluid and specification data for the \(vehicle.manufacturer) \(vehicle.model) yet. Check your owner's manual or the sticker inside your driver's door jamb in the meantime.")
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(28)
+                        .background(.thinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                    }
+                }
+                .padding(24)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Find a Fact")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+
+        @ViewBuilder
+        private func factCard(title: String, primary: String, secondary: String) -> some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title.uppercased())
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.secondary)
+                    .tracking(1.0)
+
+                Text(primary)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+
+                Text(secondary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+    }
+
+    // MARK: - Show Me How
+
+    struct ShowMeHowView: View {
+        var body: some View {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Show Me How")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+
+                        Text("Step-by-step guides for basic maintenance tasks.")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForEach(MaintenanceGuide.all) { guide in
+                        NavigationLink {
+                            MaintenanceGuideDetailView(guide: guide)
+                        } label: {
+                            LearnRowCard(
+                                icon: guide.icon,
+                                title: guide.title,
+                                subtitle: "About \(guide.estimatedTime)"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(24)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Show Me How")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    struct MaintenanceGuideDetailView: View {
+        let guide: MaintenanceGuide
+
+        var body: some View {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(guide.title)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+
+                        Text("About \(guide.estimatedTime)")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let safetyNote = guide.safetyNote {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+
+                            Text(safetyNote)
+                                .font(.subheadline)
+                        }
+                        .padding(14)
+                        .background(Color.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(Array(guide.steps.enumerated()), id: \.offset) { index, step in
+                            HStack(alignment: .top, spacing: 14) {
+                                Text("\(index + 1)")
+                                    .font(.headline)
+                                    .frame(width: 30, height: 30)
+                                    .background(.primary)
+                                    .foregroundStyle(.background)
+                                    .clipShape(Circle())
+
+                                Text(step)
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                }
+                .padding(24)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(guide.title)
             .navigationBarTitleDisplayMode(.inline)
         }
     }

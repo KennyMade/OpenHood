@@ -796,3 +796,137 @@ struct VehicleCatalog {
         .autoFillableConfiguration
     }
 }
+
+// MARK: - Vehicle Fact Sheet (Learn tab: "Find a Fact")
+
+/// Real, researched fluid/capacity/tire-pressure data for the vehicles
+/// OpenHood has genuine verified configuration data for (350Z, 4Runner,
+/// Civic — see the VehicleCatalog above). Cross-checked against multiple
+/// independent sources (owner's-manual excerpts, oil-change reference
+/// sites, tire-pressure reference sites) on 2026-08-08. Every fact card
+/// built from this carries a "confirm against your door jamb sticker or
+/// owner's manual" note, since exact figures can shift by trim/options
+/// (e.g. a 4Runner with a rear seat heater takes more coolant) — same
+/// hedge-honestly discipline as the Something Happened diagnostic
+/// content, applied to fluid specs instead of symptom causes.
+struct VehicleFactSheet {
+    let make: String
+    let model: String
+    let engineOilType: String
+    let engineOilCapacity: String
+    let coolantType: String
+    let coolantCapacity: String?
+    let tirePressureFront: String
+    let tirePressureRear: String
+    let notes: String
+}
+
+extension VehicleFactSheet {
+    static let all: [VehicleFactSheet] = [
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "350Z",
+            engineOilType: "5W-30",
+            engineOilCapacity: "Roughly 5.2 quarts with a filter change",
+            coolantType: "Nissan Long Life Antifreeze/Coolant, or an equivalent",
+            coolantCapacity: "Roughly 8.7 liters (about 9.2 quarts)",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 3.5L VQ35HR engine used in the 2009 350Z. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing — trim and tire size can shift the exact number."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "4Runner",
+            engineOilType: "0W-20 synthetic (5W-20 is an acceptable substitute if 0W-20 isn't available)",
+            engineOilCapacity: "Roughly 6.4 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (red), or an equivalent ethylene-glycol coolant",
+            coolantCapacity: "Roughly 10–11 quarts, depending on whether your 4Runner has a rear seat heater",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 4.0L V6 used in the 2014 4Runner. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "Civic",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 3.9 quarts with a filter change",
+            coolantType: "Honda Type 2 coolant (blue)",
+            coolantCapacity: nil,
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 1.8L 4-cylinder gasoline engine used in most 2013 Civic trims — the Hybrid and Natural Gas versions differ. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown; check your owner's manual for it. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        )
+    ]
+
+    static func lookup(make: String, model: String) -> VehicleFactSheet? {
+        all.first {
+            $0.make.caseInsensitiveCompare(make) == .orderedSame &&
+            $0.model.caseInsensitiveCompare(model) == .orderedSame
+        }
+    }
+}
+
+// MARK: - Maintenance Guide (Learn tab: "Show Me How")
+
+/// Universal, vehicle-independent basic-maintenance procedures — safe to
+/// write without per-vehicle research since the steps (checking a
+/// dipstick, reading a tire gauge, connecting jumper cables) are the same
+/// well-established, non-controversial process across virtually every
+/// gasoline passenger vehicle. Same tier as the general disclaimers
+/// already in the app: reviewed general procedure, not vehicle-specific
+/// guidance.
+struct MaintenanceGuide: Identifiable {
+    let id = UUID()
+    let title: String
+    let icon: String
+    let estimatedTime: String
+    let steps: [String]
+    let safetyNote: String?
+}
+
+extension MaintenanceGuide {
+    static let all: [MaintenanceGuide] = [
+        MaintenanceGuide(
+            title: "Check your engine oil level",
+            icon: "drop.fill",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Park on level ground and let the engine sit for at least 5–10 minutes after driving so the oil can settle back into the pan.",
+                "Open the hood and locate the oil dipstick — it usually has a brightly colored handle, often yellow or orange.",
+                "Pull the dipstick out, wipe it clean with a rag or paper towel, then push it all the way back in.",
+                "Pull it out again and check where the oil sits relative to the two marks or the hatched area near the tip.",
+                "If the level is below the low mark, add oil a little at a time through the oil fill cap, rechecking after each addition — it's easy to overfill."
+            ],
+            safetyNote: "Wait for the engine to cool before touching anything under the hood — components can stay hot for a while after driving."
+        ),
+        MaintenanceGuide(
+            title: "Check your tire pressure",
+            icon: "gauge.with.needle.fill",
+            estimatedTime: "10 minutes",
+            steps: [
+                "Check tires when they're cold — ideally before driving, or at least 3 hours after the vehicle has been driven.",
+                "Find your vehicle's recommended pressure on the sticker inside the driver's door jamb, not the number printed on the tire itself (that's the tire's maximum, not the recommended setting).",
+                "Remove the valve cap and press a tire gauge firmly onto the valve stem until the hissing stops.",
+                "Read the pressure and compare it to the recommended number.",
+                "Add air in short bursts if low, or press the small pin in the gauge tip to release air if too high, rechecking after each adjustment.",
+                "Don't forget the spare tire, if your vehicle has one — it's often overlooked and can be critically low."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Jump-start a dead battery",
+            icon: "bolt.fill",
+            estimatedTime: "10–15 minutes",
+            steps: [
+                "Position the working vehicle close enough for the cables to reach, but not touching either vehicle.",
+                "Turn off both vehicles and engage the parking brake on both.",
+                "Connect the red (positive) clamp to the dead battery's positive terminal, then the other red clamp to the working battery's positive terminal.",
+                "Connect the black (negative) clamp to the working battery's negative terminal, then the other black clamp to an unpainted metal surface on the dead vehicle's engine block — not to the dead battery itself.",
+                "Start the working vehicle and let it run for a few minutes.",
+                "Try starting the dead vehicle. If it starts, let both run for several minutes before disconnecting the cables in the reverse order you connected them.",
+                "If it doesn't start after a couple of tries, the battery or another component may need a mechanic's attention rather than another jump."
+            ],
+            safetyNote: "Car batteries contain acid and can produce explosive gas. Keep sparks and flames away, don't lean over the battery while connecting cables, and stop if you smell burning or see smoke."
+        )
+    ]
+}
