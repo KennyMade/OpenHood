@@ -388,9 +388,9 @@ struct VehicleCatalog {
             name: "Toyota",
             region: .japanese,
             models: [
-                VehicleModel(name: "Corolla"),
-                VehicleModel(name: "Camry"),
-                VehicleModel(name: "Tacoma"),
+                VehicleModel(name: "Corolla", availability: .supported),
+                VehicleModel(name: "Camry", availability: .supported),
+                VehicleModel(name: "Tacoma", availability: .supported),
                 VehicleModel(
                     name: "4Runner",
                     productionYearRange: 1984...2026,
@@ -855,6 +855,116 @@ extension VehicleFactSheet {
             tirePressureFront: "33 PSI",
             tirePressureRear: "33 PSI",
             notes: "These figures are for the 1.8L 4-cylinder gasoline engine used in most 2013 Civic trims — the Hybrid and Natural Gas versions differ. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown; check your owner's manual for it. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "RAV4",
+            engineOilType: "0W-16 full synthetic (some references list 0W-20 as an acceptable substitute)",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink), or an equivalent",
+            coolantCapacity: "Roughly 7.3 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder (A25A-FKS) used in the 2019 RAV4. Tire pressure commonly ranges 33–36 PSI by trim and tire size — always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "CR-V",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 3.7 quarts with a filter change",
+            coolantType: "Honda Long-Life Antifreeze/Coolant Type 2 (blue)",
+            coolantCapacity: nil,
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 1.5L turbocharged 4-cylinder used in most 2019 CR-V trims. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown; check your owner's manual for it. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Camry",
+            engineOilType: "0W-16 full synthetic",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink/red POAT formula), or an equivalent",
+            coolantCapacity: "Roughly 6.4 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in the 2019 Camry — hybrid and V6 versions differ. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "Accord",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 3.4 quarts with a filter change",
+            coolantType: "Honda Long-Life Antifreeze/Coolant Type 2 (blue)",
+            coolantCapacity: "Roughly 6.3 quarts (CVT models)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 1.5L turbocharged 4-cylinder used in most 2019 Accord trims — the 2.0L turbo and hybrid versions differ. Tire pressure commonly ranges 32–35 PSI by trim. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "F-150",
+            engineOilType: "Motorcraft 5W-20 synthetic blend",
+            engineOilCapacity: "Roughly 8.9 quarts with a filter change",
+            coolantType: "Motorcraft Orange concentrated OAT antifreeze/coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.0L V8 used in the 2019 F-150 — other engine options (2.7L/3.5L EcoBoost, 3.3L V6) differ. Trucks with the Heavy-Duty Payload Package call for 40 PSI front and rear instead. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Silverado",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 8 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 17.4 quarts (dry fill, mixed 50/50 with distilled water)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.3L V8 used in the 2019 Silverado 1500 — other engine options differ. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Corolla",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 1.8L 4-cylinder used in the 2019 Corolla — the hybrid version differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Rogue",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.9 quarts with a filter change",
+            coolantType: "Nissan Long Life Antifreeze/Coolant (green), or an equivalent",
+            coolantCapacity: "Roughly 6.5 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in the 2019 Rogue. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ram",
+            model: "1500",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "Roughly 7 quarts with a filter change",
+            coolantType: "Mopar MS-90032 OAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.7L HEMI V8 used in the 2019 Ram 1500 — other engine options (3.6L V6, eTorque) differ. Tire pressure commonly ranges 32–36 PSI by trim and payload package. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Jeep",
+            model: "Wrangler",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5 quarts with a filter change",
+            coolantType: "Mopar OAT coolant (typically orange, 5-year/100,000-mile formula) — not independently confirmed this pass",
+            coolantCapacity: "Roughly 10.7 quarts",
+            tirePressureFront: "37 PSI",
+            tirePressureRear: "37 PSI",
+            notes: "These figures are for the 3.6L V6 used in the 2019 Wrangler JL. Coolant type and tire pressure were not independently confirmed with full confidence for this pass — both vary meaningfully with the Wrangler's optional tire sizes. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
         )
     ]
 
