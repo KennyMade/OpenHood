@@ -1,5 +1,67 @@
 import Foundation
 
+/// One piece of work the owner remembers having done.
+///
+/// `timeframe` is the point of this type. Knowing that brakes were done
+/// says very little on its own — brakes done last month and brakes done
+/// six years ago mean opposite things, and almost every maintenance
+/// interval is defined by time or distance rather than by whether the job
+/// was ever performed. The maintenance screens previously captured only
+/// the "what", which is the half that can't be acted on.
+///
+/// Deliberately a coarse timeframe rather than an exact date: people
+/// genuinely do not remember the day they had spark plugs done, and
+/// forcing a date picker would either stall them or collect a confident
+/// answer that isn't true. A range they can actually stand behind is more
+/// useful than a precise number they guessed at.
+struct VehicleServiceRecord: Identifiable, Codable, Equatable, Hashable {
+    let id: UUID
+    /// Display name of the work, e.g. "Brakes". Stored as text rather than
+    /// as the MaintenanceService enum so a record survives that list being
+    /// reordered or renamed later, and so free-text entries fit here too.
+    var service: String
+    /// Coarse, owner-reportable timeframe. Nil means they told us the work
+    /// was done but not when — still worth keeping, and worth showing as
+    /// "timing not recorded" rather than silently implying it was recent.
+    var timeframe: String?
+    /// Free-text detail, used by the "I know most of it" screen where
+    /// people describe several jobs in their own words.
+    var note: String?
+
+    init(
+        id: UUID = UUID(),
+        service: String,
+        timeframe: String? = nil,
+        note: String? = nil
+    ) {
+        self.id = id
+        self.service = service
+        self.timeframe = timeframe
+        self.note = note
+    }
+
+    /// The choices offered for `timeframe`, ordered newest to oldest.
+    /// "I don't remember" is a real, first-class answer here for the same
+    /// reason it is throughout the diagnostic flow — an honest unknown
+    /// beats a pressured guess.
+    static let timeframeOptions = [
+        "Within the last 6 months",
+        "6 to 12 months ago",
+        "1 to 2 years ago",
+        "More than 2 years ago",
+        "I don't remember"
+    ]
+
+    /// How this reads in a list. Keeps the "when" attached to the "what"
+    /// everywhere it's displayed, so the two can't drift apart in the UI.
+    var displayLine: String {
+        guard let timeframe, !timeframe.isEmpty else {
+            return "\(service) — timing not recorded"
+        }
+        return "\(service) — \(timeframe)"
+    }
+}
+
 struct SavedVehicle: Identifiable, Codable, Equatable {
     let id: UUID
     var make: String
@@ -12,6 +74,21 @@ struct SavedVehicle: Identifiable, Codable, Equatable {
     var transmission: String?
     var trim: String?
     var mileage: Int?
+    /// Work the owner told OpenHood about during setup.
+    ///
+    /// This existed nowhere before. The maintenance screens asked "how much
+    /// do you know about its recent maintenance?", let people type notes or
+    /// tick off services, and then discarded every answer — the selections
+    /// were local view state, `SavedVehicle` had no field to put them in,
+    /// and the Continue button did exactly what Skip did. That is why a
+    /// person could never see what they had selected: it was never saved.
+    ///
+    /// Optional rather than a defaulted array on purpose: Swift's
+    /// synthesized `Decodable` does not fall back to a property's default
+    /// when a key is missing, so a non-Optional here would fail to decode
+    /// every vehicle saved before this field existed. Same pattern the
+    /// incident snapshot uses for its added fields.
+    var serviceHistory: [VehicleServiceRecord]?
     var profileVerification: VehicleProfileVerification
 
     init(
@@ -26,6 +103,7 @@ struct SavedVehicle: Identifiable, Codable, Equatable {
         transmission: String? = nil,
         trim: String? = nil,
         mileage: Int? = nil,
+        serviceHistory: [VehicleServiceRecord]? = nil,
         profileVerification: VehicleProfileVerification
     ) {
         self.id = id
@@ -39,6 +117,7 @@ struct SavedVehicle: Identifiable, Codable, Equatable {
         self.transmission = transmission
         self.trim = trim
         self.mileage = mileage
+        self.serviceHistory = serviceHistory
         self.profileVerification = profileVerification
     }
 }
@@ -57,6 +136,7 @@ extension SavedVehicle {
             transmission: Self.knownValue(draft.transmission),
             trim: Self.knownValue(draft.trim),
             mileage: Int(draft.mileage.filter(\.isNumber)),
+            serviceHistory: draft.serviceHistory.isEmpty ? nil : draft.serviceHistory,
             profileVerification: draft.profileVerification
         )
     }
@@ -89,6 +169,7 @@ extension VehicleOnboardingData {
         transmission = savedVehicle.transmission ?? ""
         trim = savedVehicle.trim ?? ""
         mileage = savedVehicle.mileage?.formatted() ?? ""
+        serviceHistory = savedVehicle.serviceHistory ?? []
         profileVerification = savedVehicle.profileVerification
     }
 

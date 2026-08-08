@@ -19,6 +19,10 @@ final class VehicleOnboardingData: ObservableObject {
     @Published var transmission = ""
     @Published var trim = ""
     @Published var mileage = ""
+    /// Work the owner reported during setup. Lives here so the maintenance
+    /// screens have somewhere to write to — previously they had nowhere,
+    /// and every answer given on them was thrown away when the view closed.
+    @Published var serviceHistory: [VehicleServiceRecord] = []
     @Published var profileVerification: VehicleProfileVerification = .verified
 
     var vehicleName: String {
@@ -1487,6 +1491,7 @@ struct MaintenanceMemoryView: View {
     @EnvironmentObject private var onboardingSession: OnboardingSession
 
     @State private var maintenanceNotes = ""
+    @State private var notesTimeframe: String?
 
     var body: some View {
         ScrollView {
@@ -1548,7 +1553,46 @@ struct MaintenanceMemoryView: View {
                         )
                 }
 
+                // Optional on purpose. The point of this screen is that
+                // people describe work loosely and often can't date each
+                // item, so a single overall timeframe is the most that can
+                // honestly be asked here — and it can be left blank.
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Roughly when was this work done?")
+                        .font(.headline)
+
+                    Text("Optional. Skip it if the work spans different times.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(VehicleServiceRecord.timeframeOptions, id: \.self) { option in
+                        Button {
+                            notesTimeframe = notesTimeframe == option ? nil : option
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(
+                                    systemName: notesTimeframe == option
+                                        ? "largecircle.fill.circle"
+                                        : "circle"
+                                )
+                                .foregroundStyle(
+                                    notesTimeframe == option ? Color.accentColor : .secondary
+                                )
+
+                                Text(option)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.primary)
+
+                                Spacer()
+                            }
+                            .padding(.vertical, 7)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 Button {
+                    saveNotes()
                     onboardingSession.complete(
                         vehicle: vehicle,
                         garageStore: garageStore
@@ -1584,6 +1628,23 @@ struct MaintenanceMemoryView: View {
         }
         .navigationTitle("Recent Work")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Stored as a single record holding the person's own wording. Splitting
+    /// their sentence into separate services would mean guessing at what
+    /// they meant, and this app's whole standard is not guessing — the raw
+    /// text is what they actually said, so that is what gets kept.
+    private func saveNotes() {
+        let trimmed = maintenanceNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        vehicle.serviceHistory = [
+            VehicleServiceRecord(
+                service: "Work described by owner",
+                timeframe: notesTimeframe,
+                note: trimmed
+            )
+        ]
     }
 }
 
@@ -1672,6 +1733,7 @@ struct MaintenanceServicesView: View {
     @EnvironmentObject private var onboardingSession: OnboardingSession
 
     @State private var selectedServices: Set<MaintenanceService> = []
+    @State private var timeframes: [MaintenanceService: String] = [:]
 
     var body: some View {
         ScrollView {
@@ -1692,18 +1754,38 @@ struct MaintenanceServicesView: View {
                 .padding(.bottom, 6)
 
                 ForEach(MaintenanceService.allCases) { service in
-                    Button {
-                        toggle(service)
-                    } label: {
-                        MaintenanceServiceCard(
-                            service: service,
-                            isSelected: selectedServices.contains(service)
-                        )
+                    VStack(spacing: 0) {
+                        Button {
+                            toggle(service)
+                        } label: {
+                            MaintenanceServiceCard(
+                                service: service,
+                                isSelected: selectedServices.contains(service)
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // The "when" this screen never asked for. It appears
+                        // only under a service the person actually picked, so
+                        // the page stays a simple list until they engage with
+                        // it — no wall of pickers for twelve services they
+                        // haven't chosen.
+                        if selectedServices.contains(service) {
+                            timeframePicker(for: service)
+                        }
                     }
-                    .buttonStyle(.plain)
+                }
+
+                // Plays back what has been selected so far. Previously there
+                // was no confirmation of any kind: you tapped items, the
+                // screen closed, and nothing you chose appeared anywhere in
+                // the app ever again.
+                if !selectedServices.isEmpty {
+                    selectionSummary
                 }
 
                 Button {
+                    saveSelections()
                     onboardingSession.complete(
                         vehicle: vehicle,
                         garageStore: garageStore
@@ -1727,6 +1809,9 @@ struct MaintenanceServicesView: View {
                 .disabled(selectedServices.isEmpty)
 
                 Button {
+                    // Genuinely records nothing, unlike Continue. Before this
+                    // change both buttons did exactly the same thing, because
+                    // neither one saved anything.
                     onboardingSession.complete(
                         vehicle: vehicle,
                         garageStore: garageStore
@@ -1747,9 +1832,91 @@ struct MaintenanceServicesView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    private func timeframePicker(for service: MaintenanceService) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("When was this done?")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            ForEach(VehicleServiceRecord.timeframeOptions, id: \.self) { option in
+                Button {
+                    timeframes[service] = option
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(
+                            systemName: timeframes[service] == option
+                                ? "largecircle.fill.circle"
+                                : "circle"
+                        )
+                        .foregroundStyle(
+                            timeframes[service] == option ? Color.accentColor : .secondary
+                        )
+
+                        Text(option)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+                    }
+                    .padding(.vertical, 7)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.top, 6)
+    }
+
+    private var selectionSummary: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("You've told OpenHood about")
+                .font(.headline)
+
+            ForEach(orderedSelections) { record in
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+
+                    Text(record.displayLine)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    /// Built in the order services are listed rather than Set order, so the
+    /// summary doesn't reshuffle itself every time something is tapped.
+    private var orderedSelections: [VehicleServiceRecord] {
+        MaintenanceService.allCases
+            .filter { selectedServices.contains($0) }
+            .map {
+                VehicleServiceRecord(
+                    service: $0.rawValue,
+                    timeframe: timeframes[$0]
+                )
+            }
+    }
+
+    private func saveSelections() {
+        vehicle.serviceHistory = orderedSelections
+    }
+
     private func toggle(_ service: MaintenanceService) {
         if selectedServices.contains(service) {
             selectedServices.remove(service)
+            timeframes[service] = nil
         } else {
             selectedServices.insert(service)
         }
@@ -3063,9 +3230,17 @@ struct MaintenanceSummaryCard: View {
 
 // MARK: - Service History
 
+/// Shows the work an owner reported. This card previously took no data at
+/// all and was hardcoded to read "No records added yet" — which was
+/// accurate only by accident, since nothing anywhere in the app was
+/// capable of saving a record for it to show. It also wasn't rendered
+/// anywhere. Both halves are fixed: it now takes real records, and the
+/// vehicle detail screen displays it.
 struct ServiceHistoryCard: View {
+    var records: [VehicleServiceRecord] = []
+
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(alignment: records.isEmpty ? .center : .top, spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.primary.opacity(0.08))
@@ -3076,15 +3251,39 @@ struct ServiceHistoryCard: View {
             }
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("No records added yet")
+                if records.isEmpty {
+                    Text("No records added yet")
+                        .font(.headline)
+
+                    Text(
+                        "Log maintenance, repairs, inspections, and receipts."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                } else {
+                    Text(
+                        records.count == 1
+                            ? "1 item on record"
+                            : "\(records.count) items on record"
+                    )
                     .font(.headline)
 
-                Text(
-                    "Log maintenance, repairs, inspections, and receipts."
-                )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
+                    ForEach(records) { record in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(record.displayLine)
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+
+                            if let note = record.note, !note.isEmpty {
+                                Text(note)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
             }
 
             Spacer()

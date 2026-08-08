@@ -273,6 +273,16 @@ struct VehicleDetailView: View {
                     .buttonStyle(.plain)
                 }
 
+                // Where a person can finally see what they told OpenHood
+                // during setup. Until now those answers were discarded on
+                // the way in and had no screen on the way out.
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Service history")
+                        .font(.headline)
+
+                    ServiceHistoryCard(records: vehicle.serviceHistory ?? [])
+                }
+
                 VStack(spacing: 0) {
                     GarageDetailRow(title: "Trim", value: vehicle.trim ?? "Not confirmed")
                     Divider()
