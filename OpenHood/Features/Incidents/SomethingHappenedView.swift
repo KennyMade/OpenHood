@@ -285,7 +285,12 @@ private struct IncidentIntakeView: View {
                 },
                 onDiagnose: {
                     guard path.last == .shopOrDiagnose else { return }
-                    path.append(.observations)
+                    // Straight to "tell me what happened". The checklist used
+                    // to come first, so a person had to categorise their own
+                    // problem across eight checkboxes before they were allowed
+                    // to say it in words. It still exists, but only as the
+                    // fallback for text the router can't place.
+                    path.append(.description)
                 }
             )
         case .observations:
@@ -293,7 +298,7 @@ private struct IncidentIntakeView: View {
                 selections: $incident.observationTypes,
                 onChange: saveDraft
             ) {
-                appendIfNeeded(.description)
+                advanceNoiseIntake()
             }
         case .noiseQuestion(let index):
             noiseQuestionDestination(index: index)
@@ -310,7 +315,7 @@ private struct IncidentIntakeView: View {
                 description: $incident.userDescription,
                 onChange: saveDraft
             ) {
-                advanceNoiseIntake()
+                applyDescriptionRouteAndAdvance()
             }
         case .recentWork:
             IncidentRecentWorkView(
@@ -999,6 +1004,58 @@ private struct IncidentIntakeView: View {
         case "The engine actually shuts off or dies": .engineWillNotStayRunning
         default: nil
         }
+    }
+
+    /// Reads what the person typed, fills in every question it can answer
+    /// from that, and jumps to the first one it genuinely can't.
+    ///
+    /// This is what turns the intake from a form into a conversation. Someone
+    /// who writes "engine turns over slowly when I start it" has already told
+    /// us the observation type and the crank behaviour; asking them to
+    /// re-enter both through menus is the app not listening.
+    ///
+    /// Two rules keep this safe:
+    ///
+    /// 1. Router answers never overwrite something the person chose. If they
+    ///    back up and edit their description, their own taps still win.
+    /// 2. The router refuses to write any answer that triggers an urgent
+    ///    escalation (see IncidentDescriptionRouter.forbiddenAnswers), so
+    ///    the screens that decide STOP DRIVING are always reached by hand.
+    ///
+    /// When the text matches nothing at all, the observation checklist is
+    /// shown exactly as before — an unrecognised description falls back, it
+    /// does not guess.
+    private func applyDescriptionRouteAndAdvance() {
+        let route = IncidentDescriptionRouter.route(incident.userDescription)
+
+        guard !route.isEmpty else {
+            appendIfNeeded(.observations)
+            return
+        }
+
+        // observationTypes is an Array, not a Set — append only what's new so
+        // a person who backs up and edits doesn't accumulate duplicates.
+        for type in route.observationTypes where !incident.observationTypes.contains(type) {
+            incident.observationTypes.append(type)
+        }
+
+        func merge(_ new: [String: String], into existing: inout [String: String]?) {
+            guard !new.isEmpty else { return }
+            var answers = existing ?? [:]
+            for (key, value) in new where answers[key] == nil {
+                answers[key] = value
+            }
+            existing = answers
+        }
+
+        merge(route.startingAnswers, into: &incident.startingFollowUpAnswers)
+        merge(route.noiseAnswers, into: &incident.noiseFollowUpAnswers)
+        merge(route.warningAnswers, into: &incident.warningFollowUpAnswers)
+        merge(route.fluidAnswers, into: &incident.fluidFollowUpAnswers)
+        merge(route.drivingChangeAnswers, into: &incident.drivingChangeFollowUpAnswers)
+
+        saveDraft()
+        advanceNoiseIntake()
     }
 
     private func advanceStartingIntake() {
