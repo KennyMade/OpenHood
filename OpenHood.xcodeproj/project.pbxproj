@@ -6,17 +6,54 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		97D1CAF030195D810059BAC9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97D1CAEC30195D810059BAC9 /* Assets.xcassets */; };
+		97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D1CAED30195D810059BAC9 /* ContentView.swift */; };
+		97D1CAF230195D810059BAC9 /* OpenHoodApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D1CAEE30195D810059BAC9 /* OpenHoodApp.swift */; };
+		97FEA3F4301A8BC900C608B2 /* VehicleCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FEA3F3301A8BC900C608B2 /* VehicleCatalog.swift */; };
+		97FEA3F6301A94F200C608B2 /* VehicleKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FEA3F5301A94F200C608B2 /* VehicleKnowledge.swift */; };
+		A10000013020000000000001 /* VehiclePlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000023020000000000001 /* VehiclePlanView.swift */; };
+		A20000013020000000000001 /* SomethingHappenedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000023020000000000001 /* SomethingHappenedView.swift */; };
+		B10000013030000000000001 /* SavedVehicle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000023030000000000001 /* SavedVehicle.swift */; };
+		B10000033030000000000001 /* GarageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000043030000000000001 /* GarageStore.swift */; };
+		B10000053030000000000001 /* GaragePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000063030000000000001 /* GaragePersistence.swift */; };
+		C10000013040000000000001 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000023040000000000001 /* AppRootView.swift */; };
+		C10000033040000000000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000043040000000000001 /* MainTabView.swift */; };
+		C10000053040000000000001 /* GarageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000063040000000000001 /* GarageView.swift */; };
+		D10000013050000000000001 /* VehicleIncident.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000023050000000000001 /* VehicleIncident.swift */; };
+		D10000033050000000000001 /* IncidentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000043050000000000001 /* IncidentStore.swift */; };
+		D10000053050000000000001 /* IncidentPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000063050000000000001 /* IncidentPersistence.swift */; };
+		E10000013060000000000001 /* IncidentGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000023060000000000001 /* IncidentGuidance.swift */; };
+		E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000043060000000000001 /* IncidentGuidanceEngine.swift */; };
+		F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */; };
+		H10000013090000000000001 /* IncidentEvidenceGatedKnowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */; };
+		G10000013080000000000001 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = G10000023080000000000001 /* ProfileSettingsView.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		97D1CADB301945160059BAC9 /* OpenHood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenHood.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97D1CAEC30195D810059BAC9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		97D1CAED30195D810059BAC9 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		97D1CAEE30195D810059BAC9 /* OpenHoodApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenHoodApp.swift; sourceTree = "<group>"; };
+		97FEA3F3301A8BC900C608B2 /* VehicleCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleCatalog.swift; sourceTree = "<group>"; };
+		97FEA3F5301A94F200C608B2 /* VehicleKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleKnowledge.swift; sourceTree = "<group>"; };
+		A10000023020000000000001 /* VehiclePlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehiclePlanView.swift; sourceTree = "<group>"; };
+		A20000023020000000000001 /* SomethingHappenedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SomethingHappenedView.swift; sourceTree = "<group>"; };
+		B10000023030000000000001 /* SavedVehicle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedVehicle.swift; sourceTree = "<group>"; };
+		B10000043030000000000001 /* GarageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageStore.swift; sourceTree = "<group>"; };
+		B10000063030000000000001 /* GaragePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaragePersistence.swift; sourceTree = "<group>"; };
+		C10000023040000000000001 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		C10000043040000000000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		C10000063040000000000001 /* GarageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageView.swift; sourceTree = "<group>"; };
+		D10000023050000000000001 /* VehicleIncident.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleIncident.swift; sourceTree = "<group>"; };
+		D10000043050000000000001 /* IncidentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentStore.swift; sourceTree = "<group>"; };
+		D10000063050000000000001 /* IncidentPersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentPersistence.swift; sourceTree = "<group>"; };
+		E10000023060000000000001 /* IncidentGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidance.swift; sourceTree = "<group>"; };
+		E10000043060000000000001 /* IncidentGuidanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceEngine.swift; sourceTree = "<group>"; };
+		F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentGuidanceKnowledge.swift; sourceTree = "<group>"; };
+		H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentEvidenceGatedKnowledge.swift; sourceTree = "<group>"; };
+		G10000023080000000000001 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		97D1CADD301945160059BAC9 /* OpenHood */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenHood;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		97D1CAD8301945150059BAC9 /* Frameworks */ = {
@@ -32,8 +69,8 @@
 		97D1CAD2301945150059BAC9 = {
 			isa = PBXGroup;
 			children = (
-				97D1CADD301945160059BAC9 /* OpenHood */,
 				97D1CADC301945160059BAC9 /* Products */,
+				97D1CAEF30195D810059BAC9 /* OpenHood */,
 			);
 			sourceTree = "<group>";
 		};
@@ -43,6 +80,98 @@
 				97D1CADB301945160059BAC9 /* OpenHood.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		97D1CAEF30195D810059BAC9 /* OpenHood */ = {
+			isa = PBXGroup;
+			children = (
+				A10000033020000000000001 /* Features */,
+				B10000073030000000000001 /* Models */,
+				C10000073040000000000001 /* Navigation */,
+				B10000083030000000000001 /* Persistence */,
+				97D1CAEC30195D810059BAC9 /* Assets.xcassets */,
+				97D1CAED30195D810059BAC9 /* ContentView.swift */,
+				97D1CAEE30195D810059BAC9 /* OpenHoodApp.swift */,
+				97FEA3F3301A8BC900C608B2 /* VehicleCatalog.swift */,
+				97FEA3F5301A94F200C608B2 /* VehicleKnowledge.swift */,
+			);
+			path = OpenHood;
+			sourceTree = "<group>";
+		};
+		A10000033020000000000001 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				C10000083040000000000001 /* Garage */,
+				A20000033020000000000001 /* Incidents */,
+				A10000043020000000000001 /* Plan */,
+				G10000033080000000000001 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A10000043020000000000001 /* Plan */ = {
+			isa = PBXGroup;
+			children = (
+				A10000023020000000000001 /* VehiclePlanView.swift */,
+			);
+			path = Plan;
+			sourceTree = "<group>";
+		};
+		A20000033020000000000001 /* Incidents */ = {
+			isa = PBXGroup;
+			children = (
+				E10000043060000000000001 /* IncidentGuidanceEngine.swift */,
+				F10000023070000000000001 /* IncidentGuidanceKnowledge.swift */,
+				H10000023090000000000001 /* IncidentEvidenceGatedKnowledge.swift */,
+				A20000023020000000000001 /* SomethingHappenedView.swift */,
+			);
+			path = Incidents;
+			sourceTree = "<group>";
+		};
+		B10000073030000000000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E10000023060000000000001 /* IncidentGuidance.swift */,
+				D10000043050000000000001 /* IncidentStore.swift */,
+				B10000023030000000000001 /* SavedVehicle.swift */,
+				B10000043030000000000001 /* GarageStore.swift */,
+				D10000023050000000000001 /* VehicleIncident.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B10000083030000000000001 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				B10000063030000000000001 /* GaragePersistence.swift */,
+				D10000063050000000000001 /* IncidentPersistence.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		C10000073040000000000001 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				C10000023040000000000001 /* AppRootView.swift */,
+				C10000043040000000000001 /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		C10000083040000000000001 /* Garage */ = {
+			isa = PBXGroup;
+			children = (
+				C10000063040000000000001 /* GarageView.swift */,
+			);
+			path = Garage;
+			sourceTree = "<group>";
+		};
+		G10000033080000000000001 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				G10000023080000000000001 /* ProfileSettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -59,9 +188,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				97D1CADD301945160059BAC9 /* OpenHood */,
 			);
 			name = OpenHood;
 			packageProductDependencies = (
@@ -109,6 +235,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97D1CAF030195D810059BAC9 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +246,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000013040000000000001 /* AppRootView.swift in Sources */,
+				C10000033040000000000001 /* MainTabView.swift in Sources */,
+				C10000053040000000000001 /* GarageView.swift in Sources */,
+				B10000013030000000000001 /* SavedVehicle.swift in Sources */,
+				B10000033030000000000001 /* GarageStore.swift in Sources */,
+				B10000053030000000000001 /* GaragePersistence.swift in Sources */,
+				D10000033050000000000001 /* IncidentStore.swift in Sources */,
+				D10000053050000000000001 /* IncidentPersistence.swift in Sources */,
+				D10000013050000000000001 /* VehicleIncident.swift in Sources */,
+				E10000013060000000000001 /* IncidentGuidance.swift in Sources */,
+				E10000033060000000000001 /* IncidentGuidanceEngine.swift in Sources */,
+				F10000013070000000000001 /* IncidentGuidanceKnowledge.swift in Sources */,
+				H10000013090000000000001 /* IncidentEvidenceGatedKnowledge.swift in Sources */,
+				G10000013080000000000001 /* ProfileSettingsView.swift in Sources */,
+				97D1CAF130195D810059BAC9 /* ContentView.swift in Sources */,
+				A20000013020000000000001 /* SomethingHappenedView.swift in Sources */,
+				A10000013020000000000001 /* VehiclePlanView.swift in Sources */,
+				97FEA3F6301A94F200C608B2 /* VehicleKnowledge.swift in Sources */,
+				97FEA3F4301A8BC900C608B2 /* VehicleCatalog.swift in Sources */,
+				97D1CAF230195D810059BAC9 /* OpenHoodApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
