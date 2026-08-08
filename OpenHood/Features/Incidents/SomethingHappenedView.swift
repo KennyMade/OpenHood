@@ -961,7 +961,7 @@ private struct IncidentIntakeView: View {
             return []
         }
         return [
-            question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "Cranks slowly then stops", "It cranks and turns over, but never actually starts", "It starts up fine — my concern is how it runs afterward", "I’m not sure"]),
+            question("What happens when you try to start it?", key: IncidentStartingAnswerKey.crankBehavior, choices: ["Rapid clicking", "One single click", "No sound at all", "The engine turns over slowly, then stops", "The engine turns over normally, but never starts", "It starts up fine — my concern is how it runs afterward", "I’m not sure"]),
             question("Any other clues when it cranks but doesn’t start?", key: IncidentStartingAnswerKey.crankClues, choices: ["No unusual smell or sound", "Smell of gas/fuel while trying to start", "A clicking or ticking sound from the engine while cranking", "A recent check-engine light before this happened", "Cranks slower or takes longer to start in cold weather", "I’m not sure"]),
             question("What’s happening?", key: IncidentStartingAnswerKey.whatsHappening, choices: ["Rough or shaky idle, but the engine keeps running", "Occasional stumble or hesitation while driving, engine keeps running", "The engine actually shuts off or dies", "I’m not sure"]),
             // "Slipping" and "burning smell" are known-dangerous and now
@@ -1036,11 +1036,20 @@ private struct IncidentIntakeView: View {
     /// - Q3 (transmission) likewise requires a running car; slipping and a
     ///   burning smell cannot present on a vehicle that never starts.
     ///
-    /// "I'm not sure" deliberately keeps every question relevant — when we
-    /// don't know what the engine is doing, we shouldn't be pruning
-    /// questions, and the "I'm not sure" fallback records
-    /// (phase1.starting.electrical, phase1.starting.fuel-ignition,
-    /// phase1.transmission) all still resolve exactly as before.
+    /// "I'm not sure" keeps the two questions that might still narrow things
+    /// down, but NOT the transmission question. The first version of this fix
+    /// let "I'm not sure" through to everything, reasoning that we shouldn't
+    /// prune when we don't know what the engine is doing. Watching someone
+    /// use it proved that wrong: they reported a hard start, answered "I'm
+    /// not sure" because the options said "cranks" and they'd have said
+    /// "turns over", and got asked about transmission slipping anyway — the
+    /// exact complaint this function was written to fix, reappearing through
+    /// the one door left open.
+    ///
+    /// Not knowing what the engine did is not a reason to ask about a
+    /// symptom that requires a running car. The person told us at the start
+    /// that the car has trouble starting; that alone rules the transmission
+    /// question out, whatever they answer here.
     private func startingQuestionIsRelevant(index: Int) -> Bool {
         guard index != 0 else { return true }
         guard let crankBehavior = incident.startingFollowUpAnswers?[IncidentStartingAnswerKey.crankBehavior] else {
@@ -1049,8 +1058,8 @@ private struct IncidentIntakeView: View {
         }
         switch crankBehavior {
         case "I’m not sure":
-            return true
-        case "Cranks slowly then stops", "It cranks and turns over, but never actually starts":
+            return index != 3
+        case "The engine turns over slowly, then stops", "The engine turns over normally, but never starts":
             // Engine is turning over but not catching: the clue question is
             // the one that matters (cold-weather cranking and fuel smell
             // both live there). Running-behavior and transmission are not

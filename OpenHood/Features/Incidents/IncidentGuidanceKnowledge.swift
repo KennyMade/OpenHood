@@ -530,11 +530,11 @@ enum IncidentGuidanceKnowledge {
             observations: [.startingOrRunningTrouble],
             required: [
                 .observation(.startingOrRunningTrouble),
-                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "The engine turns over slowly, then stops")
             ],
             support: [
                 .observation(.startingOrRunningTrouble),
-                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "The engine turns over slowly, then stops")
             ],
             contradict: [],
             area: .startingAndElectrical,
@@ -2702,13 +2702,13 @@ enum IncidentGuidanceKnowledge {
             observations: [.warningLightOrMessage, .startingOrRunningTrouble],
             required: [
                 .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Battery or charging symbol"),
-                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "The engine turns over slowly, then stops")
             ],
             support: [
                 .observation(.warningLightOrMessage),
                 .observation(.startingOrRunningTrouble),
                 .warningAnswer(key: IncidentWarningAnswerKey.light, value: "Battery or charging symbol"),
-                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "Cranks slowly then stops")
+                .startingAnswer(key: IncidentStartingAnswerKey.crankBehavior, value: "The engine turns over slowly, then stops")
             ],
             contradict: [],
             area: .startingAndElectrical,

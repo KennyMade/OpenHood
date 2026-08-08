@@ -85,7 +85,14 @@ struct AddVehicleOnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            AddVehicleView()
+            // Goes straight to picking a manufacturer. AddVehicleView used to
+            // sit here as an interstitial whose only content was one card
+            // reading "Choose manually" — a whole screen and an extra tap to
+            // reach the single thing it could do. It existed to leave room
+            // for VIN scanning, which isn't built and isn't planned yet; the
+            // screen can come back the day there's a second option to choose
+            // between.
+            ManufacturerView()
                 .navigationTitle("Add Vehicle")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {

@@ -76,13 +76,19 @@ struct WelcomeView: View {
 
             Spacer()
 
+            // Carries the app icon's own colours rather than a neutral grey
+            // circle with a stock SF Symbol in it. The old treatment read as
+            // a different, generic logo sitting where the OpenHood mark
+            // should be, which is exactly backwards on the first screen a
+            // person ever sees.
             ZStack {
                 Circle()
-                    .fill(Color.primary.opacity(0.08))
+                    .fill(Color.accentColor)
                     .frame(width: 126, height: 126)
 
                 Image(systemName: "car.side.fill")
                     .font(.system(size: 62))
+                    .foregroundStyle(.white)
             }
 
             Text("OpenHood")
@@ -940,14 +946,14 @@ struct VehicleConfirmationView: View {
                             .fontWeight(.bold)
                             .multilineTextAlignment(.center)
 
-                        Text(
-                            vehicle.profileVerification == .verified
-                                ? "OpenHood recognizes this vehicle and filled in what it knows."
-                                : "OpenHood has added this vehicle to your garage."
-                        )
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        // The details are listed directly below this line, so
+                        // narrating that they were filled in just describes
+                        // what the person can already see. Says what happens
+                        // next instead.
+                        Text("Added to your garage.")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
                 }
                 .padding(.top, 8)
