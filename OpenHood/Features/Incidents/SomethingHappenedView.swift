@@ -1499,19 +1499,70 @@ private struct IncidentIntakeView: View {
     }
 }
 
+/// The safety gate.
+///
+/// This screen used to open with all ten `IncidentSafetySelection` cases at
+/// once — smoke or fire, brakes unsafe, transmission slipping, and so on. It
+/// is the first thing a person sees after tapping "Something happened", and
+/// as a greeting it was a wall of worst-case scenarios that most people had
+/// to scroll past to reach "None of these".
+///
+/// It cannot simply be removed. It is the screen standing between someone
+/// with an actual car fire and a diagnostic questionnaire, and every urgent
+/// path in the app starts here.
+///
+/// So it becomes one question. "No" — the overwhelmingly common answer — is
+/// a single tap straight into the normal flow. "Yes, or I'm not sure" reveals
+/// the exact same ten options, routing into the exact same urgent handling.
+/// Nothing behind this door changed; there is just a door now.
 private struct IncidentSafetyQuestionView: View {
     let onSelect: (IncidentSafetySelection) -> Void
 
+    @State private var showingDangerousOptions = false
+
     var body: some View {
-        IncidentQuestionLayout(
-            title: "What is happening right now?",
-            message: "Choose the closest answer. Safety comes first."
-        ) {
-            ForEach(IncidentSafetySelection.allCases) { selection in
+        if showingDangerousOptions {
+            IncidentQuestionLayout(
+                title: "Which is closest?",
+                message: "Pick the one that best matches. If none fit, choose “I’m not sure”."
+            ) {
+                // Only the eight genuinely dangerous cases here. Filtering on
+                // `.urgent` specifically, not "not routine" — `.unsure` is
+                // `.caution`, so a looser filter would render it twice, once
+                // in this loop and once as the explicit option below.
+                // "None of these" is already covered by No on the gate.
+                ForEach(IncidentSafetySelection.allCases.filter { $0.urgency == .urgent }) { selection in
+                    Button {
+                        onSelect(selection)
+                    } label: {
+                        IncidentChoiceCard(title: selection.title)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Button {
-                    onSelect(selection)
+                    onSelect(.unsure)
                 } label: {
-                    IncidentChoiceCard(title: selection.title)
+                    IncidentChoiceCard(title: IncidentSafetySelection.unsure.title)
+                }
+                .buttonStyle(.plain)
+            }
+        } else {
+            IncidentQuestionLayout(
+                title: "Is anything dangerous happening right now?",
+                message: "Smoke or fire, a strong fuel smell, overheating, or brakes or steering that don’t feel right."
+            ) {
+                Button {
+                    onSelect(.noneOfThese)
+                } label: {
+                    IncidentChoiceCard(title: "No, nothing like that")
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    showingDangerousOptions = true
+                } label: {
+                    IncidentChoiceCard(title: "Yes, or I’m not sure")
                 }
                 .buttonStyle(.plain)
             }
