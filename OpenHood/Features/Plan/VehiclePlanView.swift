@@ -1258,6 +1258,7 @@ struct PlanBuilderPlaceholderView: View {
             return [
                 PlanFollowUpQuestion(
                     title: serviceHistoryKey,
+                    subtitle: knownServiceHistorySubtitle,
                     options: [
                         PlanQuestionOption("Complete"),
                         PlanQuestionOption("Some"),
@@ -1297,6 +1298,24 @@ struct PlanBuilderPlaceholderView: View {
                 )
             ]
         }
+    }
+
+    /// Plays back the work the owner already told OpenHood about during
+    /// setup, right on the question that asks how complete their service
+    /// history is. Same principle as pre-filling mileage: the app should
+    /// not act as though it has never met this vehicle. Asking someone to
+    /// characterise their service history while showing them nothing of
+    /// what they already recorded is how the app ends up feeling like a
+    /// stranger every time it's opened.
+    ///
+    /// Returns nil when there's nothing on record, which leaves the
+    /// question exactly as it was rather than showing an empty prompt.
+    private var knownServiceHistorySubtitle: String? {
+        let recorded = vehicle.serviceHistory
+        guard !recorded.isEmpty else { return nil }
+
+        let lines = recorded.map(\.displayLine).joined(separator: " · ")
+        return "Already on record for this vehicle: \(lines). Answer for the history overall, including anything not listed here."
     }
 
     private func reliabilityConcernOptions(
