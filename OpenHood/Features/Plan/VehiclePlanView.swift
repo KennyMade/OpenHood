@@ -1461,6 +1461,13 @@ struct PlanBuilderPlaceholderView: View {
         return followUpQuestions[questionIndex]
     }
 
+    /// The app already collected mileage when the vehicle was added, and
+    /// stores it on the saved vehicle — asking a person to type the same
+    /// number in again is the app forgetting what it was told, which is
+    /// the opposite of what a garage-aware tool should do. Pre-fill it
+    /// from the saved vehicle so the normal case is a single confirming
+    /// tap, while still leaving the field editable, because mileage is the
+    /// one saved detail that genuinely drifts between sessions.
     private var mileageQuestion: some View {
         shortTextQuestion(
             title: mileageKey,
@@ -1471,6 +1478,10 @@ struct PlanBuilderPlaceholderView: View {
         ) {
             answers[mileageKey] = mileage.trimmingCharacters(in: .whitespacesAndNewlines)
             step += 1
+        }
+        .onAppear {
+            guard mileage.isEmpty else { return }
+            mileage = vehicle.mileage.trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 

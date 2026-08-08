@@ -732,8 +732,29 @@ private struct IncidentIntakeView: View {
                 question("Which best describes the smell?", key: IncidentFluidAnswerKey.odor, choices: ["Sweet or coolant-like", "Musty or moldy", "Electrical or burning plastic", "Exhaust", "Rotten egg or sulfur", "I’m not sure"])
             )
         }
-        if (incident.observationTypes.contains(.visible) && incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Smoke")
-            || incident.observationTypes.contains(.smell) {
+        // Real-user bug fix, same class as the starting-flow relevance fix
+        // (see startingQuestionIsRelevant). This used to also fire for ANY
+        // .smell report — "|| incident.observationTypes.contains(.smell)".
+        // That asked a person who reported a musty smell, with no smoke
+        // anywhere, what color their exhaust smoke was, and gave them no
+        // truthful way to say "there wasn't any" — the closest option was
+        // "I’m not sure". That answer is exactly what phase1.exhaust-smoke
+        // requires, so it matched, scored 5, and TIED with the correct
+        // record (phase1.fluid-smell.unusual-odor.musty, also 5). Ties break
+        // alphabetically by record id (see IncidentGuidanceEngine's sort),
+        // and "phase1.exhaust-smoke" sorts before "phase1.fluid-smell...",
+        // so a mildewy cabin air filter was being reported to the user as an
+        // exhaust-smoke problem — burning oil, coolant, or a rich fuel
+        // mixture. Wrong system, wrong severity, wrong repair.
+        //
+        // The question is now asked only when the person actually saw
+        // smoke, which is the only situation where "what color was it"
+        // has a true premise. Someone reporting smoke AND a smell still
+        // reaches it through the .visible branch; the exhaust-smoke records
+        // still list .smell in their observations, so a smoke report that
+        // also involves an odor still scores the same as before.
+        if incident.observationTypes.contains(.visible),
+           incident.fluidFollowUpAnswers?[IncidentFluidAnswerKey.whatWasVisible] == "Smoke" {
             questions.append(
                 question("What color was the exhaust smoke?", key: IncidentFluidAnswerKey.exhaustSmokeColor, choices: ["White or light gray", "Blue or blue-gray", "Black", "I’m not sure"])
             )
