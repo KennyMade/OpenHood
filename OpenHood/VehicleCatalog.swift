@@ -965,6 +965,105 @@ extension VehicleFactSheet {
             tirePressureFront: "37 PSI",
             tirePressureRear: "37 PSI",
             notes: "These figures are for the 3.6L V6 used in the 2019 Wrangler JL. Coolant type and tire pressure were not independently confirmed with full confidence for this pass — both vary meaningfully with the Wrangler's optional tire sizes. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mazda",
+            model: "CX-5",
+            engineOilType: "0W-20 full synthetic (non-turbo); 5W-30 full synthetic on the turbocharged engine option",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change (non-turbo); roughly 5.1 quarts on the turbo",
+            coolantType: "Mazda FL-22 coolant, or an equivalent long-life coolant",
+            coolantCapacity: "Roughly 7.9 quarts",
+            tirePressureFront: "34 PSI",
+            tirePressureRear: "34 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 CX-5 trims — the turbocharged Signature trim differs on oil. Tire pressure is commonly 34 PSI on 17-inch wheels or 36 PSI on 19-inch wheels. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Subaru",
+            model: "Outback",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.1 quarts with a filter change",
+            coolantType: "Subaru Super Coolant (blue), or an equivalent long-life coolant",
+            coolantCapacity: "Roughly 6.9 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 Outback trims — the 3.6L 6-cylinder option differs. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "BMW",
+            model: "3 Series",
+            engineOilType: "0W-20 or 5W-30 full synthetic, BMW Longlife-01 approved",
+            engineOilCapacity: "Roughly 5.5 quarts with a filter change",
+            coolantType: "BMW-approved blue coolant (G48 or equivalent) — not independently confirmed this pass",
+            coolantCapacity: nil,
+            tirePressureFront: "Commonly 32–36 PSI — check door placard, varies significantly by tire size and run-flat vs standard tires",
+            tirePressureRear: "Commonly 32–36 PSI — check door placard, varies significantly by tire size and run-flat vs standard tires",
+            notes: "These figures are for the 330i's 2.0L turbocharged 4-cylinder used in the 2019 3 Series — the M340i and M3 differ. Coolant capacity and an exact tire pressure figure were not independently confirmed with full confidence for this pass. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mercedes-Benz",
+            model: "C-Class",
+            engineOilType: "0W-40 full synthetic, Mercedes-Benz MB 229.5 approved",
+            engineOilCapacity: "Roughly 6.3 quarts with a filter change",
+            coolantType: "Mercedes-Benz MB 325.6 pink Si-OAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "Commonly 32–36 PSI — check door placard, many trims use different front/rear staggered tire sizes",
+            tirePressureRear: "Commonly 32–36 PSI — check door placard, many trims use different front/rear staggered tire sizes",
+            notes: "These figures are for the C300's 2.0L turbocharged 4-cylinder used in the 2019 C-Class — the AMG C43/C63 differ. Coolant capacity and an exact tire pressure figure were not independently confirmed with full confidence for this pass. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Audi",
+            model: "A4",
+            engineOilType: "0W-30 full synthetic, VW 502.00 approved",
+            engineOilCapacity: "Roughly 5.5 quarts with a filter change",
+            coolantType: "Audi G12evo (or G13) long-life coolant",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.0T used in most 2019 A4 trims — the S4 differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Volkswagen",
+            model: "Jetta",
+            engineOilType: "0W-20 full synthetic, VW 508.00 approved",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "VW G12++ or G13 long-life coolant",
+            coolantCapacity: nil,
+            tirePressureFront: "36 PSI",
+            tirePressureRear: "36 PSI",
+            notes: "These figures are for the 1.4L turbocharged 4-cylinder used in most 2019 Jetta trims — the GLI differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Dodge",
+            model: "Charger",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.9 quarts with a filter change",
+            coolantType: "Mopar Antifreeze/Coolant 10 Year/150,000 Mile Formula OAT, or an equivalent",
+            coolantCapacity: "Roughly 5.7 quarts",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 3.6L V6 used in most 2019 Charger trims — the R/T, Scat Pack, and SRT/Hellcat V8 trims differ significantly. Tire pressure commonly ranges 32–35 PSI by trim. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "GMC",
+            model: "Sierra",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 8 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 17.4 quarts (dry fill, mixed 50/50 with distilled water)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.3L V8 used in the 2019 Sierra 1500 — other engine options differ. The Sierra shares its platform and this powertrain with the Chevrolet Silverado 1500, so these figures are the same across both; confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mitsubishi",
+            model: "Outlander",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.9 quarts with a filter change",
+            coolantType: "Mitsubishi ES-64217 red HOAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.4L 4-cylinder used in the regular 2019 Outlander — the smaller Outlander Sport is a different vehicle with its own specs, not covered here. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
         )
     ]
 
