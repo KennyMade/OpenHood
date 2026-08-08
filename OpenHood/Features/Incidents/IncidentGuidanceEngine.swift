@@ -1501,3 +1501,335 @@ private extension IncidentGuidanceEngine {
         return "Vehicle: \(vehicleName.isEmpty ? "Unconfirmed vehicle" : vehicleName). Observations: \(observations.isEmpty ? "Not provided" : observations). Owner description: \(incident.userDescription.isEmpty ? "Not provided" : incident.userDescription). Safety answer: \(incident.safetySelection?.title ?? "Unknown"). Recent work: \(recentWork)\(notes.isEmpty ? "" : " — \(notes)"). Unresolved: \(uncertainty.joined(separator: " "))"
     }
 }
+
+// MARK: - Description Router (intake redesign, step 1)
+
+/// What a typed description tells us before any question is asked.
+///
+/// Deliberately holds only *answers*, never conclusions. The router's whole
+/// job is to spare someone from re-typing what they already said in prose —
+/// it fills in the questions it can and lets the existing flow skip them.
+/// Nothing here reaches the user as guidance; every diagnosis still comes
+/// from a reviewed record in IncidentGuidanceKnowledge.
+struct IncidentDescriptionRouteResult: Equatable {
+    var observationTypes: Set<IncidentObservationType> = []
+    var startingAnswers: [String: String] = [:]
+    var noiseAnswers: [String: String] = [:]
+    var warningAnswers: [String: String] = [:]
+    var fluidAnswers: [String: String] = [:]
+    var drivingChangeAnswers: [String: String] = [:]
+
+    /// True when the text told us nothing usable, which is the signal to fall
+    /// back to the observation checklist rather than guess.
+    var isEmpty: Bool {
+        observationTypes.isEmpty
+    }
+}
+
+/// Turns "engine turns over slowly when I start it" into the same structured
+/// answers the person would have produced by tapping through the menus.
+///
+/// Text routes, structure diagnoses. The router narrows the flow; it never
+/// produces a result. That split exists because the two failure modes are not
+/// comparable: a routing mistake costs the user one extra question, while
+/// inferring a diagnosis from prose could tell someone their brakes are fine.
+///
+/// This is also why there is no language model here. A live model answering
+/// freely about a safety-critical vehicle problem cannot be cited, reviewed,
+/// or defended afterwards, and this app's core promise is that every claim
+/// traces back to reviewed content.
+enum IncidentDescriptionRouter {
+
+    // MARK: Escalation safety
+
+    /// Answers the router must never write, because each one is checked in a
+    /// question's *answer handler* to decide whether to escalate to urgent
+    /// safety (see brakeGrindEscalation, dangerousOdorEscalation,
+    /// engineOperationEscalation, transmissionBehaviorEscalation,
+    /// absTractionEscalation, temperatureObservationEscalation,
+    /// dashboardMessageEscalation, dashboardBrakeLightEscalation in
+    /// SomethingHappenedView).
+    ///
+    /// Pre-filling one of these would skip the screen that fires the
+    /// escalation, so a person reporting a burning-plastic smell or a
+    /// grinding brake would silently receive ordinary Phase 1 guidance
+    /// instead of STOP DRIVING. A STOP DRIVING verdict must always come from
+    /// an answer the person deliberately chose.
+    ///
+    /// Enforced as a final filter rather than by remembering not to add these
+    /// rules, so a future rule cannot reintroduce the hole by accident.
+    private static let forbiddenAnswers: [String: Set<String>] = [
+        IncidentStartingAnswerKey.whatsHappening: [
+            "The engine actually shuts off or dies"
+        ],
+        IncidentStartingAnswerKey.transmissionBehavior: [
+            "The engine revs up but the car doesn’t speed up the way it should (slipping)",
+            "A burning smell, especially after stop-and-go driving or towing"
+        ],
+        IncidentFluidAnswerKey.odor: [
+            "Electrical or burning plastic",
+            "Exhaust"
+        ],
+        IncidentFluidAnswerKey.dashboardMessageText: [
+            "Service brake system"
+        ],
+        IncidentFluidAnswerKey.dashboardBrakeLightCheck: [
+            "No, just this one", "Yes, both are on", "I’m not sure"
+        ],
+        IncidentWarningAnswerKey.absBrakeCheck: [
+            "No, just this one", "Yes, both are on", "I’m not sure"
+        ],
+        IncidentWarningAnswerKey.temperatureDetail: [
+            "Temperature gauge reading high or in the red",
+            "Steam or visible vapor",
+            "Warning light for temperature",
+            "Sweet smell with rising temperature",
+            "I’m not sure"
+        ]
+    ]
+
+    // MARK: Entry point
+
+    static func route(_ description: String) -> IncidentDescriptionRouteResult {
+        let text = description.lowercased()
+        let words = Set(
+            text.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .map(String.init)
+        )
+
+        func has(_ needles: String...) -> Bool {
+            needles.contains { needle in
+                needle.contains(" ") ? text.contains(needle) : words.contains(needle)
+            }
+        }
+
+        var result = IncidentDescriptionRouteResult()
+
+        // MARK: Observation types
+
+        if has("start", "starting", "starts", "crank", "cranks", "cranking",
+               "ignition", "stall", "stalls", "stalling", "turn over",
+               "turns over", "turning over", "won't start", "wont start") {
+            result.observationTypes.insert(.startingOrRunningTrouble)
+        }
+        if has("noise", "sound", "rattle", "rattling", "clunk", "grind",
+               "grinding", "squeal", "squealing", "squeak", "whine", "knock",
+               "ticking") {
+            result.observationTypes.insert(.sound)
+        }
+        if has("shake", "shakes", "shaking", "vibrate", "vibration",
+               "vibrating", "wobble", "shudder") {
+            result.observationTypes.insert(.vibrationOrMovement)
+        }
+        if has("smell", "smells", "smelling", "odor", "odour", "fumes",
+               "burning") {
+            result.observationTypes.insert(.smell)
+        }
+        if has("leak", "leaks", "leaking", "puddle", "drip", "dripping",
+               "smoke", "smoking", "steam", "fluid") {
+            result.observationTypes.insert(.visible)
+        }
+        if has("light", "lights", "warning", "dashboard", "dash",
+               "check engine") {
+            result.observationTypes.insert(.warningLightOrMessage)
+        }
+        if has("pulls", "pulling", "steering", "steer", "handling",
+               "sluggish", "slow to accelerate", "drives different",
+               "feels different") {
+            result.observationTypes.insert(.drivingChange)
+        }
+
+        // MARK: Starting answers
+
+        if result.observationTypes.contains(.startingOrRunningTrouble) {
+            if has("slow", "slowly", "sluggish", "struggles", "struggling",
+                   "labors", "laboring", "weak", "dragging") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "The engine turns over slowly, then stops"
+            } else if has("rapid clicking", "clicking fast", "clicks rapidly",
+                         "machine gun", "chattering") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "Rapid clicking"
+            } else if has("one click", "single click", "clicks once",
+                         "one loud click") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "One single click"
+            } else if has("nothing happens", "no sound", "dead", "silent",
+                         "no response", "nothing at all") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "No sound at all"
+            } else if has("turns over but", "cranks but", "won't fire",
+                         "wont fire", "won't catch", "never starts",
+                         "doesn't start", "does not start") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "The engine turns over normally, but never starts"
+            } else if has("rough idle", "idles rough", "runs rough",
+                         "hesitates", "hesitation", "misfire", "sputter",
+                         "sputters", "stumble") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankBehavior] =
+                    "It starts up fine — my concern is how it runs afterward"
+            }
+
+            if has("cold", "cold weather", "morning", "freezing") {
+                result.startingAnswers[IncidentStartingAnswerKey.crankClues] =
+                    "Cranks slower or takes longer to start in cold weather"
+            }
+        }
+
+        // MARK: Noise answers
+
+        if result.observationTypes.contains(.sound)
+            || result.observationTypes.contains(.vibrationOrMovement) {
+            let mentionsBraking = has("brake", "brakes", "braking", "stopping",
+                                      "slowing down")
+            let mentionsGrinding = has("grind", "grinding", "metal on metal")
+
+            // The one combination the router must not complete. Grind +
+            // While braking is exactly what brakeGrindEscalation looks for,
+            // and it is checked when the person answers the sound question.
+            // Filling both in would skip that screen and turn a
+            // stop-driving-tier brake report into ordinary guidance.
+            let wouldSkipBrakeEscalation = mentionsBraking && mentionsGrinding
+
+            if !wouldSkipBrakeEscalation {
+                if has("rattle", "rattling", "rattles") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.sound] = "Rattle"
+                } else if has("clunk", "clunking", "thunk", "knock", "knocking") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.sound] = "Clunk"
+                } else if mentionsGrinding {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.sound] = "Grind"
+                } else if has("squeal", "squealing", "squeak", "squeaking",
+                              "screech", "screeching") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.sound] = "Squeal"
+                }
+
+                if has("bump", "bumps", "pothole", "potholes", "uneven road") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.timing] = "Over bumps"
+                } else if has("turn", "turning", "corner", "cornering") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.timing] = "While turning"
+                } else if mentionsBraking {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.timing] = "While braking"
+                } else if has("constant", "constantly", "all the time", "always") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.timing] = "Constant"
+                } else if has("highway", "high speed", "at speed", "faster",
+                              "freeway") {
+                    result.noiseAnswers[IncidentNoiseAnswerKey.timing] = "Only at speed"
+                }
+            }
+
+            if has("front") {
+                result.noiseAnswers[IncidentNoiseAnswerKey.location] = "Front"
+            } else if has("rear", "back") {
+                result.noiseAnswers[IncidentNoiseAnswerKey.location] = "Rear"
+            }
+        }
+
+        // MARK: Warning light answers
+
+        if result.observationTypes.contains(.warningLightOrMessage) {
+            if has("check engine") {
+                result.warningAnswers[IncidentWarningAnswerKey.light] =
+                    "Check engine light (steady)"
+            } else if has("battery light", "charging light", "battery symbol") {
+                result.warningAnswers[IncidentWarningAnswerKey.light] =
+                    "Battery or charging symbol"
+            } else if has("temperature light", "temp light", "overheating light") {
+                result.warningAnswers[IncidentWarningAnswerKey.light] =
+                    "Temperature warning light"
+            } else if has("abs", "traction") {
+                result.warningAnswers[IncidentWarningAnswerKey.light] =
+                    "ABS or traction control light"
+            } else if has("tire pressure", "tpms", "low tire") {
+                result.warningAnswers[IncidentWarningAnswerKey.light] =
+                    "Tire pressure light"
+            }
+        }
+
+        // MARK: Fluid / smell answers
+
+        if result.observationTypes.contains(.visible) {
+            if has("smoke", "smoking") {
+                result.fluidAnswers[IncidentFluidAnswerKey.whatWasVisible] = "Smoke"
+            } else if has("leak", "leaks", "leaking", "puddle", "drip",
+                          "dripping", "fluid") {
+                result.fluidAnswers[IncidentFluidAnswerKey.whatWasVisible] =
+                    "Fluid on the ground or under the vehicle"
+            }
+
+            // Colour only means something once we know a fluid was seen.
+            if result.fluidAnswers[IncidentFluidAnswerKey.whatWasVisible]
+                == "Fluid on the ground or under the vehicle" {
+                if has("green", "orange", "pink", "yellow") {
+                    result.fluidAnswers[IncidentFluidAnswerKey.color] =
+                        "Green, orange, pink, or yellow"
+                } else if has("brown", "black") {
+                    result.fluidAnswers[IncidentFluidAnswerKey.color] =
+                        "Brown or black"
+                } else if has("red", "reddish") {
+                    result.fluidAnswers[IncidentFluidAnswerKey.color] =
+                        "Red or reddish"
+                } else if has("clear", "water") {
+                    result.fluidAnswers[IncidentFluidAnswerKey.color] =
+                        "Clear or light"
+                }
+            }
+        }
+
+        if result.observationTypes.contains(.smell) {
+            // "Electrical or burning plastic" and "Exhaust" are deliberately
+            // absent — both escalate, so they stay in forbiddenAnswers and the
+            // question gets asked properly.
+            if has("sweet", "syrup", "maple", "coolant") {
+                result.fluidAnswers[IncidentFluidAnswerKey.odor] = "Sweet or coolant-like"
+            } else if has("musty", "mold", "mould", "mildew") {
+                result.fluidAnswers[IncidentFluidAnswerKey.odor] = "Musty or moldy"
+            } else if has("rotten egg", "sulfur", "sulphur") {
+                result.fluidAnswers[IncidentFluidAnswerKey.odor] = "Rotten egg or sulfur"
+            }
+        }
+
+        // MARK: Driving change answers
+
+        if result.observationTypes.contains(.drivingChange) {
+            if has("pulls", "pulling", "veers", "drifts") {
+                result.drivingChangeAnswers[IncidentDrivingChangeAnswerKey.whatChanged] =
+                    "Pulls to one side"
+            } else if has("heavy steering", "hard to steer", "stiff steering",
+                          "heavier") {
+                result.drivingChangeAnswers[IncidentDrivingChangeAnswerKey.whatChanged] =
+                    "Steering feels heavier than normal"
+            } else if has("sluggish", "slow to accelerate", "no power",
+                          "down on power", "lost power") {
+                result.drivingChangeAnswers[IncidentDrivingChangeAnswerKey.whatChanged] =
+                    "Feels sluggish or slow to accelerate"
+            }
+        }
+
+        return stripEscalationTriggers(from: result)
+    }
+
+    /// Final safety pass. Removes any answer listed in `forbiddenAnswers`,
+    /// whatever rule produced it, so the questions that decide urgent
+    /// escalation are always reached by the person themselves.
+    private static func stripEscalationTriggers(
+        from result: IncidentDescriptionRouteResult
+    ) -> IncidentDescriptionRouteResult {
+        var cleaned = result
+
+        func strip(_ answers: inout [String: String]) {
+            for (key, value) in answers {
+                if let banned = forbiddenAnswers[key], banned.contains(value) {
+                    answers.removeValue(forKey: key)
+                }
+            }
+        }
+
+        strip(&cleaned.startingAnswers)
+        strip(&cleaned.noiseAnswers)
+        strip(&cleaned.warningAnswers)
+        strip(&cleaned.fluidAnswers)
+        strip(&cleaned.drivingChangeAnswers)
+
+        return cleaned
+    }
+}
