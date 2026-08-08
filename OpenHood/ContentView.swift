@@ -140,15 +140,20 @@ struct AddVehicleView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                OnboardingProgressView(step: 2)
-
+                // Deliberately no OnboardingProgressView here, unlike the
+                // first-time setup screens it links into (Manufacturer/
+                // Model/Year/Confirm) — those are genuinely shared with
+                // first-time onboarding since picking a car is the same
+                // task either way, but a "Step 2 of 3" bar on the entry
+                // screen implied an existing user was restarting a
+                // multi-step account setup, which they aren't.
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Add your vehicle")
+                    Text("Add a vehicle")
                         .font(.largeTitle)
                         .fontWeight(.bold)
 
                     Text(
-                        "Choose your vehicle to get started."
+                        "Add another car to your garage."
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -1890,16 +1895,53 @@ struct MaintenanceBaselineView: View {
 struct VehicleHomeView: View {
     @EnvironmentObject private var vehicle: VehicleOnboardingData
     @EnvironmentObject private var garageStore: GarageStore
+    @AppStorage("ownerDisplayName") private var ownerDisplayName: String = ""
+
+    /// Was a hardcoded "Good afternoon" regardless of actual time of day —
+    /// genuinely wrong most of the day, not just unpersonalized. Falls
+    /// back to no name suffix when ownerDisplayName is empty (the default
+    /// for anyone who hasn't set it in Profile & Settings), so this is a
+    /// pure improvement with no new failure mode for existing users.
+    private var timeBasedGreeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let timeOfDay: String
+        switch hour {
+        case 5..<12: timeOfDay = "Good morning"
+        case 12..<17: timeOfDay = "Good afternoon"
+        case 17..<22: timeOfDay = "Good evening"
+        default: timeOfDay = "Good night"
+        }
+        let trimmedName = ownerDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedName.isEmpty ? timeOfDay : "\(timeOfDay), \(trimmedName)"
+    }
+
+    /// Rotates through a few friendly variants instead of always showing
+    /// the exact same line — selected by day of year so it stays stable
+    /// within a single day rather than changing on every screen visit,
+    /// which would feel glitchy rather than intentional.
+    private static let headlineVariants = [
+        "What brings you under the hood?",
+        "What's going on with your car?",
+        "What do you want to look into today?",
+        "What's on your mind about your vehicle?",
+        "What can OpenHood help you figure out?"
+    ]
+
+    private var rotatingHeadline: String {
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        let index = dayOfYear % Self.headlineVariants.count
+        return Self.headlineVariants[index]
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 22) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Good afternoon")
+                    Text(timeBasedGreeting)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    Text("What brings you under the hood?")
+                    Text(rotatingHeadline)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                 }

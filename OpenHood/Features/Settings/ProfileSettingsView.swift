@@ -4,6 +4,12 @@ struct ProfileSettingsView: View {
     @EnvironmentObject private var garageStore: GarageStore
     @EnvironmentObject private var incidentStore: IncidentStore
     @State private var isConfirmingErase = false
+    /// Backs the Home screen's personalized greeting (VehicleHomeView.
+    /// timeBasedGreeting) via the same "ownerDisplayName" AppStorage key.
+    /// Optional by design — an empty value just means the greeting falls
+    /// back to plain "Good morning"/"Good afternoon"/"Good evening" with
+    /// no name suffix, so nobody is forced to fill this in.
+    @AppStorage("ownerDisplayName") private var ownerDisplayName: String = ""
 
     private var activeVehicleName: String {
         guard let vehicle = garageStore.activeVehicle else {
@@ -31,7 +37,11 @@ struct ProfileSettingsView: View {
 
     var body: some View {
         List {
-            Section("Profile") {
+            Section {
+                LabeledContent("Your name") {
+                    TextField("Optional", text: $ownerDisplayName)
+                        .multilineTextAlignment(.trailing)
+                }
                 LabeledContent("Status", value: "Local profile")
                 LabeledContent("Account", value: "No account connected")
                 LabeledContent("Active vehicle", value: activeVehicleName)
@@ -39,6 +49,10 @@ struct ProfileSettingsView: View {
                     "Vehicles in Garage",
                     value: garageStore.vehicles.count.formatted()
                 )
+            } header: {
+                Text("Profile")
+            } footer: {
+                Text("Your name is used only for the greeting on the Home screen and is stored on this device.")
             }
 
             Section("About OpenHood") {

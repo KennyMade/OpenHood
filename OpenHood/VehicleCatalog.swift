@@ -365,18 +365,21 @@ struct VehicleCatalog {
                     availability: .supported
                 ),
 
-                VehicleModel(name: "370Z"),
-                VehicleModel(name: "GT-R (R35)"),
-                VehicleModel(name: "Silvia S15"),
-                VehicleModel(name: "Sentra"),
-                VehicleModel(name: "Altima"),
-                VehicleModel(name: "Maxima"),
-                VehicleModel(name: "Frontier"),
-                VehicleModel(name: "Titan"),
-                VehicleModel(name: "Pathfinder"),
-                VehicleModel(name: "Rogue"),
-                VehicleModel(name: "Murano"),
-                VehicleModel(name: "Armada")
+                VehicleModel(name: "370Z", availability: .supported),
+                VehicleModel(name: "GT-R (R35)", availability: .supported),
+                VehicleModel(name: "Silvia S15", availability: .supported),
+                VehicleModel(name: "Sentra", availability: .supported),
+                VehicleModel(name: "Altima", availability: .supported),
+                VehicleModel(name: "Maxima", availability: .supported),
+                VehicleModel(name: "Frontier", availability: .supported),
+                VehicleModel(name: "Titan", availability: .supported),
+                VehicleModel(name: "Pathfinder", availability: .supported),
+                VehicleModel(name: "Rogue", availability: .supported),
+                VehicleModel(name: "Murano", availability: .supported),
+                VehicleModel(name: "Armada", availability: .supported),
+                VehicleModel(name: "Kicks", availability: .supported),
+                VehicleModel(name: "Versa", availability: .supported),
+                VehicleModel(name: "Xterra", availability: .supported)
             ],
             availability: .supported
         ),
@@ -428,15 +431,19 @@ struct VehicleCatalog {
                     ],
                     availability: .supported
                 ),
-                VehicleModel(name: "Tundra"),
-                VehicleModel(name: "GR86"),
-                VehicleModel(name: "Supra Mk4"),
-                VehicleModel(name: "Supra A90"),
-                VehicleModel(name: "GR Corolla"),
-                VehicleModel(name: "Prius"),
-                VehicleModel(name: "RAV4"),
-                VehicleModel(name: "Highlander"),
-                VehicleModel(name: "Land Cruiser")
+                VehicleModel(name: "Tundra", availability: .supported),
+                VehicleModel(name: "GR86", availability: .supported),
+                VehicleModel(name: "Supra Mk4", availability: .supported),
+                VehicleModel(name: "Supra A90", availability: .supported),
+                VehicleModel(name: "GR Corolla", availability: .supported),
+                VehicleModel(name: "Prius", availability: .supported),
+                VehicleModel(name: "RAV4", availability: .supported),
+                VehicleModel(name: "Highlander", availability: .supported),
+                VehicleModel(name: "Land Cruiser", availability: .supported),
+                VehicleModel(name: "Sienna", availability: .supported),
+                VehicleModel(name: "Sequoia", availability: .supported),
+                VehicleModel(name: "Avalon", availability: .supported),
+                VehicleModel(name: "MR2", availability: .supported)
             ],
             availability: .supported
         ),
@@ -487,9 +494,16 @@ struct VehicleCatalog {
                     ],
                     availability: .supported
                 ),
-                VehicleModel(name: "Civic Type R"),
-                VehicleModel(name: "S2000"),
-                VehicleModel(name: "NSX")
+                VehicleModel(name: "Civic Type R", availability: .supported),
+                VehicleModel(name: "S2000", availability: .supported),
+                VehicleModel(name: "NSX", availability: .supported),
+                VehicleModel(name: "Accord", availability: .supported),
+                VehicleModel(name: "CR-V", availability: .supported),
+                VehicleModel(name: "Pilot", availability: .supported),
+                VehicleModel(name: "Odyssey", availability: .supported),
+                VehicleModel(name: "Fit", availability: .supported),
+                VehicleModel(name: "HR-V", availability: .supported),
+                VehicleModel(name: "Ridgeline", availability: .supported)
             ],
             availability: .supported
         ),
@@ -497,19 +511,47 @@ struct VehicleCatalog {
         VehicleMake(
             name: "Mazda",
             region: .japanese,
-            models: []
+            models: [
+                VehicleModel(name: "MX-5 Miata", availability: .supported),
+                VehicleModel(name: "Mazda3", availability: .supported),
+                VehicleModel(name: "Mazda6", availability: .supported),
+                VehicleModel(name: "CX-5", availability: .supported),
+                VehicleModel(name: "CX-9", availability: .supported),
+                VehicleModel(name: "CX-30", availability: .supported),
+                VehicleModel(name: "RX-7", availability: .supported),
+                VehicleModel(name: "RX-8", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Subaru",
             region: .japanese,
-            models: []
+            models: [
+                VehicleModel(name: "Impreza", availability: .supported),
+                VehicleModel(name: "WRX", availability: .supported),
+                VehicleModel(name: "WRX STI", availability: .supported),
+                VehicleModel(name: "Outback", availability: .supported),
+                VehicleModel(name: "Forester", availability: .supported),
+                VehicleModel(name: "Crosstrek", availability: .supported),
+                VehicleModel(name: "Legacy", availability: .supported),
+                VehicleModel(name: "BRZ", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Mitsubishi",
             region: .japanese,
-            models: []
+            models: [
+                VehicleModel(name: "Lancer", availability: .supported),
+                VehicleModel(name: "Lancer Evolution", availability: .supported),
+                VehicleModel(name: "Eclipse", availability: .supported),
+                VehicleModel(name: "Eclipse Cross", availability: .supported),
+                VehicleModel(name: "Outlander", availability: .supported),
+                VehicleModel(name: "Mirage", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         // MARK: American
@@ -517,19 +559,87 @@ struct VehicleCatalog {
         VehicleMake(
             name: "Ford",
             region: .american,
-            models: []
+            models: [
+                VehicleModel(name: "Mustang", availability: .supported),
+                VehicleModel(name: "F-150", availability: .supported),
+                VehicleModel(name: "Explorer", availability: .supported),
+                VehicleModel(name: "Escape", availability: .supported),
+                VehicleModel(name: "Bronco", availability: .supported),
+                VehicleModel(name: "Focus", availability: .supported),
+                VehicleModel(name: "Fusion", availability: .supported),
+                VehicleModel(name: "Edge", availability: .supported),
+                VehicleModel(name: "Ranger", availability: .supported),
+                VehicleModel(name: "Expedition", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Chevrolet",
             region: .american,
-            models: []
+            models: [
+                VehicleModel(name: "Camaro", availability: .supported),
+                VehicleModel(name: "Corvette", availability: .supported),
+                VehicleModel(name: "Silverado", availability: .supported),
+                VehicleModel(name: "Malibu", availability: .supported),
+                VehicleModel(name: "Equinox", availability: .supported),
+                VehicleModel(name: "Tahoe", availability: .supported),
+                VehicleModel(name: "Impala", availability: .supported),
+                VehicleModel(name: "Cruze", availability: .supported),
+                VehicleModel(name: "Suburban", availability: .supported),
+                VehicleModel(name: "Colorado", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Dodge",
             region: .american,
-            models: []
+            models: [
+                VehicleModel(name: "Charger", availability: .supported),
+                VehicleModel(name: "Challenger", availability: .supported),
+                VehicleModel(name: "Durango", availability: .supported),
+                VehicleModel(name: "Journey", availability: .supported),
+                VehicleModel(name: "Viper", availability: .supported),
+                VehicleModel(name: "Dart", availability: .supported)
+            ],
+            availability: .supported
+        ),
+
+        VehicleMake(
+            name: "Ram",
+            region: .american,
+            models: [
+                VehicleModel(name: "1500", availability: .supported),
+                VehicleModel(name: "2500", availability: .supported),
+                VehicleModel(name: "3500", availability: .supported)
+            ],
+            availability: .supported
+        ),
+
+        VehicleMake(
+            name: "Jeep",
+            region: .american,
+            models: [
+                VehicleModel(name: "Wrangler", availability: .supported),
+                VehicleModel(name: "Grand Cherokee", availability: .supported),
+                VehicleModel(name: "Cherokee", availability: .supported),
+                VehicleModel(name: "Compass", availability: .supported),
+                VehicleModel(name: "Gladiator", availability: .supported)
+            ],
+            availability: .supported
+        ),
+
+        VehicleMake(
+            name: "GMC",
+            region: .american,
+            models: [
+                VehicleModel(name: "Sierra", availability: .supported),
+                VehicleModel(name: "Yukon", availability: .supported),
+                VehicleModel(name: "Acadia", availability: .supported),
+                VehicleModel(name: "Terrain", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         // MARK: European
@@ -537,31 +647,77 @@ struct VehicleCatalog {
         VehicleMake(
             name: "BMW",
             region: .european,
-            models: []
+            models: [
+                VehicleModel(name: "3 Series", availability: .supported),
+                VehicleModel(name: "5 Series", availability: .supported),
+                VehicleModel(name: "X3", availability: .supported),
+                VehicleModel(name: "X5", availability: .supported),
+                VehicleModel(name: "M3", availability: .supported),
+                VehicleModel(name: "M5", availability: .supported),
+                VehicleModel(name: "1 Series", availability: .supported),
+                VehicleModel(name: "Z4", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Audi",
             region: .european,
-            models: []
+            models: [
+                VehicleModel(name: "A4", availability: .supported),
+                VehicleModel(name: "A6", availability: .supported),
+                VehicleModel(name: "Q5", availability: .supported),
+                VehicleModel(name: "Q7", availability: .supported),
+                VehicleModel(name: "S4", availability: .supported),
+                VehicleModel(name: "TT", availability: .supported),
+                VehicleModel(name: "R8", availability: .supported),
+                VehicleModel(name: "A3", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Mercedes-Benz",
             region: .european,
-            models: []
+            models: [
+                VehicleModel(name: "C-Class", availability: .supported),
+                VehicleModel(name: "E-Class", availability: .supported),
+                VehicleModel(name: "GLC", availability: .supported),
+                VehicleModel(name: "GLE", availability: .supported),
+                VehicleModel(name: "S-Class", availability: .supported),
+                VehicleModel(name: "AMG GT", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Volkswagen",
             region: .european,
-            models: []
+            models: [
+                VehicleModel(name: "Golf", availability: .supported),
+                VehicleModel(name: "GTI", availability: .supported),
+                VehicleModel(name: "Jetta", availability: .supported),
+                VehicleModel(name: "Passat", availability: .supported),
+                VehicleModel(name: "Tiguan", availability: .supported),
+                VehicleModel(name: "Atlas", availability: .supported),
+                VehicleModel(name: "Beetle", availability: .supported)
+            ],
+            availability: .supported
         ),
 
         VehicleMake(
             name: "Porsche",
             region: .european,
-            models: []
+            models: [
+                VehicleModel(name: "911", availability: .supported),
+                VehicleModel(name: "Cayman", availability: .supported),
+                VehicleModel(name: "Boxster", availability: .supported),
+                VehicleModel(name: "Macan", availability: .supported),
+                VehicleModel(name: "Cayenne", availability: .supported),
+                VehicleModel(name: "Panamera", availability: .supported),
+                VehicleModel(name: "Taycan", availability: .supported)
+            ],
+            availability: .supported
         )
     ]
 
