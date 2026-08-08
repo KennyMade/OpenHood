@@ -1289,6 +1289,46 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "ABS diagnostic"
         ),
+        // Closes a real gap: "I'm not sure which one" on the warning-light
+        // question (IncidentWarningAnswerKey.light) previously had zero
+        // matching record — dashboard icons are notoriously unfamiliar, so
+        // this is a common, honest answer, not an edge case. Doesn't
+        // attempt to guess which system is involved (that would be
+        // dishonest); instead gives real, actionable help identifying the
+        // light itself, since that's the actual blocker. Same tier as the
+        // rest of this file — reviewed general guidance, not a
+        // needsVerification placeholder.
+        record(
+            id: "phase1.warning.unidentified-light",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage],
+            required: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "I’m not sure which one")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "I’m not sure which one")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "Every dashboard warning light has a specific meaning, and your owner's manual has a full picture guide — usually in the section right after the dashboard overview — that matches every symbol to its name. If the manual isn't handy, most vehicle manufacturers also publish the same guide on their support website by make, model, and year. Once the light is identified, OpenHood can give real guidance instead of a general placeholder.",
+            action: .professionalInspection,
+            questions: [
+                "What color is the light — amber/yellow, or red?",
+                "Is it steady or flashing?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-warning-light-unidentified-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Warning Light Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
         // Same tier as phase1.warning.record-code/phase1.warning.engine-
         // information and the noise/brake records above — reviewed
         // general-guidance content, not needsVerification placeholders,
@@ -1623,6 +1663,48 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "serpentine belt replacement"
+        ),
+        // Closes a real gap: "Something else" on the visible-observation
+        // question (IncidentFluidAnswerKey.whatWasVisible) previously had
+        // zero matching record and no follow-up question — the option is
+        // real and selectable, so it deserves real content rather than
+        // silence, even though what was actually seen is inherently
+        // unknown here. Same tier as the rest of this file — reviewed
+        // general guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.visible.something-else",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible],
+            required: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "Something else")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "Something else")
+            ],
+            contradict: [],
+            area: .mechanicalOrCompression,
+            explanation: "Whatever was seen doesn't match the common categories OpenHood asks about directly — fluid, smoke, a damaged belt, or a dashboard message. A specific, plain description (what it looked like, where on the vehicle, and whether it was moving, dripping, or stationary) is the most useful thing to bring to a mechanic, since this can't be narrowed down further without knowing what it actually was.",
+            action: .professionalInspection,
+            avoid: [
+                "Do not touch or move an unidentified object or component.",
+                "Do not go beneath an unsupported vehicle."
+            ],
+            questions: [
+                "What did it look like, as specifically as possible?",
+                "Where on the vehicle was it, and was it moving, dripping, or stationary?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-visible-something-else-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Something Visible, Not Otherwise Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         ),
         record(
             id: "phase1.fluid-smell.unusual-odor",
@@ -2384,6 +2466,42 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "airbag SRS diagnostic"
+        ),
+        // Closes a real gap: "I'm not sure / didn't catch it" on the
+        // dashboard-message question (IncidentFluidAnswerKey.
+        // dashboardMessageText) previously had zero matching record —
+        // messages often flash briefly, so this is a common, honest
+        // answer. Same tier as the rest of this file — reviewed general
+        // guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.dashboard-message.unidentified",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "I’m not sure / didn’t catch it")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "I’m not sure / didn’t catch it")
+            ],
+            contradict: [],
+            area: .routineReminderOrConsumable,
+            explanation: "Dashboard messages usually reappear the next time the vehicle is started or a related condition is met, so there's often a good chance to read it fully next time. Most messages are routine reminders (maintenance due, fluid levels, tire pressure) rather than urgent, but a few — like a brake system message — are more serious. If it appears again, try to read the full text before it clears, or take a photo of it if you can safely do so while parked.",
+            action: .safeObservation,
+            questions: [
+                "Did the message include any warning icon alongside the text?",
+                "Was the message a one-time message, or does it reappear each time the vehicle starts?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-message-unidentified-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Dashboard Message Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         ),
         // OH-UIK cross-chain "wow moment" pass, 2026-08-07 — same
         // technique as phase1.tires.tpms-light-with-vibration: found by
@@ -3472,6 +3590,43 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "acceleration performance diagnostic"
+        ),
+        // Closes a real gap: "I'm not sure" on the driving-change question
+        // (IncidentDrivingChangeAnswerKey.whatChanged) previously had zero
+        // matching record, unlike the three specific answers above —
+        // "something feels off but I can't say how" is a common, honest
+        // answer, not an edge case. Same tier as the rest of this file —
+        // reviewed general guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.driving-change.unclear",
+            family: .drivingChange,
+            observations: [.drivingChange],
+            required: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "I’m not sure")
+            ],
+            support: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "There are a few common categories drivers describe as the car \"just feeling different\" — pulling to one side (often alignment or a dragging brake), heavier steering (often power steering fluid or a belt), sluggish acceleration (often airflow, fuel delivery, or transmission), or a rougher or looser ride (often tires, alignment, or worn suspension parts). Noticing which of those is closest, and whether it happens more while turning, braking, accelerating, or all the time, is the fastest way to narrow this down.",
+            action: .professionalInspection,
+            questions: [
+                "Does it feel different while turning, braking, accelerating, or all the time?",
+                "Did it change suddenly, or has it been getting worse gradually?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-driving-change-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Driving Feels Different, Not Yet Narrowed Down\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         )
     ]
 
