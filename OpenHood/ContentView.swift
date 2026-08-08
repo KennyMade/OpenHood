@@ -65,7 +65,14 @@ struct ContentView: View {
 struct WelcomeView: View {
     var body: some View {
         VStack(spacing: 20) {
-            OnboardingProgressView(step: 1)
+            // Deliberately no OnboardingProgressView here, matching the
+            // entry screen further down this file. A "Step 1 of 3" bar on
+            // the very first screen announces homework before the person
+            // has agreed to do anything, and there is nothing yet to be
+            // one-third of the way through. The progress bar starts once
+            // they've tapped Get Started and are actually working through
+            // the steps, which is where it reads as orientation instead of
+            // as a chore list.
 
             Spacer()
 
@@ -1734,6 +1741,7 @@ struct MaintenanceServicesView: View {
 
     @State private var selectedServices: Set<MaintenanceService> = []
     @State private var timeframes: [MaintenanceService: String] = [:]
+    @State private var mileages: [MaintenanceService: String] = [:]
 
     var body: some View {
         ScrollView {
@@ -1863,6 +1871,29 @@ struct MaintenanceServicesView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            // Optional, and last, on purpose. Mileage is the field that
+            // makes intervals computable rather than just readable, but far
+            // fewer people remember it than remember roughly when — so it's
+            // offered without being required, below the part everyone can
+            // answer.
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Mileage when it was done")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+
+                TextField(
+                    "Optional",
+                    text: Binding(
+                        get: { mileages[service] ?? "" },
+                        set: { mileages[service] = $0 }
+                    )
+                )
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+            }
+            .padding(.top, 4)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -1901,10 +1932,13 @@ struct MaintenanceServicesView: View {
     private var orderedSelections: [VehicleServiceRecord] {
         MaintenanceService.allCases
             .filter { selectedServices.contains($0) }
-            .map {
+            .map { service in
                 VehicleServiceRecord(
-                    service: $0.rawValue,
-                    timeframe: timeframes[$0]
+                    service: service.rawValue,
+                    timeframe: timeframes[service],
+                    mileage: mileages[service]
+                        .map { $0.filter(\.isNumber) }
+                        .flatMap { $0.isEmpty ? nil : Int($0) }
                 )
             }
     }
@@ -1917,6 +1951,7 @@ struct MaintenanceServicesView: View {
         if selectedServices.contains(service) {
             selectedServices.remove(service)
             timeframes[service] = nil
+            mileages[service] = nil
         } else {
             selectedServices.insert(service)
         }

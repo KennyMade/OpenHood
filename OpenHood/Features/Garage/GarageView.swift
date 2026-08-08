@@ -119,12 +119,27 @@ struct GarageVehicleCard: View {
             .joined(separator: " ")
     }
 
+    /// Describes where this vehicle's details came from, which is the only
+    /// thing `profileVerification` actually records — it is set once, when a
+    /// year is picked, purely by whether VehicleCatalog had a confirmed
+    /// configuration for that make/model/year.
+    ///
+    /// The old wording ("Verified configuration" vs "Basic profile · Some
+    /// details self-reported") read as a score, so a person who carefully
+    /// filled in every field by hand saw "Basic profile" and reasonably
+    /// concluded the app thought their work didn't count — while a vehicle
+    /// they'd entered nothing for showed "Verified". Nothing was wrong with
+    /// their profile; the catalog simply had no entry for that year.
+    ///
+    /// The distinction is worth keeping, because catalog-confirmed and
+    /// owner-entered details genuinely differ in reliability. It just has to
+    /// say that plainly instead of implying one of them is deficient.
     private var verificationText: String {
         switch vehicle.profileVerification {
         case .verified:
-            return "Verified configuration"
+            return "Details confirmed from catalog"
         case .basicUnverified:
-            return "Basic profile · Some details self-reported"
+            return "Details you entered yourself"
         }
     }
 
@@ -218,12 +233,27 @@ struct VehicleDetailView: View {
             .joined(separator: " ")
     }
 
+    /// Describes where this vehicle's details came from, which is the only
+    /// thing `profileVerification` actually records — it is set once, when a
+    /// year is picked, purely by whether VehicleCatalog had a confirmed
+    /// configuration for that make/model/year.
+    ///
+    /// The old wording ("Verified configuration" vs "Basic profile · Some
+    /// details self-reported") read as a score, so a person who carefully
+    /// filled in every field by hand saw "Basic profile" and reasonably
+    /// concluded the app thought their work didn't count — while a vehicle
+    /// they'd entered nothing for showed "Verified". Nothing was wrong with
+    /// their profile; the catalog simply had no entry for that year.
+    ///
+    /// The distinction is worth keeping, because catalog-confirmed and
+    /// owner-entered details genuinely differ in reliability. It just has to
+    /// say that plainly instead of implying one of them is deficient.
     private var verificationText: String {
         switch vehicle.profileVerification {
         case .verified:
-            return "Verified configuration"
+            return "Details confirmed from catalog"
         case .basicUnverified:
-            return "Basic profile · Some details self-reported"
+            return "Details you entered yourself"
         }
     }
 
@@ -258,19 +288,8 @@ struct VehicleDetailView: View {
                     }
                 }
 
-                VehicleDetailProfileCard(completion: profileCompletion)
-
-                if profileCompletion < 1.0 {
-                    Button {
-                        isFinishingSetup = true
-                    } label: {
-                        ChoiceCard(
-                            icon: "checklist",
-                            title: "Finish setting up this vehicle",
-                            subtitle: "Add mileage and maintenance history"
-                        )
-                    }
-                    .buttonStyle(.plain)
+                VehicleDetailProfileCard(completion: profileCompletion) {
+                    isFinishingSetup = true
                 }
 
                 // Where a person can finally see what they told OpenHood
@@ -403,36 +422,76 @@ struct FinishVehicleSetupView: View {
     }
 }
 
+/// The profile card and the "Finish setting up this vehicle" button used to
+/// be two separate things stacked on top of each other, both saying the same
+/// thing in different words. They're one control now: the card itself is the
+/// button while anything is missing, and it settles into a finished state
+/// once the profile is complete rather than simply vanishing — a progress
+/// indicator that disappears at 100% never actually shows you that you
+/// finished.
 private struct VehicleDetailProfileCard: View {
     let completion: Double
+    var onFinishSetup: (() -> Void)?
 
     private var completionPercentage: Int {
         Int(completion * 100)
     }
 
+    private var isComplete: Bool {
+        completion >= 1.0
+    }
+
     var body: some View {
+        if isComplete || onFinishSetup == nil {
+            cardBody
+        } else {
+            Button {
+                onFinishSetup?()
+            } label: {
+                cardBody
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var cardBody: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Vehicle profile")
                         .font(.headline)
 
-                    Text("\(completionPercentage)% complete")
+                    Text(isComplete ? "Complete" : "\(completionPercentage)% complete")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isComplete ? .green : .secondary)
                 }
 
                 Spacer()
 
-                Image(systemName: "checklist")
-                    .font(.title2)
+                if isComplete {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.title2)
+                        .foregroundStyle(.green)
+                } else {
+                    HStack(spacing: 6) {
+                        Text("Finish setup")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(Color.accentColor)
+                }
             }
 
             ProgressView(value: completion)
-                .tint(.primary)
+                .tint(isComplete ? .green : Color.accentColor)
 
             Text(
-                "A more complete profile helps OpenHood provide more relevant maintenance and diagnostic guidance."
+                isComplete
+                    ? "OpenHood has everything it asks for about this vehicle. You can still update mileage and service history anytime."
+                    : "A more complete profile helps OpenHood provide more relevant maintenance and diagnostic guidance."
             )
             .font(.caption)
             .foregroundStyle(.secondary)

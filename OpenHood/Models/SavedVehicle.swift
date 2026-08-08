@@ -24,6 +24,20 @@ struct VehicleServiceRecord: Identifiable, Codable, Equatable, Hashable {
     /// was done but not when — still worth keeping, and worth showing as
     /// "timing not recorded" rather than silently implying it was recent.
     var timeframe: String?
+    /// Odometer reading when the work was done, if the owner knows it.
+    ///
+    /// This is the field that makes intervals computable rather than just
+    /// displayable. A timeframe tells you roughly how long ago something
+    /// happened; the mileage tells you how far the car has travelled since,
+    /// which is what almost every maintenance interval is actually defined
+    /// against. Together they also let OpenHood ask a genuinely useful
+    /// question later — "you last logged an oil change at 158,000 miles,
+    /// what are you at now?" — instead of nagging on a calendar.
+    ///
+    /// Optional because plenty of people remember roughly when a job was
+    /// done but not the odometer reading, and demanding it would either
+    /// stall them or collect a made-up number.
+    var mileage: Int?
     /// Free-text detail, used by the "I know most of it" screen where
     /// people describe several jobs in their own words.
     var note: String?
@@ -32,11 +46,13 @@ struct VehicleServiceRecord: Identifiable, Codable, Equatable, Hashable {
         id: UUID = UUID(),
         service: String,
         timeframe: String? = nil,
+        mileage: Int? = nil,
         note: String? = nil
     ) {
         self.id = id
         self.service = service
         self.timeframe = timeframe
+        self.mileage = mileage
         self.note = note
     }
 
@@ -55,10 +71,19 @@ struct VehicleServiceRecord: Identifiable, Codable, Equatable, Hashable {
     /// How this reads in a list. Keeps the "when" attached to the "what"
     /// everywhere it's displayed, so the two can't drift apart in the UI.
     var displayLine: String {
-        guard let timeframe, !timeframe.isEmpty else {
+        var detail: [String] = []
+
+        if let timeframe, !timeframe.isEmpty {
+            detail.append(timeframe)
+        }
+        if let mileage {
+            detail.append("at \(mileage.formatted()) mi")
+        }
+
+        guard !detail.isEmpty else {
             return "\(service) — timing not recorded"
         }
-        return "\(service) — \(timeframe)"
+        return "\(service) — \(detail.joined(separator: ", "))"
     }
 }
 
