@@ -19,6 +19,16 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
     case unsafeBrakesOrSteering
     case visibleTireDamage
     case engineWillNotStayRunning
+    // Added alongside the transmission-question escalation fix in
+    // SomethingHappenedView (see the doc comment on
+    // IncidentStartingAnswerKey.transmissionBehavior) — previously
+    // "engine revs but the car doesn't speed up" and "burning smell"
+    // were known-dangerous but had no honest fit among the 7 categories
+    // above, so they were left unescalated on purpose. This is the 8th
+    // category, added the same way the previous 7 were: a real,
+    // dangerous, plausible symptom that deserves its own STOP DRIVING
+    // treatment rather than an ordinary Phase 1 result.
+    case transmissionSlippingOrBurningSmell
     case noneOfThese
     case unsure
 
@@ -33,6 +43,7 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
         case .unsafeBrakesOrSteering: "Brakes or steering feel unsafe"
         case .visibleTireDamage: "Visible tire damage"
         case .engineWillNotStayRunning: "The engine will not stay running"
+        case .transmissionSlippingOrBurningSmell: "Transmission slipping, or a burning smell"
         case .noneOfThese: "None of these"
         case .unsure: "I’m not sure"
         }
@@ -46,7 +57,8 @@ enum IncidentSafetySelection: String, Codable, CaseIterable, Identifiable {
              .flashingWarningLight,
              .unsafeBrakesOrSteering,
              .visibleTireDamage,
-             .engineWillNotStayRunning:
+             .engineWillNotStayRunning,
+             .transmissionSlippingOrBurningSmell:
             .urgent
         case .unsure:
             .caution

@@ -388,9 +388,9 @@ struct VehicleCatalog {
             name: "Toyota",
             region: .japanese,
             models: [
-                VehicleModel(name: "Corolla"),
-                VehicleModel(name: "Camry"),
-                VehicleModel(name: "Tacoma"),
+                VehicleModel(name: "Corolla", availability: .supported),
+                VehicleModel(name: "Camry", availability: .supported),
+                VehicleModel(name: "Tacoma", availability: .supported),
                 VehicleModel(
                     name: "4Runner",
                     productionYearRange: 1984...2026,
@@ -855,6 +855,325 @@ extension VehicleFactSheet {
             tirePressureFront: "33 PSI",
             tirePressureRear: "33 PSI",
             notes: "These figures are for the 1.8L 4-cylinder gasoline engine used in most 2013 Civic trims — the Hybrid and Natural Gas versions differ. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown; check your owner's manual for it. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "RAV4",
+            engineOilType: "0W-16 full synthetic (some references list 0W-20 as an acceptable substitute)",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink), or an equivalent",
+            coolantCapacity: "Roughly 7.3 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder (A25A-FKS) used in the 2019 RAV4. Tire pressure commonly ranges 33–36 PSI by trim and tire size — always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "CR-V",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 3.7 quarts with a filter change",
+            coolantType: "Honda Long-Life Antifreeze/Coolant Type 2 (blue)",
+            coolantCapacity: nil,
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 1.5L turbocharged 4-cylinder used in most 2019 CR-V trims. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown; check your owner's manual for it. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Camry",
+            engineOilType: "0W-16 full synthetic",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink/red POAT formula), or an equivalent",
+            coolantCapacity: "Roughly 6.4 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in the 2019 Camry — hybrid and V6 versions differ. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "Accord",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 3.4 quarts with a filter change",
+            coolantType: "Honda Long-Life Antifreeze/Coolant Type 2 (blue)",
+            coolantCapacity: "Roughly 6.3 quarts (CVT models)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 1.5L turbocharged 4-cylinder used in most 2019 Accord trims — the 2.0L turbo and hybrid versions differ. Tire pressure commonly ranges 32–35 PSI by trim. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "F-150",
+            engineOilType: "Motorcraft 5W-20 synthetic blend",
+            engineOilCapacity: "Roughly 8.9 quarts with a filter change",
+            coolantType: "Motorcraft Orange concentrated OAT antifreeze/coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.0L V8 used in the 2019 F-150 — other engine options (2.7L/3.5L EcoBoost, 3.3L V6) differ. Trucks with the Heavy-Duty Payload Package call for 40 PSI front and rear instead. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Silverado",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 8 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 17.4 quarts (dry fill, mixed 50/50 with distilled water)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.3L V8 used in the 2019 Silverado 1500 — other engine options differ. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Corolla",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 1.8L 4-cylinder used in the 2019 Corolla — the hybrid version differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Rogue",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.9 quarts with a filter change",
+            coolantType: "Nissan Long Life Antifreeze/Coolant (green), or an equivalent",
+            coolantCapacity: "Roughly 6.5 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in the 2019 Rogue. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ram",
+            model: "1500",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "Roughly 7 quarts with a filter change",
+            coolantType: "Mopar MS-90032 OAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.7L HEMI V8 used in the 2019 Ram 1500 — other engine options (3.6L V6, eTorque) differ. Tire pressure commonly ranges 32–36 PSI by trim and payload package. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Jeep",
+            model: "Wrangler",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5 quarts with a filter change",
+            coolantType: "Mopar OAT coolant (typically orange, 5-year/100,000-mile formula) — not independently confirmed this pass",
+            coolantCapacity: "Roughly 10.7 quarts",
+            tirePressureFront: "37 PSI",
+            tirePressureRear: "37 PSI",
+            notes: "These figures are for the 3.6L V6 used in the 2019 Wrangler JL. Coolant type and tire pressure were not independently confirmed with full confidence for this pass — both vary meaningfully with the Wrangler's optional tire sizes. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mazda",
+            model: "CX-5",
+            engineOilType: "0W-20 full synthetic (non-turbo); 5W-30 full synthetic on the turbocharged engine option",
+            engineOilCapacity: "Roughly 4.8 quarts with a filter change (non-turbo); roughly 5.1 quarts on the turbo",
+            coolantType: "Mazda FL-22 coolant, or an equivalent long-life coolant",
+            coolantCapacity: "Roughly 7.9 quarts",
+            tirePressureFront: "34 PSI",
+            tirePressureRear: "34 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 CX-5 trims — the turbocharged Signature trim differs on oil. Tire pressure is commonly 34 PSI on 17-inch wheels or 36 PSI on 19-inch wheels. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Subaru",
+            model: "Outback",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.1 quarts with a filter change",
+            coolantType: "Subaru Super Coolant (blue), or an equivalent long-life coolant",
+            coolantCapacity: "Roughly 6.9 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 Outback trims — the 3.6L 6-cylinder option differs. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "BMW",
+            model: "3 Series",
+            engineOilType: "0W-20 or 5W-30 full synthetic, BMW Longlife-01 approved",
+            engineOilCapacity: "Roughly 5.5 quarts with a filter change",
+            coolantType: "BMW-approved blue coolant (G48 or equivalent) — not independently confirmed this pass",
+            coolantCapacity: nil,
+            tirePressureFront: "Commonly 32–36 PSI — check door placard, varies significantly by tire size and run-flat vs standard tires",
+            tirePressureRear: "Commonly 32–36 PSI — check door placard, varies significantly by tire size and run-flat vs standard tires",
+            notes: "These figures are for the 330i's 2.0L turbocharged 4-cylinder used in the 2019 3 Series — the M340i and M3 differ. Coolant capacity and an exact tire pressure figure were not independently confirmed with full confidence for this pass. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mercedes-Benz",
+            model: "C-Class",
+            engineOilType: "0W-40 full synthetic, Mercedes-Benz MB 229.5 approved",
+            engineOilCapacity: "Roughly 6.3 quarts with a filter change",
+            coolantType: "Mercedes-Benz MB 325.6 pink Si-OAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "Commonly 32–36 PSI — check door placard, many trims use different front/rear staggered tire sizes",
+            tirePressureRear: "Commonly 32–36 PSI — check door placard, many trims use different front/rear staggered tire sizes",
+            notes: "These figures are for the C300's 2.0L turbocharged 4-cylinder used in the 2019 C-Class — the AMG C43/C63 differ. Coolant capacity and an exact tire pressure figure were not independently confirmed with full confidence for this pass. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Audi",
+            model: "A4",
+            engineOilType: "0W-30 full synthetic, VW 502.00 approved",
+            engineOilCapacity: "Roughly 5.5 quarts with a filter change",
+            coolantType: "Audi G12evo (or G13) long-life coolant",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.0T used in most 2019 A4 trims — the S4 differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Volkswagen",
+            model: "Jetta",
+            engineOilType: "0W-20 full synthetic, VW 508.00 approved",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "VW G12++ or G13 long-life coolant",
+            coolantCapacity: nil,
+            tirePressureFront: "36 PSI",
+            tirePressureRear: "36 PSI",
+            notes: "These figures are for the 1.4L turbocharged 4-cylinder used in most 2019 Jetta trims — the GLI differs. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Dodge",
+            model: "Charger",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.9 quarts with a filter change",
+            coolantType: "Mopar Antifreeze/Coolant 10 Year/150,000 Mile Formula OAT, or an equivalent",
+            coolantCapacity: "Roughly 5.7 quarts",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 3.6L V6 used in most 2019 Charger trims — the R/T, Scat Pack, and SRT/Hellcat V8 trims differ significantly. Tire pressure commonly ranges 32–35 PSI by trim. Always confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "GMC",
+            model: "Sierra",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 8 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 17.4 quarts (dry fill, mixed 50/50 with distilled water)",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 5.3L V8 used in the 2019 Sierra 1500 — other engine options differ. The Sierra shares its platform and this powertrain with the Chevrolet Silverado 1500, so these figures are the same across both; confirm against the sticker inside your driver's door jamb or your owner's manual before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Mitsubishi",
+            model: "Outlander",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.9 quarts with a filter change",
+            coolantType: "Mitsubishi ES-64217 red HOAT coolant, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 2.4L 4-cylinder used in the regular 2019 Outlander — the smaller Outlander Sport is a different vehicle with its own specs, not covered here. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "Mustang",
+            engineOilType: "5W-30 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Motorcraft Orange Antifreeze/Coolant (Motorcraft Yellow on vehicles built after roughly January 2020), or an equivalent",
+            coolantCapacity: "Roughly 9.5 quarts — sources vary on this figure, so treat it as an estimate",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "30 PSI",
+            notes: "These figures are for the 2.3L EcoBoost 4-cylinder used in base 2019 Mustang trims on 18-inch wheels — the 5.0L GT V8 and performance trims (Bullitt, Shelby GT350) use different tire pressures and somewhat different fluid specs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "Explorer",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Motorcraft Orange Antifreeze/Coolant, or an equivalent — inferred from Ford's standard spec for this era, not independently confirmed for the Explorer specifically",
+            coolantCapacity: nil,
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 3.5L V6 used in most 2019 Explorer trims — the 2.3L EcoBoost 4-cylinder option shares the same oil type but a different capacity. OpenHood could not find a reliably sourced tire pressure figure for this vehicle, so that field is intentionally left unconfirmed rather than guessed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Camaro",
+            engineOilType: "5W-30 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 14.5 quarts",
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 3.6L V6 used in most 2019 Camaro trims — the turbo 4-cylinder and SS/ZL1 V8 trims differ, and the SS/ZL1 in particular use staggered front/rear tire sizes with different pressures. OpenHood could not find a reliably sourced tire pressure figure specific to the V6, so that field is intentionally left unconfirmed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Malibu",
+            engineOilType: "0W-20 full synthetic meeting GM dexos1 Gen 2",
+            engineOilCapacity: "4.2 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 12.0 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 1.5L turbo 4-cylinder used in most 2019 Malibu trims — the 2.0L turbo (Premier) engine differs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Altima",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.4 quarts with a filter change",
+            coolantType: "Genuine Nissan Long Life Antifreeze/Coolant (blue), pre-diluted, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "28 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 Altima trims — the 2.0L VC-Turbo (available on SR/Platinum) differs. The front/rear tire pressure split is unusual for a front-wheel-drive sedan, so treat it as a starting point and confirm against the sticker inside your driver's door jamb, which is the authoritative source for your specific trim and wheel size."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Sentra",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "4.2 quarts with a filter change",
+            coolantType: "Genuine Nissan Long Life Antifreeze/Coolant (blue), or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 1.8L 4-cylinder used in most 2019 Sentra trims — the turbocharged 1.6L SR Turbo differs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Porsche",
+            model: "911",
+            engineOilType: "5W-40 full synthetic meeting Porsche A40",
+            engineOilCapacity: "Roughly 8.5 quarts with a filter change",
+            coolantType: "Porsche-spec PSi-OAT coolant (pink), meeting VW/Porsche TL 774-L, such as Zerex G-40, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "34 PSI",
+            tirePressureRear: "39 PSI",
+            notes: "These figures are for the base 2019 Carrera (991.2) 3.0L twin-turbo — Carrera S, 4S, and other trims run different wheel/tire packages (19-inch vs 20-inch, different staggered widths) with front pressures commonly ranging 29–37 PSI and rear 33–47 PSI. This is one of the widest trim-to-trim spreads in this list, so treat the figures above as a starting point only — confirming against the sticker inside your driver's door jamb matters more here than for most vehicles."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "Pilot",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "5.7 quarts with a filter change",
+            coolantType: "Honda Long Life Antifreeze/Coolant Type 2 (blue), pre-mixed 50/50, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "The 2019 Pilot uses a single 3.5L V6 engine across all trims, so these figures should apply fleet-wide. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Highlander",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "5.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink), or an equivalent",
+            coolantCapacity: "Roughly 6.4 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 3.5L V6 used in most 2019 Highlander trims — the 2.7L 4-cylinder (base LE) and Hybrid models differ. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Subaru",
+            model: "Forester",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "Subaru Genuine Long Life Coolant (green), or an equivalent — the exact color/spec code was not independently confirmed this pass",
+            coolantCapacity: nil,
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 2.5L flat-4 used in all 2019 Forester trims. OpenHood could not find a reliably sourced tire pressure figure for this vehicle, so that field is intentionally left unconfirmed rather than guessed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
         )
     ]
 
@@ -927,6 +1246,135 @@ extension MaintenanceGuide {
                 "If it doesn't start after a couple of tries, the battery or another component may need a mechanic's attention rather than another jump."
             ],
             safetyNote: "Car batteries contain acid and can produce explosive gas. Keep sparks and flames away, don't lean over the battery while connecting cables, and stop if you smell burning or see smoke."
+        ),
+        MaintenanceGuide(
+            title: "Check your coolant level",
+            icon: "thermometer.medium",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Only check coolant when the engine is completely cold — ideally before driving, or several hours after the vehicle was last run.",
+                "Open the hood and find the coolant reservoir — a translucent plastic tank, usually white or off-white, marked with \"MIN\"/\"LOW\" and \"MAX\"/\"FULL\" lines on the side. This is different from the metal radiator itself.",
+                "With the engine cold, the coolant level should sit between those two lines. If it's below the low mark, that's the only part you should open.",
+                "Add the coolant type your vehicle's manual specifies (or a pre-mixed 50/50 coolant if you're not sure of the concentrate ratio) directly into the reservoir until it reaches the full line.",
+                "Replace the reservoir cap securely and close the hood."
+            ],
+            safetyNote: "Never open the radiator cap itself — only the translucent reservoir tank — and never open either one while the engine is warm or hot. A pressurized, hot cooling system can spray scalding coolant and steam."
+        ),
+        MaintenanceGuide(
+            title: "Top off windshield washer fluid",
+            icon: "sparkles",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Open the hood and find the washer fluid reservoir — usually a plastic tank with a cap marked with a windshield/spray icon.",
+                "Check the fluid level; many reservoirs are translucent enough to see the level without opening the cap.",
+                "Remove the cap and pour in washer fluid until it nears the top — a funnel helps avoid spills.",
+                "Replace the cap and run the washers briefly to confirm fluid reaches the nozzles."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Replace wiper blades",
+            icon: "cloud.rain.fill",
+            estimatedTime: "10 minutes",
+            steps: [
+                "Lift the wiper arm away from the windshield until it locks in the raised position.",
+                "Find the small release tab or clip where the blade attaches to the arm — the exact mechanism varies by vehicle, so check the new blade's packaging or a vehicle-specific guide if it's not obvious.",
+                "Press the tab and slide the old blade out along the arm.",
+                "Slide the new blade on until it clicks or locks into place, and gently tug it to confirm it's secure.",
+                "Repeat for the other wiper, then carefully lower both arms back onto the windshield — don't let them snap down on their own, which can crack the glass."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Visually check brake pad wear",
+            icon: "eye.fill",
+            estimatedTime: "5–10 minutes",
+            steps: [
+                "Park on level ground, engage the parking brake, and locate a wheel where you can see the brake caliper through the spokes — if not, this check may require removing the wheel instead.",
+                "Look for the brake pad pressed against the metal rotor inside the caliper — it's the material sandwiched between the caliper and the rotor.",
+                "Estimate the pad's thickness. Roughly a quarter inch (about 6mm) or more is generally healthy; below about an eighth inch (3mm) means it's time to have them inspected and likely replaced soon.",
+                "Check for a rotor surface that looks deeply grooved, scored, or uneven — these are also signs it's time for a closer look.",
+                "Repeat for each wheel you can see clearly — wear often differs side to side."
+            ],
+            safetyNote: "This is a visual estimate, not a substitute for a professional inspection. Pad wear can be uneven or hidden depending on the wheel design, and only a shop can measure it precisely."
+        ),
+        MaintenanceGuide(
+            title: "Replace the engine air filter",
+            icon: "wind",
+            estimatedTime: "10–15 minutes",
+            steps: [
+                "Locate the air filter housing — usually a black plastic box near the front of the engine bay, connected to a wide intake tube.",
+                "Unclip or unscrew the housing's cover — most use spring clips or a few screws, no special tools needed.",
+                "Lift out the old filter, noting which way it was facing (many have an airflow direction arrow printed on the frame).",
+                "Wipe out any loose debris from inside the housing with a rag.",
+                "Insert the new filter in the same orientation as the old one, then close and re-secure the housing cover."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Check power steering fluid",
+            icon: "steeringwheel",
+            estimatedTime: "5 minutes",
+            steps: [
+                "Confirm your vehicle actually has this system first — many newer vehicles use electric power steering (EPS) with no fluid reservoir at all. If you don't see a reservoir labeled for power steering in the engine bay, your vehicle likely doesn't use this fluid.",
+                "If present, locate the power steering reservoir — usually a small tank, sometimes with a steering-wheel icon on the cap.",
+                "With the engine off, check the fluid level against the MIN/MAX markings on the tank or dipstick built into the cap.",
+                "If low, add the specific power steering fluid type your owner's manual specifies — this varies by manufacturer more than most other fluids, so the wrong type is a real risk here.",
+                "A level that keeps dropping points to a leak worth having inspected, rather than just topped off repeatedly."
+            ],
+            safetyNote: nil
+        ),
+        MaintenanceGuide(
+            title: "Check and clean battery terminals",
+            icon: "battery.100",
+            estimatedTime: "10–15 minutes",
+            steps: [
+                "With the engine off, open the hood and locate the battery.",
+                "Look for white, blue, or greenish crusty buildup around the terminals — this is corrosion and can weaken the electrical connection.",
+                "If present, disconnect the negative (black, marked \"–\") terminal first, then the positive (red, marked \"+\").",
+                "Clean the terminals and cable ends with a wire brush or a baking-soda-and-water mixture on an old toothbrush, then rinse with plain water and dry thoroughly.",
+                "Reconnect the positive terminal first, then the negative — the reverse order of removal — and tighten securely."
+            ],
+            safetyNote: "Battery terminals carry live current and batteries can produce explosive gas. Remove jewelry, avoid letting a metal tool touch both terminals at once, and keep sparks and flames away."
+        ),
+        MaintenanceGuide(
+            title: "Check serpentine belt condition",
+            icon: "arrow.triangle.2.circlepath",
+            estimatedTime: "5 minutes",
+            steps: [
+                "With the engine off and cool, open the hood and locate the serpentine belt — the single continuous belt winding around several pulleys at the front of the engine.",
+                "Visually inspect its full visible length for cracks, fraying, glazing (a shiny, hardened look), or missing chunks in the ribbed side.",
+                "Check that the belt sits properly in each pulley groove rather than looking misaligned or loose.",
+                "If your vehicle has an automatic tensioner, note whether it looks like it's holding steady tension rather than sitting slack.",
+                "Minor surface cracking across the ribs is common with age; deep cracks, fraying, or a visibly loose belt are worth having inspected soon."
+            ],
+            safetyNote: "Never inspect the belt while the engine is running — moving belts and pulleys can catch hair, clothing, and fingers instantly."
+        ),
+        MaintenanceGuide(
+            title: "Replace a headlight bulb",
+            icon: "lightbulb.fill",
+            estimatedTime: "15–20 minutes",
+            steps: [
+                "Confirm the bulb type and part number for your specific vehicle before buying a replacement — this varies significantly by make, model, and year, and by whether it's a standard halogen bulb versus an HID or LED assembly that may not be a simple bulb swap at all.",
+                "With the engine off, open the hood and locate the back of the headlight housing — access varies a lot by vehicle, and some require removing panels or reaching from underneath.",
+                "Twist and remove the bulb's plastic access cover, if there is one, then disconnect the electrical connector from the back of the bulb.",
+                "Release the bulb's retaining clip or twist-lock and remove the old bulb without touching the new bulb's glass with bare fingers — skin oil can cause it to fail prematurely.",
+                "Insert the new bulb, secure the retaining clip, reconnect the electrical connector, and replace the access cover.",
+                "Turn on the headlights to confirm the new bulb works before closing the hood."
+            ],
+            safetyNote: "If your vehicle has HID or LED headlights rather than simple halogen bulbs, this isn't a basic bulb swap and often requires replacing the whole assembly or professional service — confirm which type your vehicle has before starting."
+        ),
+        MaintenanceGuide(
+            title: "Check transmission fluid",
+            icon: "gearshape.2.fill",
+            estimatedTime: "10 minutes",
+            steps: [
+                "Confirm your vehicle actually has a transmission dipstick first — many modern automatic transmissions are sealed, with no dipstick at all, and are checked by a shop through a fill/check plug instead. If you don't see a second dipstick (separate from the engine oil dipstick) under the hood, your vehicle likely uses the sealed design, and this fluid should be checked by a professional.",
+                "If a dipstick is present, follow your owner's manual exactly — some vehicles want the engine running and warm in Park or Neutral for this check, which is different from the engine-off oil check.",
+                "Pull the transmission dipstick, wipe it clean, reinsert it fully, then pull it out again to read the level against its markings.",
+                "Also note the fluid's color and smell — healthy fluid is typically reddish and doesn't smell burnt; dark or burnt-smelling fluid is worth mentioning to a mechanic even if the level itself is fine."
+            ],
+            safetyNote: "If your vehicle calls for checking this with the engine running, keep hands, hair, and clothing away from any moving parts under the hood."
         )
     ]
 }

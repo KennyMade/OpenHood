@@ -570,6 +570,11 @@ enum IncidentUrgentAnswerKey {
     static let restartEffect = "restartEffect"
     static let tireDamageObservation = "tireDamageObservation"
     static let tireAirStatus = "tireAirStatus"
+    static let transmissionConcernType = "transmissionConcernType"
+    static let transmissionPattern = "transmissionPattern"
+    static let transmissionTrigger = "transmissionTrigger"
+    static let transmissionWarning = "transmissionWarning"
+    static let transmissionRecentWork = "transmissionRecentWork"
 }
 
 struct IncidentGuidanceSnapshotArea: Codable, Equatable {

@@ -270,11 +270,21 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("cranks normally")],
             area: .startingAndElectrical,
-            explanation: "A no-crank or limited-response start attempt can involve electrical power or starting control, but direct testing is still needed.",
+            explanation: "Not knowing exactly what happened when you turned the key still narrows this down a little. If nothing at all happened — no crank, no dash lights, no sound — that usually points to the battery, a main fuse, or a poor connection. If the dash lights come on normally but the engine doesn't turn over, that leans more toward the starter, its relay, or the ignition switch. Next time, noticing whether the dash lights come on and whether you hear anything at all is the single most useful thing to check.",
             action: .professionalInspection,
             questions: [
                 "Does the engine crank, click, or produce no response?",
                 "What do the dash lights do during the start attempt?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-electrical-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — No-Crank Start Attempt, Response Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -508,11 +518,21 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no crank")],
             area: .fuelAndIgnition,
-            explanation: "Cranking without starting or misfire-like behavior can involve fuel delivery or ignition quality without pointing to one part.",
+            explanation: "Even without a specific clue, an OBD-II code scan — often free at an auto parts store — is the fastest way to narrow this down, since it can point toward fuel delivery, ignition, or a sensor without any guesswork. In the meantime, a fuel smell while cranking leans toward flooding or a fuel-delivery issue, while a recent check-engine light beforehand leans toward whatever it was already flagging.",
             action: .obtainCodeScan,
             questions: [
                 "Does the engine crank at its usual speed?",
                 "Is there a warning message or stored diagnostic code?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-starting-fuel-ignition-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Cranks But Won't Start, Clue Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -766,77 +786,27 @@ enum IncidentGuidanceKnowledge {
         // SomethingHappenedView.startingQuestions) rather than free-text
         // description matching.
         //
-        // Severity note, read carefully before touching this section:
-        // only "Shifting feels harsh or delayed..." and "I'm not sure"
-        // have records below. "The engine revs up but the car doesn't
-        // speed up... (slipping)" and "A burning smell..." are DELIBERATELY
-        // UNHANDLED — real guidance is consistent that both mean stop
-        // driving as soon as it's safely possible (loss of reliable power
-        // delivery; already-degraded fluid risking complete failure), not
-        // a SERVICE-SOON-tier Phase 1 result, the same severity tier this
-        // Phase 1 engine already can't represent (ordinaryDriveRecommendation
-        // only ever returns SERVICE SOON, CHECK BEFORE DRIVING, or
-        // MONITOR — no path to STOP DRIVING).
-        //
-        // Every prior severity fix this session (cooling, oil-pressure,
-        // odor, temperature warning light, ABS/brakes) closed this same
-        // kind of gap by escalating into one of the app's existing 7
-        // IncidentSafetySelection categories via escalateToUrgentSafety.
-        // This one is different: none of the 7 fit without asking a
-        // misleading follow-up question. Checked each category's actual
-        // urgentQuestions wording (not just its name), specifically
-        // against "engine revs fine but the car won't accelerate" (no
-        // smell, no fire, no coolant/temperature sign, no brake/steering
-        // symptom, engine keeps running normally) and "burning smell
-        // after stop-and-go/towing":
-        //   - .smokeOrFire: first question assumes an active flame right
-        //     now ("Is there an active flame? Answer only from a safe
-        //     distance.") — wrong premise for a smell with no fire, and
-        //     entirely wrong for slipping (no smoke/smell at all).
-        //   - .strongFuelSmell: first question forces a fuel-oriented
-        //     description (Gasoline/Burning oil/Sweet or coolant-like/
-        //     Electrical or plastic/Exhaust) under a "strong fuel smell"
-        //     framing — mischaracterizes a transmission-fluid smell as a
-        //     fuel leak, and doesn't apply at all to slipping (no smell).
-        //   - .overheatingOrSteam: first question asks whether "the gauge
-        //     or warning indicate[d] overheating" — most vehicles have no
-        //     transmission-temperature gauge, so this forces a coolant/
-        //     engine-temperature framing that doesn't fit either symptom.
-        //   - .flashingWarningLight: first question assumes a specific
-        //     dashboard light flashed (Check engine/Oil pressure/
-        //     Temperature/Brake/Charging/Tire pressure) — many transmission
-        //     slips or burning smells present with no dashboard light at
-        //     all, so this forces a false premise.
-        //   - .unsafeBrakesOrSteering: the closest guess by theme (loss of
-        //     reliable vehicle control), but its first question forces
-        //     "What is the main concern? Braking / Steering / Both / I'm
-        //     not sure" — slipping is neither a braking nor a steering
-        //     symptom (the brakes and steering both work normally; the
-        //     problem is the engine not transferring power to the wheels),
-        //     so answering this question honestly means picking "I'm not
-        //     sure" for a question that does apply to the person's car,
-        //     just not to their problem — a misleading fit, not a clean
-        //     one, despite the surface-level "loss of control" similarity.
-        //   - .engineWillNotStayRunning: first question ("What happens
-        //     when it runs? Starts and immediately stops/Idles roughly/
-        //     Shakes or misfires/Stalls when placed in gear") is about the
-        //     ENGINE stalling or misfiring — but transmission slipping is
-        //     specifically the engine running fine while the car doesn't
-        //     accelerate, the opposite premise.
-        //   - .noneOfThese: not an urgent category at all (routine path),
-        //     so it can't produce the required stop-driving-tier result
-        //     regardless of fit.
-        // Conclusion: no existing category fits both dangerous answers
-        // without a misleading premise. Per instruction, this is left
-        // unwired rather than forced — selecting either answer currently
-        // falls through to an ordinary Phase 1 result (typically SERVICE
-        // SOON, forced by the .startingOrRunningTrouble observation floor
-        // in ordinaryDriveRecommendation, generally with no record
-        // actually matching that specific answer) instead of the correct
-        // stop-driving treatment. This is a known, called-out gap — not
-        // an oversight — pending a product decision on whether a new
-        // IncidentSafetySelection category is needed for "transmission
-        // failing under load" specifically.
+        // Severity note: only "Shifting feels harsh or delayed..." and
+        // "I'm not sure" have Phase 1 records below. "The engine revs up
+        // but the car doesn't speed up... (slipping)" and "A burning
+        // smell..." are handled OUTSIDE this Phase 1 system entirely — an
+        // audit against the app's 7 existing IncidentSafetySelection
+        // categories found that none of them fit either answer without a
+        // misleading follow-up question (smoke/fire assumes an active
+        // flame; strong-fuel-smell forces a fuel-leak framing; overheating
+        // assumes a temperature gauge most transmissions don't have;
+        // flashing-warning-light assumes a dashboard light that isn't
+        // always present; unsafe-brakes-or-steering forces "braking or
+        // steering" when the actual problem is neither; engine-will-not-
+        // stay-running assumes the engine itself is stalling, the opposite
+        // of slipping's premise). Rather than force a misleading fit, the
+        // app now has an 8th category built specifically for this:
+        // IncidentSafetySelection.transmissionSlippingOrBurningSmell (see
+        // its doc comment in VehicleIncident.swift), wired via
+        // transmissionBehaviorEscalation in SomethingHappenedView. Both
+        // dangerous answers route straight into that category's own STOP
+        // DRIVING treatment before Phase 1 evaluation ever runs — they
+        // never reach the records below.
         //
         // sourceReferences below are attributed to OpenHood, not to the
         // specific outlets consulted, for the same reason given above the
@@ -1319,6 +1289,46 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "ABS diagnostic"
         ),
+        // Closes a real gap: "I'm not sure which one" on the warning-light
+        // question (IncidentWarningAnswerKey.light) previously had zero
+        // matching record — dashboard icons are notoriously unfamiliar, so
+        // this is a common, honest answer, not an edge case. Doesn't
+        // attempt to guess which system is involved (that would be
+        // dishonest); instead gives real, actionable help identifying the
+        // light itself, since that's the actual blocker. Same tier as the
+        // rest of this file — reviewed general guidance, not a
+        // needsVerification placeholder.
+        record(
+            id: "phase1.warning.unidentified-light",
+            family: .warningLightOrMessage,
+            observations: [.warningLightOrMessage],
+            required: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "I’m not sure which one")
+            ],
+            support: [
+                .observation(.warningLightOrMessage),
+                .warningAnswer(key: IncidentWarningAnswerKey.light, value: "I’m not sure which one")
+            ],
+            contradict: [],
+            area: .engineAndCombustion,
+            explanation: "Every dashboard warning light has a specific meaning, and your owner's manual has a full picture guide — usually in the section right after the dashboard overview — that matches every symbol to its name. If the manual isn't handy, most vehicle manufacturers also publish the same guide on their support website by make, model, and year. Once the light is identified, OpenHood can give real guidance instead of a general placeholder.",
+            action: .professionalInspection,
+            questions: [
+                "What color is the light — amber/yellow, or red?",
+                "Is it steady or flashing?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-warning-light-unidentified-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Warning Light Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
         // Same tier as phase1.warning.record-code/phase1.warning.engine-
         // information and the noise/brake records above — reviewed
         // general-guidance content, not needsVerification placeholders,
@@ -1376,7 +1386,7 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no visible fluid")],
             area: .leaksSmokeAndOdors,
-            explanation: "Visible fluid or residue may involve a leak, spill, or normal drainage. Its location and appearance are worth documenting without touching it.",
+            explanation: "Without knowing the color, it's hard to narrow this down — but color is usually the fastest clue once you can see it again. Coolant is typically green, orange, pink, or yellow; oil is brown to black and often has a slick texture; a reddish tint often points to transmission or power steering fluid; and clear water that shows up only after using the air conditioning is usually just normal AC condensation, not a leak at all. A quick look next time, from a safe standing position, often points straight to the right system.",
             action: .professionalInspection,
             avoid: [
                 "Do not touch or taste an unknown fluid.",
@@ -1385,6 +1395,16 @@ enum IncidentGuidanceKnowledge {
             questions: [
                 "Where was the fluid visible from a safe standing position?",
                 "What color or consistency was visible without touching it?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-visible-fluid-color-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Visible Fluid, Color Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -1644,6 +1664,48 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "serpentine belt replacement"
         ),
+        // Closes a real gap: "Something else" on the visible-observation
+        // question (IncidentFluidAnswerKey.whatWasVisible) previously had
+        // zero matching record and no follow-up question — the option is
+        // real and selectable, so it deserves real content rather than
+        // silence, even though what was actually seen is inherently
+        // unknown here. Same tier as the rest of this file — reviewed
+        // general guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.visible.something-else",
+            family: .fluidLeakOrUnusualSmell,
+            observations: [.visible],
+            required: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "Something else")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.whatWasVisible, value: "Something else")
+            ],
+            contradict: [],
+            area: .mechanicalOrCompression,
+            explanation: "Whatever was seen doesn't match the common categories OpenHood asks about directly — fluid, smoke, a damaged belt, or a dashboard message. A specific, plain description (what it looked like, where on the vehicle, and whether it was moving, dripping, or stationary) is the most useful thing to bring to a mechanic, since this can't be narrowed down further without knowing what it actually was.",
+            action: .professionalInspection,
+            avoid: [
+                "Do not touch or move an unidentified object or component.",
+                "Do not go beneath an unsupported vehicle."
+            ],
+            questions: [
+                "What did it look like, as specifically as possible?",
+                "Where on the vehicle was it, and was it moving, dripping, or stationary?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-visible-something-else-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Something Visible, Not Otherwise Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
         record(
             id: "phase1.fluid-smell.unusual-odor",
             family: .fluidLeakOrUnusualSmell,
@@ -1662,7 +1724,7 @@ enum IncidentGuidanceKnowledge {
             ],
             contradict: [.descriptionContains("no smell")],
             area: .leaksSmokeAndOdors,
-            explanation: "An unusual odor can involve fluid contacting a hot surface, electrical heat, exhaust, or another source. The odor description and location help separate those possibilities.",
+            explanation: "Without knowing the smell, it's hard to narrow this down — but the description itself is usually the fastest clue. A sweet smell often points to coolant reaching a hot surface; a burning smell often points to oil, a belt, or brake material; an electrical or plastic smell points toward wiring or a heat source; and a musty smell is usually just cabin-filter or AC moisture, not a mechanical concern at all. Next time it happens, noticing which of those it's closest to — and whether smoke or liquid was visible at the same time — often points straight to the right system.",
             action: .professionalInspection,
             avoid: [
                 "Do not restart or reproduce an odor when smoke, fuel, or electrical heat may be involved.",
@@ -1671,6 +1733,16 @@ enum IncidentGuidanceKnowledge {
             questions: [
                 "Which odor description is closest?",
                 "Where was it strongest, and was smoke or liquid visible?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-unusual-odor-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Unusual Odor, Description Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
             ]
         ),
         record(
@@ -2395,6 +2467,42 @@ enum IncidentGuidanceKnowledge {
             ],
             repairSearchTerm: "airbag SRS diagnostic"
         ),
+        // Closes a real gap: "I'm not sure / didn't catch it" on the
+        // dashboard-message question (IncidentFluidAnswerKey.
+        // dashboardMessageText) previously had zero matching record —
+        // messages often flash briefly, so this is a common, honest
+        // answer. Same tier as the rest of this file — reviewed general
+        // guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.dashboard-message.unidentified",
+            family: .warningLightOrMessage,
+            observations: [.visible],
+            required: [
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "I’m not sure / didn’t catch it")
+            ],
+            support: [
+                .observation(.visible),
+                .fluidAnswer(key: IncidentFluidAnswerKey.dashboardMessageText, value: "I’m not sure / didn’t catch it")
+            ],
+            contradict: [],
+            area: .routineReminderOrConsumable,
+            explanation: "Dashboard messages usually reappear the next time the vehicle is started or a related condition is met, so there's often a good chance to read it fully next time. Most messages are routine reminders (maintenance due, fluid levels, tire pressure) rather than urgent, but a few — like a brake system message — are more serious. If it appears again, try to read the full text before it clears, or take a photo of it if you can safely do so while parked.",
+            action: .safeObservation,
+            questions: [
+                "Did the message include any warning icon alongside the text?",
+                "Was the message a one-time message, or does it reappear each time the vehicle starts?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-dashboard-message-unidentified-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Dashboard Message Not Yet Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
+        ),
         // OH-UIK cross-chain "wow moment" pass, 2026-08-07 — same
         // technique as phase1.tires.tpms-light-with-vibration: found by
         // scanning every possibleArea for pairs of records driven by
@@ -2741,9 +2849,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.rattle-not-bumps",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Rattle")
             ],
             support: [
@@ -2797,9 +2904,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.clunk-not-bumps",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Clunk")
             ],
             support: [
@@ -3143,9 +3249,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.squeal-not-braking",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Squeal")
             ],
             support: [
@@ -3207,9 +3312,8 @@ enum IncidentGuidanceKnowledge {
         record(
             id: "phase1.noise.grind-not-bumps-not-braking",
             family: .noiseVibrationOrSuspension,
-            observations: [.sound],
+            observations: [.sound, .vibrationOrMovement],
             required: [
-                .observation(.sound),
                 .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "Grind")
             ],
             support: [
@@ -3253,6 +3357,57 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "CV joint or wheel bearing inspection"
+        ),
+        // Universal noise fallback — closes a real dead end: every record
+        // above requires either a specific timing value (bump-noise,
+        // vibration-at-speed, vibration-while-turning, squeal-while-
+        // braking, vibration-while-braking) or a specific sound value
+        // (rattle/clunk/squeal/grind "not bumps"/"not braking"). Someone
+        // who genuinely can't place when it happens or what it sounds
+        // like — a common, honest real-world answer, not an edge case —
+        // matched nothing and fell through to the generic "not enough
+        // information" result regardless of which specific location or
+        // observation type they'd picked. This only requires sound
+        // being "I'm not sure," independent of timing, so it also covers
+        // "I'm not sure" timing and "Constant" timing paired with an
+        // unidentified sound — the two dead-end combinations found in
+        // this pass. It does NOT fire when a specific sound value is
+        // given (Rattle/Clunk/Squeal/Grind), even with "Constant" or
+        // "I'm not sure" timing, since those already match one of the
+        // "not bumps"/"not braking" records above regardless of timing.
+        //
+        // Same tier as the rest of this file — reviewed general guidance,
+        // not a needsVerification placeholder — since "it could be one of
+        // several common systems, here's how to narrow it down" is itself
+        // real, honest, actionable content, not a non-answer.
+        record(
+            id: "phase1.noise.sound-unclear",
+            family: .noiseVibrationOrSuspension,
+            observations: [.sound, .vibrationOrMovement],
+            required: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "I’m not sure")
+            ],
+            support: [
+                .noiseAnswer(key: IncidentNoiseAnswerKey.sound, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "Without knowing what the sound is like, it's hard to point to one system — a rattle or clunk often traces back to suspension or exhaust hardware, a squeal to a belt or brake pads, and a grinding sound to brakes or a wheel bearing. Paying attention to a couple of extra details next time it happens can narrow this down significantly.",
+            action: .professionalInspection,
+            questions: [
+                "Does it happen more over bumps, at highway speed, while turning, or while braking — or is it fairly constant?",
+                "If you had to guess, does it sound closer to a rattle, a clunk, a squeal, or a grinding noise?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-noise-sound-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Noise Reported, Sound Not Identified\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         ),
         // phase1.driving-change.* — structured follow-up asked only when
         // the reported observation includes .drivingChange, gated on the
@@ -3435,6 +3590,43 @@ enum IncidentGuidanceKnowledge {
                 )
             ],
             repairSearchTerm: "acceleration performance diagnostic"
+        ),
+        // Closes a real gap: "I'm not sure" on the driving-change question
+        // (IncidentDrivingChangeAnswerKey.whatChanged) previously had zero
+        // matching record, unlike the three specific answers above —
+        // "something feels off but I can't say how" is a common, honest
+        // answer, not an edge case. Same tier as the rest of this file —
+        // reviewed general guidance, not a needsVerification placeholder.
+        record(
+            id: "phase1.driving-change.unclear",
+            family: .drivingChange,
+            observations: [.drivingChange],
+            required: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "I’m not sure")
+            ],
+            support: [
+                .observation(.drivingChange),
+                .drivingChangeAnswer(key: IncidentDrivingChangeAnswerKey.whatChanged, value: "I’m not sure")
+            ],
+            contradict: [],
+            area: .suspensionAndChassis,
+            explanation: "There are a few common categories drivers describe as the car \"just feeling different\" — pulling to one side (often alignment or a dragging brake), heavier steering (often power steering fluid or a belt), sluggish acceleration (often airflow, fuel delivery, or transmission), or a rougher or looser ride (often tires, alignment, or worn suspension parts). Noticing which of those is closest, and whether it happens more while turning, braking, accelerating, or all the time, is the fastest way to narrow this down.",
+            action: .professionalInspection,
+            questions: [
+                "Does it feel different while turning, braking, accelerating, or all the time?",
+                "Did it change suddenly, or has it been getting worse gradually?"
+            ],
+            verificationState: .reviewedGeneralPrinciple,
+            contentState: .verifiedGeneralAutomotivePrinciple,
+            sourceReferences: [
+                IncidentGuidanceSourceReference(
+                    id: "openhood-reviewed-driving-change-unclear-guidance",
+                    title: "OpenHood, \"Reviewed General Automotive Guidance — Driving Feels Different, Not Yet Narrowed Down\"",
+                    location: nil,
+                    isPlaceholder: false
+                )
+            ]
         )
     ]
 
