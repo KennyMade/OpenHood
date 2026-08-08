@@ -1064,6 +1064,116 @@ extension VehicleFactSheet {
             tirePressureFront: "35 PSI",
             tirePressureRear: "35 PSI",
             notes: "These figures are for the 2.4L 4-cylinder used in the regular 2019 Outlander — the smaller Outlander Sport is a different vehicle with its own specs, not covered here. OpenHood could not independently confirm the exact coolant capacity for this engine, so that figure isn't shown. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "Mustang",
+            engineOilType: "5W-30 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Motorcraft Orange Antifreeze/Coolant (Motorcraft Yellow on vehicles built after roughly January 2020), or an equivalent",
+            coolantCapacity: "Roughly 9.5 quarts — sources vary on this figure, so treat it as an estimate",
+            tirePressureFront: "32 PSI",
+            tirePressureRear: "30 PSI",
+            notes: "These figures are for the 2.3L EcoBoost 4-cylinder used in base 2019 Mustang trims on 18-inch wheels — the 5.0L GT V8 and performance trims (Bullitt, Shelby GT350) use different tire pressures and somewhat different fluid specs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Ford",
+            model: "Explorer",
+            engineOilType: "5W-20 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Motorcraft Orange Antifreeze/Coolant, or an equivalent — inferred from Ford's standard spec for this era, not independently confirmed for the Explorer specifically",
+            coolantCapacity: nil,
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 3.5L V6 used in most 2019 Explorer trims — the 2.3L EcoBoost 4-cylinder option shares the same oil type but a different capacity. OpenHood could not find a reliably sourced tire pressure figure for this vehicle, so that field is intentionally left unconfirmed rather than guessed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Camaro",
+            engineOilType: "5W-30 full synthetic",
+            engineOilCapacity: "6 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 14.5 quarts",
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 3.6L V6 used in most 2019 Camaro trims — the turbo 4-cylinder and SS/ZL1 V8 trims differ, and the SS/ZL1 in particular use staggered front/rear tire sizes with different pressures. OpenHood could not find a reliably sourced tire pressure figure specific to the V6, so that field is intentionally left unconfirmed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Chevrolet",
+            model: "Malibu",
+            engineOilType: "0W-20 full synthetic meeting GM dexos1 Gen 2",
+            engineOilCapacity: "4.2 quarts with a filter change",
+            coolantType: "Dex-Cool orange OAT coolant, or an equivalent",
+            coolantCapacity: "Roughly 12.0 quarts",
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "These figures are for the 1.5L turbo 4-cylinder used in most 2019 Malibu trims — the 2.0L turbo (Premier) engine differs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Altima",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 5.4 quarts with a filter change",
+            coolantType: "Genuine Nissan Long Life Antifreeze/Coolant (blue), pre-diluted, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "28 PSI",
+            tirePressureRear: "32 PSI",
+            notes: "These figures are for the 2.5L 4-cylinder used in most 2019 Altima trims — the 2.0L VC-Turbo (available on SR/Platinum) differs. The front/rear tire pressure split is unusual for a front-wheel-drive sedan, so treat it as a starting point and confirm against the sticker inside your driver's door jamb, which is the authoritative source for your specific trim and wheel size."
+        ),
+        VehicleFactSheet(
+            make: "Nissan",
+            model: "Sentra",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "4.2 quarts with a filter change",
+            coolantType: "Genuine Nissan Long Life Antifreeze/Coolant (blue), or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 1.8L 4-cylinder used in most 2019 Sentra trims — the turbocharged 1.6L SR Turbo differs. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Porsche",
+            model: "911",
+            engineOilType: "5W-40 full synthetic meeting Porsche A40",
+            engineOilCapacity: "Roughly 8.5 quarts with a filter change",
+            coolantType: "Porsche-spec PSi-OAT coolant (pink), meeting VW/Porsche TL 774-L, such as Zerex G-40, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "34 PSI",
+            tirePressureRear: "39 PSI",
+            notes: "These figures are for the base 2019 Carrera (991.2) 3.0L twin-turbo — Carrera S, 4S, and other trims run different wheel/tire packages (19-inch vs 20-inch, different staggered widths) with front pressures commonly ranging 29–37 PSI and rear 33–47 PSI. This is one of the widest trim-to-trim spreads in this list, so treat the figures above as a starting point only — confirming against the sticker inside your driver's door jamb matters more here than for most vehicles."
+        ),
+        VehicleFactSheet(
+            make: "Honda",
+            model: "Pilot",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "5.7 quarts with a filter change",
+            coolantType: "Honda Long Life Antifreeze/Coolant Type 2 (blue), pre-mixed 50/50, or an equivalent",
+            coolantCapacity: nil,
+            tirePressureFront: "35 PSI",
+            tirePressureRear: "35 PSI",
+            notes: "The 2019 Pilot uses a single 3.5L V6 engine across all trims, so these figures should apply fleet-wide. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Toyota",
+            model: "Highlander",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "5.8 quarts with a filter change",
+            coolantType: "Toyota Super Long Life Coolant (pink), or an equivalent",
+            coolantCapacity: "Roughly 6.4 quarts",
+            tirePressureFront: "33 PSI",
+            tirePressureRear: "33 PSI",
+            notes: "These figures are for the 3.5L V6 used in most 2019 Highlander trims — the 2.7L 4-cylinder (base LE) and Hybrid models differ. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
+        ),
+        VehicleFactSheet(
+            make: "Subaru",
+            model: "Forester",
+            engineOilType: "0W-20 full synthetic",
+            engineOilCapacity: "Roughly 4.4 quarts with a filter change",
+            coolantType: "Subaru Genuine Long Life Coolant (green), or an equivalent — the exact color/spec code was not independently confirmed this pass",
+            coolantCapacity: nil,
+            tirePressureFront: "Not independently confirmed — check your door jamb sticker",
+            tirePressureRear: "Not independently confirmed — check your door jamb sticker",
+            notes: "These figures are for the 2.5L flat-4 used in all 2019 Forester trims. OpenHood could not find a reliably sourced tire pressure figure for this vehicle, so that field is intentionally left unconfirmed rather than guessed. Always confirm every figure against the sticker inside your driver's door jamb before servicing."
         )
     ]
 
