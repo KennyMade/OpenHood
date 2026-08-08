@@ -68,7 +68,7 @@ struct ProfileSettingsView: View {
             }
 
             Section("Legal and Support") {
-                UnavailableSettingsRow(title: "Privacy Policy")
+                NavigationLink("Privacy Policy") { PrivacyPolicyView() }
                 NavigationLink("Terms") { LegalDisclaimerView() }
                 UnavailableSettingsRow(title: "Support")
             }
@@ -169,6 +169,91 @@ struct LegalDisclaimerView: View {
 
     @ViewBuilder
     private func disclaimerSection(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            Text(body)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Separate from LegalDisclaimerView on purpose — a privacy policy and a
+/// liability disclaimer are two different documents with two different
+/// jobs (data practices vs. limiting liability), and Apple's App Store
+/// Connect requires a privacy policy specifically before an app can go
+/// through TestFlight external testing or App Store submission. This
+/// content is a factual description of what OpenHood actually does,
+/// verified directly against the codebase rather than assumed: no
+/// network calls, no analytics or tracking SDKs, and no camera/location/
+/// contacts permission requests exist anywhere in the project as of this
+/// writing (checked via full-project search, 2026-08-08). Garage
+/// vehicles, incident reports, saved guidance, and the optional display
+/// name are all stored with plain local UserDefaults — see
+/// GaragePersistence.swift and IncidentPersistence.swift.
+///
+/// This in-app screen is necessary but not sufficient on its own: Apple's
+/// App Store Connect requires a privacy policy URL (a real, publicly
+/// hosted web page), not just in-app text, in the TestFlight/App Store
+/// metadata. This content should be published at a public URL (a simple
+/// static page works fine) before setting up external TestFlight testing
+/// or App Store submission.
+struct PrivacyPolicyView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Privacy Policy")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                Text("This describes what OpenHood does and does not do with your information. It is provided as general information and is not a substitute for advice from a licensed attorney.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                privacySection(
+                    title: "What OpenHood collects",
+                    body: "OpenHood only stores what you enter yourself: vehicle details you add to your Garage, incident reports and guidance you save through Something Happened, and an optional display name. OpenHood does not collect anything automatically, and does not ask for your name, email, phone number, or any account information to use the app."
+                )
+
+                privacySection(
+                    title: "Where your information is stored",
+                    body: "Everything is stored locally on your device only, using Apple's standard on-device app storage. OpenHood has no servers, no account system, and no cloud synchronization — your information never leaves your device through OpenHood."
+                )
+
+                privacySection(
+                    title: "What OpenHood does not do",
+                    body: "OpenHood does not use analytics, advertising, or tracking services of any kind. It does not request access to your camera, location, contacts, photos, or microphone. It does not share, sell, or transmit your information to any third party, because it has no network connection through which to do so."
+                )
+
+                privacySection(
+                    title: "Apple's own data",
+                    body: "Apple may independently collect standard operational data through the App Store or TestFlight, such as crash reports (only if you opt in through your device settings) or download and usage statistics. This is governed by Apple's own privacy policy, not OpenHood's, and OpenHood has no access to it."
+                )
+
+                privacySection(
+                    title: "Deleting your information",
+                    body: "You can permanently remove everything OpenHood has stored at any time using \"Erase OpenHood Data\" in Profile & Settings. This cannot be undone."
+                )
+
+                privacySection(
+                    title: "If this changes",
+                    body: "If a future version of OpenHood adds a feature that transmits data anywhere — such as cloud sync or an online vehicle-lookup service — this policy will be updated to describe it clearly before that feature is available, not after."
+                )
+
+                Text("Last reviewed against the app's actual code on August 8, 2026. This policy will be kept in sync as OpenHood's features change.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
+            .padding(24)
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("Privacy Policy")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func privacySection(title: String, body: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
